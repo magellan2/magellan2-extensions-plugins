@@ -1,0 +1,1 @@
+Just an simply example for an Mageööan 2 plugin.
