@@ -1,0 +1,3 @@
+2008-02-06 Fiete (sf@fietefietz.de)
+	* initial release: just watch actual memory status
+	
