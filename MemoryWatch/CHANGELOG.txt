@@ -1,3 +1,6 @@
+2008-02-15 Fiete (sf@fietefietz.de)
+	* Runtime wsas not visible anymore...
+
 2008-02-06 Fiete (sf@fietefietz.de)
 	* initial release: just watch actual memory status
 	

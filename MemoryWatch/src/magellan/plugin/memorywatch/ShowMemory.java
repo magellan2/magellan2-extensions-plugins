@@ -100,10 +100,11 @@ public class ShowMemory implements MemoryWatchAction, Runnable{
 			formatter = new SimpleDateFormat("dd.MM.yyyy H:mm:ss");
 			today = new Date();
 			output = formatter.format(today);
-			long isFree = MemoryManagment.r.freeMemory();
+			
+			long isFree = MemoryManagment.getR().freeMemory();
 			output += "\n" + "free : " + NumberFormat.getNumberInstance().format(isFree) + " Byte";
-			output += "\n" + "total: " + NumberFormat.getNumberInstance().format(MemoryManagment.r.totalMemory()) + " Byte";
-			output += "\n" + "max  : " + NumberFormat.getNumberInstance().format(MemoryManagment.r.maxMemory()) + " Byte";
+			output += "\n" + "total: " + NumberFormat.getNumberInstance().format(MemoryManagment.getR().totalMemory()) + " Byte";
+			output += "\n" + "max  : " + NumberFormat.getNumberInstance().format(MemoryManagment.getR().maxMemory()) + " Byte";
 			output += "\n" + "dFree: " + NumberFormat.getNumberInstance().format(isFree - lastFree) + " Byte";
 			lastFree = isFree;
 			txtOutput.setText(output);
