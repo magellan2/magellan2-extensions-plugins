@@ -95,6 +95,7 @@ public class ShowMemory implements MemoryWatchAction, Runnable{
 		if (memoryDLG==null){
 			init(this.client);
 		}
+		log.warn("Memory Watch Thread starting");
 		while (this.threadMayRun && memoryDLG!=null && memoryDLG.isVisible()){
 			formatter = new SimpleDateFormat("dd.MM.yyyy H:mm:ss");
 			today = new Date();
@@ -107,7 +108,7 @@ public class ShowMemory implements MemoryWatchAction, Runnable{
 			lastFree = isFree;
 			txtOutput.setText(output);
 			try {
-				t.sleep(1000);
+				Thread.sleep(1000);
 			}
 			catch (InterruptedException e){
 				// do nothing
