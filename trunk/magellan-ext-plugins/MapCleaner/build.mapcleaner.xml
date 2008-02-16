@@ -77,6 +77,7 @@
 
 
 		<!-- JAR File erzeugen -->
+		<mkdir dir="${release}" />
 		<jar jarfile="${release}/MapCleaner.jar" basedir="${classes}" 
 			 manifest="${etc.ext}/manifest.mf">
 	    	
