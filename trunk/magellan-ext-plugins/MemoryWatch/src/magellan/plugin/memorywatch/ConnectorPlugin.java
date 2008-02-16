@@ -12,6 +12,7 @@ import javax.swing.JMenuItem;
 
 import magellan.client.Client;
 import magellan.client.extern.MagellanPlugIn;
+import magellan.client.swing.preferences.PreferencesFactory;
 import magellan.library.GameData;
 import magellan.library.utils.logging.Logger;
 
@@ -114,4 +115,11 @@ public class ConnectorPlugin implements MagellanPlugIn, ActionListener{
 			  }
 		  }
 	  }
+
+		/**
+		 * 
+		 */
+		public PreferencesFactory getPreferencesProvider() {
+			return null;
+		}
 }
