@@ -1,0 +1,1 @@
+The Teacher plug in makes teaching easy.
