@@ -36,7 +36,6 @@ import java.util.Set;
 
 import magellan.library.Skill;
 import magellan.library.Unit;
-import magellan.library.UnitContainer;
 import magellan.library.utils.NullUserInterface;
 import magellan.library.utils.UserInterface;
 import magellan.library.utils.logging.Logger;
@@ -50,16 +49,18 @@ import magellan.library.utils.logging.Logger;
 public class Teacher {
 	private final Logger log = Logger.getInstance(Teacher.class);
 
-	UnitContainer container;
+	Collection<Unit> units = Collections.emptyList();
+	String namespace = null;
 
 	private UserInterface ui = new NullUserInterface();
 
-	Teacher(UnitContainer container, UserInterface ui) {
-		this.container = container;
+	Teacher(Collection<Unit> units, String namespace, UserInterface ui) {
+		this.units = units;
+		this.namespace = namespace;
 		this.ui = ui;
 	}
 
-	private SUnit[] units;
+	private SUnit[] sUnits;
 	java.lang.String delim = " ";
 
 	Random random = new Random();
@@ -106,8 +107,12 @@ public class Teacher {
 			return (teach.get(teaching) != null ? teach.get(teaching) : 1);
 		}
 
-		public Set<String> getTalents() {
+		public Set<String> getLearnTalents() {
 			return learn.keySet();
+		}
+
+		public Set<String> getTeachTalents() {
+			return teach.keySet();
 		}
 
 		void setIndex(int index) {
@@ -157,8 +162,8 @@ public class Teacher {
 			}
 
 			public void assignLearn() {
-				learning = (String) unit.getTalents().toArray()[random.nextInt(unit.getTalents()
-						.size())];
+				learning = (String) unit.getLearnTalents().toArray()[random.nextInt(unit
+						.getLearnTalents().size())];
 			}
 
 			public String toString() {
@@ -489,9 +494,18 @@ public class Teacher {
 	 * @return A List of units who are teachers or students
 	 */
 	public Collection<SUnit> getUnits(String namespace) {
-		Collection<SUnit> result = new ArrayList<SUnit>(container.units().size());
-		for (Unit u : container.units()) {
-			SUnit su = parseUnit(u, namespace);
+		String teachTag, learnTag;
+		if (namespace == null) {
+			teachTag = "$T";
+			learnTag = "$L";
+		} else {
+			teachTag = "$" + namespace + "$T";
+			learnTag = "$" + namespace + "$L";
+		}
+
+		Collection<SUnit> result = new ArrayList<SUnit>(units.size());
+		for (Unit u : units) {
+			SUnit su = parseUnit(u, teachTag, learnTag);
 			if (su != null) {
 				result.add(su);
 				su.setIndex(result.size() - 1);
@@ -513,7 +527,7 @@ public class Teacher {
 	 */
 	private boolean valid(SUnit student, SUnit teacher) {
 		boolean result = false;
-		for (String talent : student.getTalents()) {
+		for (String talent : student.getLearnTalents()) {
 			int diff = teacher.getMaximumDifference(talent);
 			if (diff == 3)
 				diff = 3;
@@ -535,15 +549,15 @@ public class Teacher {
 	 * @return A {@link SUnit} according to <code>u</code>'s orders, <code>null</code> if this
 	 *         unit has no teaching or learning orders
 	 */
-	public SUnit parseUnit(Unit u, String namespace) {
+	public SUnit parseUnit(Unit u, String teachTag, String learnTag) {
 		SUnit su = null;
 		boolean errorFlag = false;
 		for (java.lang.String o : u.getOrders()) {
-			int start = o.indexOf("$T");
+			int start = o.indexOf(teachTag);
 			if (start != -1) {
 				try {
-					java.util.StringTokenizer st = new java.util.StringTokenizer(o
-							.substring(start + 2), delim, false);
+					java.util.StringTokenizer st = new java.util.StringTokenizer(o.substring(start
+							+ learnTag.length()), delim, false);
 					while (st.hasMoreElements()) {
 						String talent = st.nextToken();
 						int prio = Integer.parseInt(st.nextToken());
@@ -562,16 +576,16 @@ public class Teacher {
 						}
 					}
 				} catch (Exception e) {
-					log.warn(e + "parse error, unit " + u + " line " + o);
+					log.warn(e + " parse error, unit " + u + " line " + o);
 					errorFlag = true;
 				}
 			}
 
-			start = o.indexOf("$L");
+			start = o.indexOf(learnTag);
 			if (start != -1) {
 				try {
-					java.util.StringTokenizer st = new java.util.StringTokenizer(o
-							.substring(start + 2), delim, false);
+					java.util.StringTokenizer st = new java.util.StringTokenizer(o.substring(start
+							+ teachTag.length()), delim, false);
 					while (st.hasMoreElements()) {
 						String talent = st.nextToken();
 						double prio = Double.parseDouble(st.nextToken()), prio2 = 0;
@@ -602,7 +616,7 @@ public class Teacher {
 						}
 					}
 				} catch (Exception e) {
-					log.warn("parse error, unit " + u + " line " + o);
+					log.warn(e+" parse error, unit " + u + " line " + o);
 					errorFlag = true;
 				}
 			}
@@ -613,6 +627,8 @@ public class Teacher {
 			return null;
 		}
 
+		if (su == null || su.getLearnTalents().isEmpty())
+			return null;
 		return su;
 	}
 
@@ -622,9 +638,13 @@ public class Teacher {
 	 * @return The value of the best solution
 	 */
 	public double mainrun() {
-		units = (SUnit[]) getUnits(null).toArray(new SUnit[0]);
+		sUnits = (SUnit[]) getUnits(namespace).toArray(new SUnit[0]);
+		log.info("teaching " + sUnits.length + " units in namespace \"" + namespace + "\"");
 
-		final int numRounds = Math.max(80, (int) (units.length) * 3 / 2);
+		if (sUnits.length == 0)
+			return 0;
+
+		final int numRounds = Math.max(80, (int) (sUnits.length) * 3 / 2);
 		final int popSize = numRounds;
 		final int numMetaRounds = 3;
 		final int select = 5;
@@ -634,11 +654,11 @@ public class Teacher {
 		ui.show();
 
 		Solution[] best = new Solution[numMetaRounds * select * 3 / 2];
-		init(best, units);
+		init(best, sUnits);
 
 		for (int metaRound = 0; metaRound < numMetaRounds; ++metaRound) {
 			Solution[] population = new Solution[popSize];
-			init(population, units);
+			init(population, sUnits);
 
 			for (int round = 0; round < numRounds; ++round) {
 				select(population);
@@ -684,7 +704,7 @@ public class Teacher {
 		log.info("***** 0: " + best[0].evaluate() + " l/3: " + best[best.length / 3].evaluate()
 				+ " " + (best.length - 1) + ": " + best[best.length - 1].evaluate());
 		ui.ready();
-		
+
 		if (best.length == 0)
 			return -1;
 		return setResult(best[0]);
@@ -694,7 +714,7 @@ public class Teacher {
 	 * Removes all orders containing $$$
 	 */
 	public void clear() {
-		for (Unit u : container.units()) {
+		for (Unit u : units) {
 			Collection<String> orders = new ArrayList<String>(u.getOrders());
 			for (Iterator<String> it = orders.iterator(); it.hasNext();) {
 				String o = (String) it.next();
@@ -742,7 +762,7 @@ public class Teacher {
 	}
 
 	/**
-	 * Sets the orders according to the solution 
+	 * Sets the orders according to the solution
 	 * 
 	 * @param best
 	 * @return The value of the solution
@@ -791,14 +811,13 @@ public class Teacher {
 		return best.evaluate();
 	}
 
-	public static void teach(final UnitContainer container, final UserInterface ui) {
-
-		(new Teacher(container, ui)).mainrun();
+	public static void teach(final Collection<Unit> units, String namespace, final UserInterface ui) {
+		(new Teacher(units, namespace, ui)).mainrun();
 
 	}
 
-	public static void clear(UnitContainer container) {
-		(new Teacher(container, new NullUserInterface())).clear();
+	public static void clear(Collection<Unit> units, String namespace) {
+		(new Teacher(units, namespace, new NullUserInterface())).clear();
 
 	}
 

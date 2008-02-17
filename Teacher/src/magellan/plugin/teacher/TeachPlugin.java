@@ -17,24 +17,39 @@
 // 
 package magellan.plugin.teacher;
 
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.Properties;
+import java.util.ResourceBundle;
 
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 import magellan.client.Client;
 import magellan.client.event.EventDispatcher;
 import magellan.client.extern.MagellanPlugIn;
 import magellan.client.swing.ProgressBarUI;
 import magellan.client.swing.context.UnitContainerContextMenuProvider;
+import magellan.client.swing.preferences.PreferencesAdapter;
 import magellan.client.swing.preferences.PreferencesFactory;
 import magellan.library.GameData;
+import magellan.library.Unit;
 import magellan.library.UnitContainer;
 import magellan.library.event.GameDataEvent;
+import magellan.library.utils.Locales;
 import magellan.library.utils.logging.Logger;
 
 /**
@@ -86,14 +101,49 @@ import magellan.library.utils.logging.Logger;
  * 
  * It is feasible (in fact, desirable) for a unit to be teacher and student at the same time.
  * 
- *  @author stm
+ * @author stm
  */
-public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider {
+public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
+		ActionListener {
 	private static Logger log = null;
 
 	private Client client = null;
 	private Properties properties = null;
 	private GameData gd = null;
+
+	private String namespace = null;
+
+	/**
+	 * An enum for all action types in this plugin.
+	 * 
+	 * @author Thoralf Rickert
+	 * @version 1.0, 11.09.2007
+	 */
+	public enum PlugInAction {
+		EXECUTE("mainmenu.execute"), EXECUTE_ALL("mainmenu.executeall"), CLEAR("mainmenu.clear"), CLEAR_ALL(
+				"mainmenu.clearall"), UNKNOWN("");
+
+		private String id;
+
+		private PlugInAction(String id) {
+			this.id = id;
+		}
+
+		public String getID() {
+			return id;
+		}
+
+		public static PlugInAction getAction(ActionEvent e) {
+			if (e == null)
+				return UNKNOWN;
+			for (PlugInAction action : values()) {
+				if (action.id.equalsIgnoreCase(e.getActionCommand()))
+					return action;
+			}
+			return UNKNOWN;
+		}
+
+	}
 
 	/**
 	 * @see magellan.client.extern.MagellanPlugIn#init(magellan.client.Client, java.util.Properties)
@@ -120,14 +170,39 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 * @see magellan.client.extern.MagellanPlugIn#getMenuItems()
 	 */
 	public List<JMenuItem> getMenuItems() {
-		return Collections.emptyList();
+		List<JMenuItem> items = new ArrayList<JMenuItem>();
+
+		JMenu menu = new JMenu(getString("plugin.teacher.mainmenu.title"));
+		items.add(menu);
+
+//		JMenuItem executeMenu = new JMenuItem(getString("mainmenu.execute.title"));
+//		executeMenu.setActionCommand(PlugInAction.EXECUTE.getID());
+//		executeMenu.addActionListener(this);
+//		menu.add(executeMenu);
+//
+		JMenuItem executeAllMenu = new JMenuItem(getString("plugin.teacher.mainmenu.executeall.title"));
+		executeAllMenu.setActionCommand(PlugInAction.EXECUTE_ALL.getID());
+		executeAllMenu.addActionListener(this);
+		menu.add(executeAllMenu);
+
+//		JMenuItem clearMenu = new JMenuItem(getString("mainmenu.clear.title"));
+//		clearMenu.setActionCommand(PlugInAction.CLEAR.getID());
+//		clearMenu.addActionListener(this);
+//		menu.add(clearMenu);
+
+		JMenuItem clearAllMenu = new JMenuItem(getString("plugin.teacher.mainmenu.clearall.title"));
+		clearAllMenu.setActionCommand(PlugInAction.CLEAR_ALL.getID());
+		clearAllMenu.addActionListener(this);
+		menu.add(clearAllMenu);
+
+		return items;
 	}
 
 	/**
 	 * @see magellan.client.extern.MagellanPlugIn#getName()
 	 */
 	public String getName() {
-		return "FFplugin";
+		return getString("plugin.teacher.name");
 	}
 
 	/**
@@ -136,35 +211,61 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 */
 	public JMenuItem createContextMenu(final EventDispatcher dispatcher, final GameData data,
 			final UnitContainer container) {
-		JMenu menu = new JMenu("TeachTest");
+		JMenu menu = new JMenu(getString("plugin.teacher.contextmenu.title"));
 
 		// do teaching for this unit container
-		JMenuItem editMenu = new JMenuItem("teach");
+		JMenuItem editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.execute.title"));
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				new Thread(new Runnable() {
-
-					public void run() {
-						Teacher.teach(container, new ProgressBarUI(client));
-
-						dispatcher.fire(new GameDataEvent(client, client.getData()));
-					}
-				}).start();
+				doTeach(container.units());
 			}
 		});
 		menu.add(editMenu);
 
-		// clear all $$$ comments 
-		editMenu = new JMenuItem("clear");
+		// clear all $$$ comments
+		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.clear.title"));
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Teacher.clear(container);
-				dispatcher.fire(new GameDataEvent(client, client.getData()));
+				doClear(container.units());
 			}
 		});
 		menu.add(editMenu);
 
 		return menu;
+	}
+
+	public void actionPerformed(ActionEvent e) {
+		log.info(e.getActionCommand());
+		switch (PlugInAction.getAction(e)) {
+		case EXECUTE_ALL: {
+			doTeach(gd.units().values());
+			break;
+		}
+		case CLEAR_ALL: {
+			doClear(gd.units().values());
+		}
+		}
+
+	}
+
+	private void doClear(final Collection<Unit> values) {
+		new Thread(new Runnable() {
+			public void run() {
+				Teacher.clear(values, namespace);
+				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+			}
+		}).start();
+	}
+
+	private void doTeach(final Collection<Unit> values) {
+		new Thread(new Runnable() {
+
+			public void run() {
+				Teacher.teach(values, namespace, new ProgressBarUI(client));
+				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+			}
+		}).start();
+
 	}
 
 	/**
@@ -175,6 +276,69 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	}
 
 	public PreferencesFactory getPreferencesProvider() {
-		return null;
+		return new PreferencesFactory() {
+
+			public PreferencesAdapter createPreferencesAdapter() {
+				return new TeachPreferences();
+			}
+
+		};
 	}
+
+	class TeachPreferences implements PreferencesAdapter {
+
+		JTextArea txtNamespace;
+
+		public void applyPreferences() {
+			namespace = txtNamespace.getText();
+		}
+
+		public Component getComponent() {
+			JPanel panel = new JPanel(new GridBagLayout());
+			panel.setBorder(new javax.swing.border.TitledBorder(BorderFactory.createEtchedBorder(),
+					getString("plugin.teacher.preferences.label.namespace")));
+
+			GridBagConstraints con = new GridBagConstraints(0, 0, 1, 1, 0, 0,
+					GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(3, 3, 3, 3),
+					0, 0);
+
+			JLabel lblNamespace = new JLabel(getString("plugin.teacher.preferences.label.namespace"));
+			panel.add(lblNamespace, con);
+
+			txtNamespace = new JTextArea();
+			txtNamespace.setMinimumSize(new Dimension(100, 20));
+			txtNamespace.setPreferredSize(new java.awt.Dimension(100, 20));
+			// txtNamespace.setText("stm");
+
+			con.insets.left = 0;
+			con.gridx = 1;
+			panel.add(txtNamespace, con);
+
+			return panel;
+		}
+
+		public String getTitle() {
+			return getString("plugin.teacher.preferences.title");
+		}
+
+		public void initPreferences() {
+
+		}
+
+	}
+
+	  private static final String BUNDLE_NAME = "magellan.plugin.teacher.teacher_resources";
+
+	  private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
+
+	  public static String getString(String key) {
+		ResourceBundle bundle = ResourceBundle.getBundle(BUNDLE_NAME, Locales.getGUILocale());
+	    try {
+	      return bundle.getString(key);
+	    } catch (MissingResourceException e) {
+	      log.warn("resource key "+key+" not found in bundle "+BUNDLE_NAME+", "+Locales.getGUILocale());
+	      return '!' + key + '!';
+	    }
+	  }
+
 }
