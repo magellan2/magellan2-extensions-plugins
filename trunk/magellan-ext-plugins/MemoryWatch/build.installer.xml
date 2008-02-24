@@ -1,0 +1,111 @@
+<project name="magellan-memorywatch">
+  <description>
+    This is an example for creating a plugin installer jar file
+    based on the magellan2 libraries.
+  </description>
+
+  <!-- Some properties -->
+  <property name="sources"      location="${basedir}/src"/>
+  <property name="classes"      location="${basedir}/classes"/>
+  <property name="release"      location="${basedir}/release"/>
+  <property name="magellan2"    location="${basedir}/../magellan2/"/>
+  <property name="installer"    location="${magellan2}/installer"/>
+
+  <!-- Compile Settings -->
+  <property name="debug"             value="on" />
+  <property name="optimize"          value="off" />
+  <property name="build.compiler"    value="javac1.5"/>
+  <property name="compile.target"    value="1.5"/>
+  <property name="compile.encoding"  value="ISO-8859-1"/>
+
+
+  <path id="plugin.class.path">
+    <pathelement path="${java.class.path}/" />
+    <fileset dir="${magellan2}/lib">
+      <include name="**/*.jar" />
+    </fileset>
+    <fileset dir="${magellan2}/bin">
+      <include name="**/*.class" />
+    </fileset>
+  </path>
+	
+  <!-- *************************************************************** -->
+  <!-- *                                                             * -->
+  <!-- *  This target compiles and packs the magellan library.       * -->
+  <!-- *                                                             * -->
+  <!-- *************************************************************** -->
+  <target name="create-installer" description="Run this to create a installer jar for this plugin">
+    <echo message="Compiling Plug-In..." />
+
+    <antcall target="clear-classes"/>
+    <mkdir dir="${classes}" />
+  	
+    <javac srcdir="${sources}/"
+           destdir="${classes}"
+           includes="**"
+           source="${compile.target}"
+           target="${compile.target}"
+           encoding="${compile.encoding}"
+           optimize="${optimize}"
+           debug="${debug}">
+      <!--<compilerarg value="-Xlint:unchecked"/>-->
+      <!--<compilerarg value="-Xlint:deprecation"/>-->
+      <classpath refid="plugin.class.path"/>
+    </javac>
+  	
+    <echo message="Building MemoryWatch Plugin JAR file" />
+  	
+    <!-- delete old library -->
+    <delete file="${release}/memorywatch-plugin.jar" failonerror="false" />
+
+    <!-- JAR File erzeugen -->
+    <buildnumber file=".build.number"/>
+    <jar jarfile="${release}/memorywatch-plugin.jar" basedir="${classes}">
+      <manifest>
+        <attribute name="Built-By" value="${user.name}" />
+        <attribute name="Specification-Title" value="Magellan MemoryWatch [build ${build.number}]" />
+        <attribute name="Specification-Vendor" value="Magellan Development Team"/>
+      </manifest>
+    </jar>
+  	
+    <antcall target="clear-classes"/>
+  	
+    <mkdir dir="${release}/doc" />
+    <copy todir="${release}/doc" overwrite="true">
+      <fileset dir="${basedir}">
+        <include name="README.txt"/>
+      </fileset>
+    </copy>
+
+    
+  	<java jar="${installer}/izpack/standalone-compiler.jar" fork="true" failonerror="true">
+      <arg value="${basedir}/izpack-install.xml"/>
+      <arg value="-b"/>
+      <arg value="."/>
+      <arg value="-o"/>
+      <arg value="magellan2_memorywatch_plugin.jar"/>
+      <arg value="-k"/>
+      <arg value="standard"/>
+ 
+      <classpath>
+        <pathelement path="${java.class.path}/" />
+        <fileset dir="${installer}/izpack/">
+          <include name="**/*.jar" />
+        </fileset>
+      </classpath>
+  	</java>
+  </target>
+	
+
+  <!-- *************************************************************** -->
+  <!-- *                                                             * -->
+  <!-- *************************************************************** -->
+  <target name="clear-classes">
+  	<!-- cleaning classes directory by creating&deleting and creating it -->
+    <echo message="Cleaning output folder"/>
+    <mkdir dir="${classes}" />
+    <delete includeEmptyDirs="true" failonerror="false">
+      <fileset dir="${classes}" includes="**" />
+    </delete>
+  </target>
+</project>

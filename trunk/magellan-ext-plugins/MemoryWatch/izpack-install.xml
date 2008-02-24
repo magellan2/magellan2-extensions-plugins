@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
+<installation version="1.0">
+  <info>
+    <appname>Magellan MemoryWatch</appname>
+    <appversion>1.0</appversion>
+    <authors>
+      <author name="Thoralf Rickert" email="thoralf@m84.de"/>
+      <author name="Fiete" email="sf@fietefietz.de"/>
+      <author name="Steffen Mecke" email="stm_@users.sourceforge.net"/>
+      <author name="Steve Wagner" email="lanwin@users.sourceforge.net"/>
+      <author name="Ralf Duckstein" email="sf.net@duckstein.net"/>
+      <author name="Mar'ek Khadar" email="regdokhan@gmail.com"/>
+    </authors>
+    <url>http://magellan-client.sourceforge.net/</url>
+    <uninstaller write="yes"/>
+    <javaversion>1.5</javaversion>
+  </info>
+  
+  <guiprefs width="640" height="480" resizable="no"/>
+  
+  <locale>
+    <langpack iso3="eng"/>
+    <langpack iso3="deu"/>
+  </locale>
+  
+  <resources>
+    <res id="InfoPanel.info"   src="release/README.txt"/>
+    <res id="useNativeLAF"     src="release/README.txt"/>
+  </resources>
+
+  <panels>
+    <panel classname="HelloPanel"/>
+    <panel classname="InfoPanel"/>
+    <panel classname="TargetPanel"/> 
+    <panel classname="PacksPanel"/>
+    <panel classname="InstallPanel"/>
+    <panel classname="FinishPanel"/>
+  </panels>
+
+  <packs>
+    <pack name="MemoryWatch for Magellan2" required="yes">
+      <description>A plugin for Magellan2 showing the current memory usage of Magellan2.</description>
+      <file src="release/doc"                               targetdir="$INSTALL_PATH/doc/memorywatch"/>
+      <file src="release/memorywatch-plugin.jar"            targetdir="$INSTALL_PATH/plugins"/>
+    </pack>
+  </packs>
+</installation>
