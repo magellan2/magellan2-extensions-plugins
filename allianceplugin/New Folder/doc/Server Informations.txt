@@ -1,0 +1,30 @@
+Alliance Plugin
+Server Informations
+Version 1.0
+Author Thoralf Rickert
+
+
+This plugin uses a server side script to manage the report and orders.
+At the moment there is no public server that you can use to manage your
+alliance. You have to install your own server. This document shows you,
+what you need.
+
+First, of course, you need a server that is always connected to the
+internet and that can be reached from the internet. So you have to
+check that another can connect to it over the internet.
+
+Second, you need to install some software. At the moment there are
+to ways to use the software. At the beginning of the development
+the server side script is a PHP script that waits for report and
+order requests. It communications in the backend with a java program
+that merges the reports and the commands. So you server needs a 
+PHP enabled HTTP server (Apache) that can start local script. And you
+need Java on the server that you can start from PHP (so PHP must be
+enabled to execute a shell command). Attention: Most public servers 
+don't provide this service - so check that. Another way is the 
+"future" solution that needs a Tomcat server. Some informations from
+the user, the orders etc. are stored in MySQL database. That should
+not be a problem. Most servers have MySQL instance installed.
+
+Installation:
+...to be continued, if there is something...
