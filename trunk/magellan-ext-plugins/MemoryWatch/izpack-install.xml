@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
 <installation version="1.0">
   <info>
-    <appname>Magellan MemoryWatch</appname>
+    <appname>Magellan MemoryWatch Plugin</appname>
     <appversion>1.0</appversion>
+    <appsubpath>Magellan</appsubpath>
     <authors>
       <author name="Thoralf Rickert" email="thoralf@m84.de"/>
       <author name="Fiete" email="sf@fietefietz.de"/>
@@ -12,7 +13,7 @@
       <author name="Mar'ek Khadar" email="regdokhan@gmail.com"/>
     </authors>
     <url>http://magellan-client.sourceforge.net/</url>
-    <uninstaller write="yes"/>
+    <uninstaller write="no"/>
     <javaversion>1.5</javaversion>
   </info>
   
@@ -24,24 +25,26 @@
   </locale>
   
   <resources>
-    <res id="InfoPanel.info"   src="release/README.txt"/>
-    <res id="useNativeLAF"     src="release/README.txt"/>
+    <res id="InfoPanel.info"   src="README.txt"/>
+    <res id="useNativeLAF"     src="README.txt"/>
   </resources>
 
   <panels>
     <panel classname="HelloPanel"/>
     <panel classname="InfoPanel"/>
-    <panel classname="TargetPanel"/> 
-    <panel classname="PacksPanel"/>
+    <panel classname="MagellanPluginTargetPanel"/> 
+    <!--<panel classname="PacksPanel"/>-->
     <panel classname="InstallPanel"/>
-    <panel classname="FinishPanel"/>
+    <panel classname="SimpleFinishPanel"/>
   </panels>
 
   <packs>
     <pack name="MemoryWatch for Magellan2" required="yes">
       <description>A plugin for Magellan2 showing the current memory usage of Magellan2.</description>
-      <file src="release/doc"                               targetdir="$INSTALL_PATH/doc/memorywatch"/>
-      <file src="release/memorywatch-plugin.jar"            targetdir="$INSTALL_PATH/plugins"/>
+      <file src="doc"                            targetdir="$INSTALL_PATH/doc/memorywatchplugin"/>
+      <file src="memorywatch-plugin.jar"         targetdir="$INSTALL_PATH/plugins"/>
+      <file src="etc"                            targetdir="$INSTALL_PATH"/>
+      <file src="lib"                            targetdir="$INSTALL_PATH"/>
     </pack>
   </packs>
 </installation>
