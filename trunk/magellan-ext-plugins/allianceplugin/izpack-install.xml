@@ -8,7 +8,7 @@
       <author name="Thoralf Rickert" email="thoralf@m84.de"/>
     </authors>
     <url>http://magellan-client.sourceforge.net/</url>
-    <uninstaller write="yes"/>
+    <uninstaller write="no"/>
     <javaversion>1.5</javaversion>
   </info>
   
@@ -27,10 +27,10 @@
   <panels>
     <panel classname="HelloPanel"/>
     <panel classname="InfoPanel"/>
-    <panel classname="TargetPanel"/> 
-    <panel classname="PacksPanel"/>
+    <panel classname="MagellanPluginTargetPanel"/> 
+    <!--<panel classname="PacksPanel"/>-->
     <panel classname="InstallPanel"/>
-    <panel classname="FinishPanel"/>
+    <panel classname="SimpleFinishPanel"/>
   </panels>
 
   <packs>
