@@ -1,0 +1,10 @@
+
+Library: Swing Layout
+Desc...: Extensions to Swing to create professional cross platform layout
+Website: https://swing-layout.dev.java.net/
+License: Lesser General Public License (LGPL)
+
+Library: designgridlayout
+Desc...: Easy to use LayoutManager inspired by canonical design grids.
+Website: https://designgridlayout.dev.java.net/
+License: Lesser General Public License (LGPL)
