@@ -41,5 +41,7 @@ public interface Constants {
 
   public static final String RESOURCE_DOWNLOAD = "allianceplugin.download";
 
+  public static final String RESOURCE_UPLOADDIALOG_FILE_TITLE = "alliancedialog.upload.title";
+
   
 }
