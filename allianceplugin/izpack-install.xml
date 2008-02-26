@@ -38,9 +38,9 @@
       <description>A plugin for Magellan2 that allows an alliance to share their maps.</description>
       <file src="doc"                            targetdir="$INSTALL_PATH/doc/allianceplugin"/>
       <file src="README.txt"                     targetdir="$INSTALL_PATH/doc/allianceplugin"/>
-      <file src="alliance-plugin.jar"            targetdir="$INSTALL_PATH/plugins"/>
+      <file src="alliance-plugin.jar"            targetdir="$INSTALL_PATH/plugins/allianceplugin"/>
       <file src="etc"                            targetdir="$INSTALL_PATH"/>
-      <file src="lib"                            targetdir="$INSTALL_PATH"/>
+      <file src="lib"                            targetdir="$INSTALL_PATH/plugins/allianceplugin"/>
     </pack>
   </packs>
 </installation>
