@@ -51,20 +51,26 @@ public class AlliancePlugIn implements MagellanPlugIn, ActionListener {
     log.info(getName()+" initialized...(Client)");
    
     // check, if the client loads automatically the last loaded report on start and inform user.
-    if (PropertiesHelper.getBoolean(settings, "ClientPreferences.LoadLastReport", true)) {
+    if (PropertiesHelper.getBoolean(settings, PropertiesHelper.CLIENTPREFERENCES_LOAD_LAST_REPORT, true)) {
       // okay, yes - should we inform the user about that?
-      if (PropertiesHelper.getBoolean(settings, "AlliancePlugIn.informUserAboutLoadLastReport", true)) {
+      if (PropertiesHelper.getBoolean(settings, Constants.PROPERTY_INFORM_USER_ABOUT_LOAD_LAST_REPORT, true)) {
         // okay, then we should do it and ask if we should disable that feature.
-        int change = JOptionPane.showConfirmDialog(this.client, Resources.get("allianceplugin.loadlastreport.message"), Resources.get("allianceplugin.loadlastreport.title"), JOptionPane.YES_NO_OPTION);
+        int change = JOptionPane.showConfirmDialog(this.client, Resources.get(Constants.RESOURCE_LOAD_LAST_REPORT_MESSAGE), Resources.get(Constants.RESOURCE_LOAD_LAST_REPORT_TITLE), JOptionPane.YES_NO_OPTION);
         if (change == JOptionPane.YES_OPTION) {
           // ok, disable that feature
-          settings.put("ClientPreferences.LoadLastReport", Boolean.FALSE.toString());
-          settings.put("AlliancePlugIn.informUserAboutLoadLastReport", Boolean.TRUE.toString());
+          settings.put(PropertiesHelper.CLIENTPREFERENCES_LOAD_LAST_REPORT, Boolean.FALSE.toString());
+          settings.put(Constants.PROPERTY_INFORM_USER_ABOUT_LOAD_LAST_REPORT, Boolean.TRUE.toString());
         } else {
           // ok, we have asked, so let's disable this feature.
-          settings.put("AlliancePlugIn.informUserAboutLoadLastReport", Boolean.FALSE.toString());
+          settings.put(Constants.PROPERTY_INFORM_USER_ABOUT_LOAD_LAST_REPORT, Boolean.FALSE.toString());
         }
       }
+    }
+    
+    if (PropertiesHelper.getBoolean(settings, Constants.PROPERTY_SHOW_DOWNLOAD_DIALOG_ON_START, true)) {
+      DownloadReportDialog dialog = new DownloadReportDialog(client);
+      dialog.setOpenAtStart(true);
+      dialog.setVisible(true);
     }
   }
   
@@ -84,20 +90,20 @@ public class AlliancePlugIn implements MagellanPlugIn, ActionListener {
   public List<JMenuItem> getMenuItems() {
     List<JMenuItem> items = new ArrayList<JMenuItem>();
     
-    JMenu menu = new JMenu(Resources.get("allianceplugin.mainmenu.title"));
+    JMenu menu = new JMenu(Resources.get(Constants.RESOURCE_MAINMENU_TITLE));
     items.add(menu);
     
-    JMenuItem uploadReportMenu = new JMenuItem(Resources.get("allianceplugin.mainmenu.uploadreport.title"));
+    JMenuItem uploadReportMenu = new JMenuItem(Resources.get(Constants.RESOURCE_MAINMENU_UPLOADDIALOG_TITLE));
     uploadReportMenu.setActionCommand(AlliancePlugInAction.UPLOAD_REPORT.getID());
     uploadReportMenu.addActionListener(this);
     menu.add(uploadReportMenu);    
     
-    JMenuItem downloadReportMenu = new JMenuItem(Resources.get("allianceplugin.mainmenu.downloadreport.title"));
+    JMenuItem downloadReportMenu = new JMenuItem(Resources.get(Constants.RESOURCE_MAINMENU_DOWNLOADDIALOG_TITLE));
     downloadReportMenu.setActionCommand(AlliancePlugInAction.DOWNLOAD_REPORT.getID());
     downloadReportMenu.addActionListener(this);
     menu.add(downloadReportMenu);    
 
-    JMenuItem mergeOrdersMenu = new JMenuItem(Resources.get("allianceplugin.mainmenu.mergeorders.title"));
+    JMenuItem mergeOrdersMenu = new JMenuItem(Resources.get(Constants.RESOURCE_MAINMENU_MERGEORDERS_TITLE));
     mergeOrdersMenu.setActionCommand(AlliancePlugInAction.MERGE_ORDERS.getID());
     mergeOrdersMenu.addActionListener(this);
     menu.add(mergeOrdersMenu);    
