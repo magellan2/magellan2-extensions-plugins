@@ -2,20 +2,14 @@ package magellan.plugin.allianceplugin.download;
 
 import static pagelayout.EasyCell.*;
 
-import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.border.TitledBorder;
 
 import pagelayout.Column;
 
@@ -38,14 +32,12 @@ import magellan.plugin.allianceplugin.net.OdysseyServerInformation;
  * @author Thoralf Rickert
  * @version 1.0
  */
-public class DownloadReportDialog extends AbstractOdysseyConnectDialog implements ActionListener, ItemListener {
+public class DownloadReportDialog extends AbstractOdysseyConnectDialog implements ActionListener {
   private static final Logger log = Logger.getInstance(DownloadReportDialog.class);
   boolean openAtStart = false;
   
-  private JComboBox allianceChooser = null;
-  private JComboBox mapChooser = null;
-  private JComboBox mapPartChooser = null;
   private JButton downloadButton = null;
+  private JButton cancelButton = null;
   
   /**
    * Creates a new dialog that asks for the server
@@ -56,6 +48,8 @@ public class DownloadReportDialog extends AbstractOdysseyConnectDialog implement
    */
   public DownloadReportDialog(Client client) {
     super(client);
+    setActionListener(this);
+    initGUI();
   }
   
   /**
@@ -67,48 +61,36 @@ public class DownloadReportDialog extends AbstractOdysseyConnectDialog implement
     setResizable(false);
   }
 
-  protected JPanel initCenterPanel() {
-    // Center: Info and Chooser
-    JPanel centerPanel = new JPanel(new BorderLayout());
-    centerPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(),Resources.get(Constants.RESOURCE_DOWNLOADDIALOG_ALLIANCESETTINGS_TITLE)));
+  /**
+   * @see magellan.plugin.allianceplugin.AbstractOdysseyConnectDialog#initSpecialGUIPanel()
+   */
+  @Override
+  protected JPanel initSpecialGUIPanel() {
+    JPanel buttonPanel = new JPanel();
     
-    servernameField = new JTextField(Resources.get(Constants.RESOURCE_SERVER_NAME));
-    servernameField.setEnabled(false);
-    allianceChooser = new JComboBox();
-    allianceChooser.addItemListener(this);
-    allianceChooser.setEnabled(false);
-    mapChooser = new JComboBox();
-    mapChooser.addItemListener(this);
-    mapChooser.setEnabled(false);
-    mapPartChooser = new JComboBox();
-    mapPartChooser.setEnabled(false);
-
+    cancelButton = new JButton(Resources.get(Constants.RESOURCE_CANCEL));
+    cancelButton.addActionListener(this);
+    cancelButton.setActionCommand("button.cancel");
+    
     downloadButton = new JButton(Resources.get(Constants.RESOURCE_DOWNLOAD));
     downloadButton.addActionListener(this);
     downloadButton.setActionCommand("button.download");
     enableDownloadButton();
 
     Column layout = column(
-                      grid(
-                        label(Constants.RESOURCE_SERVER_NAME),servernameField,eol(),
-                        label(Constants.RESOURCE_ALLIANCE),allianceChooser,eol(),
-                        label(Constants.RESOURCE_ALLIANCE_MAP),mapChooser,eol(),
-                        label(Constants.RESOURCE_ALLIANCE_MAPPART),mapPartChooser),
-                      row(center,none,vgap(10)),
-                      row(right,none,downloadButton),
-                      row(center,none,vgap(50))
-                      );
-    layout.createLayout(centerPanel);
+                      row(right,none,cancelButton,downloadButton)
+                    );
     
-    return centerPanel;
+    layout.createLayout(buttonPanel);
+
+    return buttonPanel;
   }
   
   /**
    * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
    */
-  @Override
   public void actionPerformed(ActionEvent e) {
-    super.actionPerformed(e);
+    super.handleActionPerformed(e);
     if (e.getActionCommand() == null) return;
     if (e.getActionCommand().equals("button.download")) {
 
@@ -119,48 +101,36 @@ public class DownloadReportDialog extends AbstractOdysseyConnectDialog implement
       
       DownloadObserver observer = new DownloadObserver(alliance,map,mappart);
       observer.start();
+    } else if (e.getActionCommand().equals("button.cancel")) {
+      setVisible(false);
     }
+
   }
 
   /**
    * @see magellan.plugin.allianceplugin.AbstractOdysseyConnectDialog#connectionEstablished(magellan.plugin.allianceplugin.net.OdysseyServerInformation)
    */
   protected void connectionEstablished(OdysseyServerInformation infos) {
-    for (int i=allianceChooser.getItemCount(); i>0; i--) allianceChooser.removeItemAt(i-1);
-    for (OdysseyAlliance alliance : infos.getAlliances()) {
-      allianceChooser.addItem(alliance);
-    }
-    allianceChooser.setEnabled(true);
-    allianceChooser.setSelectedIndex(0);
-    progressBar.setValue(40);
-    
-    OdysseyAlliance alliance = (OdysseyAlliance)allianceChooser.getSelectedItem();
-    for (int i=mapChooser.getItemCount(); i>0; i--) mapChooser.removeItemAt(i-1);
-    for (OdysseyMap map : alliance.getMaps()) {
-      mapChooser.addItem(map);
-    }
-    mapChooser.setEnabled(true);
-    mapChooser.setSelectedIndex(0);
-    progressBar.setValue(50);
-    
-    OdysseyMap map = (OdysseyMap)mapChooser.getSelectedItem();
-    for (int i=mapPartChooser.getItemCount(); i>0; i--) mapPartChooser.removeItemAt(i-1);
-    for (OdysseyMapPart mappart : map.getParts()) {
-      mapPartChooser.addItem(mappart);
-    }
-    mapPartChooser.setEnabled(true);
-    mapPartChooser.setSelectedIndex(0);
-    progressBar.setValue(60);
-    
     enableDownloadButton();
   }
   
+  /**
+   * 
+   */
   private void enableDownloadButton() {
     Object alliance = allianceChooser.getSelectedItem();
     Object map = mapChooser.getSelectedItem();
     Object mappart = mapPartChooser.getSelectedItem();
     
     downloadButton.setEnabled(alliance!=null && map!=null && mappart!=null);
+  }
+  
+
+  /**
+   * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+   */
+  public void allianceSettingsChanged(ItemEvent e) {
+    enableDownloadButton();
   }
 
   /**
@@ -181,14 +151,13 @@ public class DownloadReportDialog extends AbstractOdysseyConnectDialog implement
     this.openAtStart = openAtStart;
   }
   
+  
   /**
-   * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+   * This class observes the download process.
+   *
+   * @author <a href="thoralf@m84.de">Thoralf Rickert</a>
+   * @version 1.0
    */
-  public void itemStateChanged(ItemEvent e) {
-    enableDownloadButton();
-  }
-  
-  
   class DownloadObserver extends Thread implements Observer {
     private OdysseyAlliance alliance = null;
     private OdysseyMap map = null;
@@ -196,6 +165,9 @@ public class DownloadReportDialog extends AbstractOdysseyConnectDialog implement
     private long transferedBytes = 0l;
     private File crFile = null;
     
+    /**
+     * 
+     */
     public DownloadObserver(OdysseyAlliance alliance, OdysseyMap map, OdysseyMapPart mappart) {
       this.alliance = alliance;
       this.map = map;
@@ -207,9 +179,14 @@ public class DownloadReportDialog extends AbstractOdysseyConnectDialog implement
       // okay, do not start any other operations...
       connectButton.setEnabled(false);
       downloadButton.setEnabled(false);
+      cancelButton.setEnabled(false);
+      autoConnectBox.setEnabled(false);
     }
     
-    
+    /**
+     * @see java.lang.Thread#run()
+     */
+    @Override
     public void run() {
       DownloadThread thread = new DownloadThread(this);
       thread.start();
@@ -231,28 +208,41 @@ public class DownloadReportDialog extends AbstractOdysseyConnectDialog implement
       
       if (crFile != null) {
         log.info("Load CR file into Magellan");
+        crFile.deleteOnExit();
         progressBar.setValue(0);
         progressBar.setEnabled(false);
         
         Client.INSTANCE.loadCRThread(crFile);
         setVisible(false);
       } else {
+        cancelButton.setEnabled(true);
         connectButton.setEnabled(true);
         downloadButton.setEnabled(true);
+        autoConnectBox.setEnabled(true);
       }
     }
 
-
+    /**
+     * @see magellan.plugin.allianceplugin.net.Observer#transfer(long)
+     */
     public void transfer(long value) {
       this.transferedBytes = value;
     }
 
-
+    /**
+     * @see magellan.plugin.allianceplugin.net.Observer#setFile(java.io.File)
+     */
     public void setFile(File file) {
       this.crFile = file;
       transferedBytes = mappart.getSize();
     }
     
+    /**
+     * This class downloads the file.
+     *
+     * @author <a href="thoralf@m84.de">Thoralf Rickert</a>
+     * @version 1.0
+     */
     class DownloadThread extends Thread {
       private Observer observer;
       public DownloadThread(Observer observer) {
@@ -263,4 +253,5 @@ public class DownloadReportDialog extends AbstractOdysseyConnectDialog implement
       }
     }
   }
+
 }

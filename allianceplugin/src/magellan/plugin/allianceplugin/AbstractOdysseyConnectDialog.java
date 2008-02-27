@@ -16,12 +16,16 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.net.URI;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -36,6 +40,9 @@ import magellan.client.Client;
 import magellan.library.utils.PropertiesHelper;
 import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
+import magellan.plugin.allianceplugin.data.OdysseyAlliance;
+import magellan.plugin.allianceplugin.data.OdysseyMap;
+import magellan.plugin.allianceplugin.data.OdysseyMapPart;
 import magellan.plugin.allianceplugin.net.OdysseyClient;
 import magellan.plugin.allianceplugin.net.OdysseyServerInformation;
 
@@ -45,23 +52,31 @@ import magellan.plugin.allianceplugin.net.OdysseyServerInformation;
  * @author <a href="thoralf@m84.de">Thoralf Rickert</a>
  * @version 1.0
  */
-public abstract class AbstractOdysseyConnectDialog extends JDialog implements ActionListener, KeyListener {
+public abstract class AbstractOdysseyConnectDialog extends JDialog implements KeyListener, ItemListener {
   private static final Logger log = Logger.getInstance(AbstractOdysseyConnectDialog.class);
 
   protected Client client = null;
+  protected ActionListener listener = null;
 
   protected JTextField serverURLField = null;
   protected JTextField userEMailField = null;
   protected JPasswordField userPasswordField = null;
+  protected JCheckBox autoConnectBox = null;
   protected JButton connectButton = null;
   protected JTextField servernameField = null;
-
+  protected JComboBox allianceChooser = null;
+  protected JComboBox mapChooser = null;
+  protected JComboBox mapPartChooser = null;
+  
   protected JProgressBar progressBar = null;
   
   public AbstractOdysseyConnectDialog(Client client) {
-    super(client);
+    super(client,true);
     this.client = client;
-    initGUI();
+  }
+  
+  public void setActionListener(ActionListener listener) {
+    this.listener = listener;
   }
 
 
@@ -79,19 +94,29 @@ public abstract class AbstractOdysseyConnectDialog extends JDialog implements Ac
     setLayout(new BorderLayout());
     
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(initNorthPanel(),BorderLayout.NORTH);
-    panel.add(initCenterPanel(),BorderLayout.CENTER);
-    panel.add(initSouthPanel(),BorderLayout.SOUTH);
+    panel.add(initServerConnectionPanel(),BorderLayout.NORTH);
+    panel.add(initServerAlliancePanel(),BorderLayout.CENTER);
+    panel.add(initProgressPanel(),BorderLayout.SOUTH);
     
     add(panel,BorderLayout.CENTER);
+    
+    if (PropertiesHelper.getBoolean(client.getProperties(), Constants.PROPERTY_SERVER_AUTOCONNECT, false)) {
+      connect();
+    }
   }
   
+  /**
+   * Sets the "outer" layouts of this dialog, like size and title.
+   */
   protected abstract void initDialog();
   
-  protected JPanel initNorthPanel() {
+  /**
+   * Initializes the connection handling settings.
+   */
+  protected JPanel initServerConnectionPanel() {
     // North: Server Settings
     JPanel northPanel = new JPanel();
-    northPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(),Resources.get(Constants.RESOURCE_DOWNLOADDIALOG_SERVERSETTINGS_TITLE)));
+    northPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(),Resources.get(Constants.RESOURCE_SERVERSETTINGS_TITLE)));
     
     serverURLField = new JTextField(PropertiesHelper.getString(client.getProperties(),Constants.PROPERTY_SERVER_URL,Constants.DEFAULT_SERVER_URL));
     serverURLField.addKeyListener(this);
@@ -99,8 +124,11 @@ public abstract class AbstractOdysseyConnectDialog extends JDialog implements Ac
     userEMailField.addKeyListener(this);
     userPasswordField = new JPasswordField(PropertiesHelper.getString(client.getProperties(),Constants.PROPERTY_USER_PASSWORD,""));
     userPasswordField.addKeyListener(this);
+    
+    autoConnectBox = new JCheckBox(Resources.get(Constants.RESOURCE_SERVER_AUTOCONNECT),PropertiesHelper.getBoolean(client.getProperties(), Constants.PROPERTY_SERVER_AUTOCONNECT, false));
+    
     connectButton = new JButton(Resources.get(Constants.RESOURCE_CONNECT));
-    connectButton.addActionListener(this);
+    connectButton.addActionListener(listener);
     connectButton.setActionCommand("button.connect");
     enableConnectButton();
     
@@ -110,18 +138,63 @@ public abstract class AbstractOdysseyConnectDialog extends JDialog implements Ac
                         label(Constants.RESOURCE_SERVER_USER_EMAIL),userEMailField,eol(),
                         label(Constants.RESOURCE_SERVER_USER_PASSWORD),userPasswordField),
                       row(center,none,vgap(10)),
-                      row(right,none,connectButton));
+                      row(right,none,autoConnectBox,connectButton));
     layout.createLayout(northPanel);
     
     return northPanel;
   }
 
-  protected abstract JPanel initCenterPanel();
+  /**
+   * Initializes the alliance and odyssey settings.
+   */
+  protected JPanel initServerAlliancePanel() {
+    log.info("Initialize Center Panel");
+    
+    // Center: Info and Chooser
+    JPanel centerPanel = new JPanel(new BorderLayout());
+    centerPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(),Resources.get(Constants.RESOURCE_ALLIANCESETTINGS_TITLE)));
+    
+    servernameField = new JTextField("");
+    servernameField.setEditable(false);
+    servernameField.setSelectionColor(servernameField.getBackground());
+    servernameField.setSelectedTextColor(servernameField.getForeground());
+    allianceChooser = new JComboBox();
+    allianceChooser.addItemListener(this);
+    allianceChooser.setEnabled(false);
+    mapChooser = new JComboBox();
+    mapChooser.addItemListener(this);
+    mapChooser.setEnabled(false);
+    mapPartChooser = new JComboBox();
+    mapPartChooser.setEnabled(false);
+    mapPartChooser.addItemListener(this);
+    
+    JPanel panel = initSpecialGUIPanel();
+
+    Column layout = column(
+                      grid(
+                        label(Constants.RESOURCE_SERVER_NAME),servernameField,eol(),
+                        label(Constants.RESOURCE_ALLIANCE),allianceChooser,eol(),
+                        label(Constants.RESOURCE_ALLIANCE_MAP),mapChooser,eol(),
+                        label(Constants.RESOURCE_ALLIANCE_MAPPART),mapPartChooser),
+                      row(center,none,vgap(10)),
+                      row(center,none,panel),
+                      row(center,none,vgap(50))
+                    );
+    layout.createLayout(centerPanel);
+
+    return centerPanel;
+  }
+  
+  /**
+   * Contains the GUI elements that are special for this
+   * dialog
+   */
+  protected abstract JPanel initSpecialGUIPanel();
   
   /**
    * Creates a progress bar.
    */
-  protected JPanel initSouthPanel() {
+  protected JPanel initProgressPanel() {
     // South: progressbar
     JPanel southPanel = new JPanel();
     add(southPanel,BorderLayout.SOUTH);
@@ -140,48 +213,88 @@ public abstract class AbstractOdysseyConnectDialog extends JDialog implements Ac
   /**
    * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
    */
-  public void actionPerformed(ActionEvent e) {
+  public void handleActionPerformed(ActionEvent e) {
     if (e.getActionCommand() == null) return;
     if (e.getActionCommand().equals("button.connect")) {
-      log.info("Try to connect to odyssey server");
-      // try to connect to server...
-      String serverURL = serverURLField.getText();
-      String userEMail = userEMailField.getText();
-      String userPass  = new String(userPasswordField.getPassword());
-      
-      progressBar.setEnabled(true);
-      progressBar.setMinimum(0);
-      progressBar.setMaximum(100);
-      progressBar.setValue(10);
-      
-      OdysseyClient odyssey = OdysseyClient.getInstance();
-      odyssey.setServerURL(serverURL);
-      odyssey.setUserMail(userEMail);
-      odyssey.setUserPass(userPass);
-      progressBar.setValue(20);
-      OdysseyServerInformation infos = odyssey.connect();
-      if (infos == null || infos.hasErrors()) {
-        progressBar.setEnabled(false);
-        progressBar.setValue(0);
-        return;
-      }
-      
-      client.getProperties().setProperty(Constants.PROPERTY_SERVER_URL, serverURL);
-      client.getProperties().setProperty(Constants.PROPERTY_USER_EMAIL, userEMail);
-      client.getProperties().setProperty(Constants.PROPERTY_USER_PASSWORD, userPass);
-      progressBar.setValue(30);
-
-      // setup alliance settings
-      servernameField.setText(infos.getServername());
-      
-      connectionEstablished(infos);
-
-      // ready...
-      progressBar.setEnabled(false);
-      progressBar.setValue(0);
+      connect();
     }
   }
   
+  /**
+   * This method is called, when the connect button is pressed.
+   */
+  protected void connect() {
+    log.info("Try to connect to odyssey server");
+    // try to connect to server...
+    String serverURL = serverURLField.getText();
+    String userEMail = userEMailField.getText();
+    String userPass  = new String(userPasswordField.getPassword());
+    
+    progressBar.setEnabled(true);
+    progressBar.setMinimum(0);
+    progressBar.setMaximum(100);
+    progressBar.setValue(10);
+    
+    OdysseyClient odyssey = OdysseyClient.getInstance();
+    odyssey.setServerURL(serverURL);
+    odyssey.setUserMail(userEMail);
+    odyssey.setUserPass(userPass);
+    progressBar.setValue(20);
+    OdysseyServerInformation infos = odyssey.connect();
+    if (infos == null || infos.hasErrors()) {
+      progressBar.setEnabled(false);
+      progressBar.setValue(0);
+      return;
+    }
+    
+    client.getProperties().setProperty(Constants.PROPERTY_SERVER_URL, serverURL);
+    client.getProperties().setProperty(Constants.PROPERTY_USER_EMAIL, userEMail);
+    client.getProperties().setProperty(Constants.PROPERTY_USER_PASSWORD, userPass);
+    client.getProperties().setProperty(Constants.PROPERTY_SERVER_AUTOCONNECT, Boolean.toString(autoConnectBox.isSelected()));
+    progressBar.setValue(30);
+
+    // setup alliance settings
+    servernameField.setText(infos.getServername());
+    
+    for (int i=allianceChooser.getItemCount(); i>0; i--) allianceChooser.removeItemAt(i-1);
+    for (OdysseyAlliance alliance : infos.getAlliances()) {
+      allianceChooser.addItem(alliance);
+    }
+    allianceChooser.setEnabled(true);
+    allianceChooser.setSelectedIndex(0);
+    progressBar.setValue(40);
+    
+    OdysseyAlliance alliance = (OdysseyAlliance)allianceChooser.getSelectedItem();
+    for (int i=mapChooser.getItemCount(); i>0; i--) mapChooser.removeItemAt(i-1);
+    for (OdysseyMap map : alliance.getMaps()) {
+      mapChooser.addItem(map);
+    }
+    mapChooser.setEnabled(true);
+    mapChooser.setSelectedIndex(0);
+    progressBar.setValue(50);
+    
+    OdysseyMap map = (OdysseyMap)mapChooser.getSelectedItem();
+    for (int i=mapPartChooser.getItemCount(); i>0; i--) mapPartChooser.removeItemAt(i-1);
+    for (OdysseyMapPart mappart : map.getParts()) {
+      mapPartChooser.addItem(mappart);
+    }
+    mapPartChooser.setEnabled(true);
+    mapPartChooser.setSelectedIndex(0);
+    progressBar.setValue(60);
+    
+    connectionEstablished(infos);
+
+    // ready...
+    progressBar.setEnabled(false);
+    progressBar.setValue(0);
+  }
+  
+  /**
+   * This method is called, if the connection could be established
+   * via the server connection settings and if there are
+   * server informations available. Everything else is saved in the
+   * OdysseyClient.
+   */
   protected abstract void connectionEstablished(OdysseyServerInformation infos);
 
   /**
@@ -200,7 +313,10 @@ public abstract class AbstractOdysseyConnectDialog extends JDialog implements Ac
       isURL = false;
     }
     
-    connectButton.setEnabled(serverURL.length() > 10 && isURL && userEMail.length() > 5 && userPass.length() > 4);
+    boolean seemsOK2Me = serverURL.length() > 10 && isURL && userEMail.length() > 5 && userPass.length() > 4;
+    
+    connectButton.setEnabled(seemsOK2Me);
+    autoConnectBox.setEnabled(seemsOK2Me);
   }
   
   /**
@@ -224,7 +340,9 @@ public abstract class AbstractOdysseyConnectDialog extends JDialog implements Ac
    * @see java.awt.event.KeyListener#keyReleased(java.awt.event.KeyEvent)
    */
   public void keyReleased(KeyEvent e) {
-    enableConnectButton();
+    if (e.getComponent().equals(serverURLField)) enableConnectButton();
+    if (e.getComponent().equals(userEMailField)) enableConnectButton();
+    if (e.getComponent().equals(userPasswordField)) enableConnectButton();
   }
 
   /**
@@ -253,4 +371,13 @@ public abstract class AbstractOdysseyConnectDialog extends JDialog implements Ac
     this.client = client;
   }
   
+
+  /**
+   * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+   */
+  public void itemStateChanged(ItemEvent e) {
+    allianceSettingsChanged(e);
+  }
+  
+  protected abstract void allianceSettingsChanged(ItemEvent e);
 }
