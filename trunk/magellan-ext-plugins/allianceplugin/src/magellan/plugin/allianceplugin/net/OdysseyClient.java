@@ -3,12 +3,19 @@
 package magellan.plugin.allianceplugin.net;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.httpclient.methods.multipart.FilePart;
+import org.apache.commons.httpclient.methods.multipart.FilePartSource;
+import org.apache.commons.httpclient.methods.multipart.Part;
+import org.apache.commons.httpclient.methods.multipart.StringPart;
 
 import magellan.client.Client;
 import magellan.client.utils.ErrorWindow;
@@ -172,6 +179,69 @@ public class OdysseyClient {
       observer.setFile(null);
     }
   }
+  
+  /**
+   * This method tries to send the given file to the odyssey server. 
+   * Then there runs a merge process.
+   */
+  public void sendMap(Observer observer, OdysseyAlliance alliance, OdysseyMap map, OdysseyMapPart mappart, File crFile) {
+    try {
+      String user = URLEncoder.encode(userMail,Encoding.ISO.toString());
+      String pass = URLEncoder.encode(new String(base64.encode(userPass.getBytes())),Encoding.ISO.toString());
+      String mapname = URLEncoder.encode(mappart.getName(),Encoding.ISO.toString());
+      int version = mappart.getVersion();
+      URI uri = new URI(serverURL+"/upload.php");
+      
+      log.info("Upload Map "+crFile.getName());
+      
+      client = new HTTPClient(Client.INSTANCE.getProperties());
+      Part[] parts = new Part[5];
+      int i=0;
+      parts[i++] = new StringPart("user",user);
+      parts[i++] = new StringPart("pass",pass);
+      parts[i++] = new StringPart("map",mapname);
+      parts[i++] = new StringPart("version",String.valueOf(version));
+      parts[i++] = new FilePart("crfile",new ObservableFilePartSource(observer,crFile,true));
+      HTTPResult result = client.post(uri,parts);
+      
+      if (result == null) {
+        log.error("HTTP client returns no result");
+        observer.setFile(null);
+        return;
+      }
+      if (result.getStatus() == 403) {
+        log.error("Authentification required");
+        ErrorWindow window = new ErrorWindow(Client.INSTANCE,Resources.get(Constants.RESOURCE_SERVER_CONNECT_FAILED_MESSAGE)+"\n"+result.getResultAsString(),"URL:"+uri,null);
+        window.setShutdownOnCancel(false);
+        window.setVisible(true);
+        observer.setFile(null);
+        return;
+      }
+      if (result.getStatus() != 200) {
+        log.error("HTTP server response is "+result.getStatus());
+        observer.setFile(null);
+        ErrorWindow window = new ErrorWindow(Client.INSTANCE,Resources.get(Constants.RESOURCE_SERVER_CONNECT_FAILED_MESSAGE)+"\n"+result.getResultAsString(),"URL:"+uri,null);
+        window.setShutdownOnCancel(false);
+        window.setVisible(true);
+        observer.setFile(null);
+        return;
+      }
+      
+      log.info("Result: "+result.getResultAsString());
+      
+      // we are ready...
+      observer.transfer(crFile.length());
+      observer.setFile(crFile);
+
+      
+    } catch (Exception exception) {
+      log.error("",exception);
+      ErrorWindow window = new ErrorWindow(Client.INSTANCE,Resources.get(Constants.RESOURCE_SERVER_CONNECT_FAILED_MESSAGE),exception.getMessage(),exception);
+      window.setShutdownOnCancel(false);
+      window.setVisible(true);
+      observer.setFile(null);
+    }
+  }
 
   
   /**
@@ -228,6 +298,88 @@ public class OdysseyClient {
     this.userPass = userPass;
   }
 
-  
-  
+  /**
+   * This class overrides the FilePartSource and makes it possible
+   * to load a file and inform an observer.
+   *
+   * @author <a href="thoralf@m84.de">Thoralf Rickert</a>
+   * @version 1.0
+   */  
+  class ObservableFilePartSource extends FilePartSource {
+    private Observer observer = null;
+    private File file = null;
+    private boolean dontReportLastByte = false;
+    
+    public ObservableFilePartSource(Observer observer, File file, boolean dontReportLastByte) throws FileNotFoundException {
+      super(file);
+      this.file = file;
+      this.observer = observer;
+      this.dontReportLastByte = dontReportLastByte;
+    }
+    
+    /**
+     * @see org.apache.commons.httpclient.methods.multipart.FilePartSource#createInputStream()
+     */
+    @Override
+    public InputStream createInputStream() throws FileNotFoundException {
+      return new ObservableFileInputStream(observer, file, dontReportLastByte);
+    }
+    
+    /**
+     * This class overrides the FileInputStream and makes it possible
+     * to load a file and inform an observer.
+     *
+     * @author <a href="thoralf@m84.de">Thoralf Rickert</a>
+     * @version 1.0
+     */
+    class ObservableFileInputStream extends FileInputStream {
+      private Observer observer = null;
+      private File file = null;
+      private long sum = 0;
+      private boolean dontReportLastByte = false;
+      
+      public ObservableFileInputStream(Observer observer, File file, boolean dontReportLastByte) throws FileNotFoundException  {
+        super(file);
+        this.observer = observer;
+        this.file = file;
+        this.dontReportLastByte = dontReportLastByte;
+      }
+      
+      public int read(byte b[], int off, int len) throws IOException {
+        int read = super.read(b,off,len);
+        informObserver(read);
+        return read;
+      }
+
+      /**
+       * @see java.io.FileInputStream#read()
+       */
+      @Override
+      public int read() throws IOException {
+        int read = super.read();
+        informObserver(1);
+        return read;
+      }
+
+      /**
+       * @see java.io.FileInputStream#read(byte[])
+       */
+      @Override
+      public int read(byte[] b) throws IOException {
+        int read = super.read(b);
+        informObserver(read);
+        return read;
+      }
+      
+      private void informObserver(int read) {
+        sum += read;
+        
+        if (sum == file.length() && dontReportLastByte) {
+          sum--;
+        }
+        observer.transfer(sum);
+      }
+      
+    }
+  }
 }
