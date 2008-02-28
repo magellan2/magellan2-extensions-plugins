@@ -33,7 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.StringTokenizer;
 
+import magellan.client.swing.ProgressBarUI;
 import magellan.library.Skill;
 import magellan.library.Unit;
 import magellan.library.utils.NullUserInterface;
@@ -49,6 +51,11 @@ import magellan.library.utils.logging.Logger;
 public class Teacher {
 	private final Logger log = Logger.getInstance(Teacher.class);
 
+	public static final String TEACH_TAG = "ejcTaggableComparator2";
+	public static final String LEARN_TAG = "ejcTaggableComparator";
+	// private static final String TEACH_TAG = "Teaching";
+	// private static final String LEARN_TAG = "Learning";
+
 	Collection<Unit> units = Collections.emptyList();
 	String namespace = null;
 
@@ -61,7 +68,7 @@ public class Teacher {
 	}
 
 	private SUnit[] sUnits;
-	java.lang.String delim = " ";
+	public static final String delim = " ";
 
 	Random random = new Random();
 
@@ -127,14 +134,41 @@ public class Teacher {
 			teachers.add(index);
 		}
 
-		public int getRandomTeacher() {
-			if (teachers.size() == 0)
-				return -1;
-			return teachers.get(random.nextInt(teachers.size()));
+		List<Integer> getTeachers() {
+			return teachers;
 		}
 
 		public String toString() {
 			return index + ":" + getUnit().toString();
+		}
+
+		public void setTags() {
+			Unit u = getUnit();
+			double maxPrio = Double.NEGATIVE_INFINITY;
+			String maxLearning = null;
+			String maxTeaching = null;
+			for (String t : getLearnTalents()) {
+				if (getPrio(t) > maxPrio) {
+					maxPrio = getPrio(t);
+					maxLearning = t;
+				}
+
+			}
+			int maxTalent = 0;
+			for (String t : getTeachTalents()) {
+				if (getLevel(u, t) > maxTalent) {
+					maxTalent = getLevel(u, t);
+					maxTeaching = t;
+				}
+
+			}
+			if (maxLearning != null) {
+				u.putTag(LEARN_TAG, maxLearning);
+			}
+			if (maxTeaching != null) {
+				u.putTag(TEACH_TAG, maxTeaching);
+			}
+
 		}
 	}
 
@@ -162,8 +196,8 @@ public class Teacher {
 			}
 
 			public void assignLearn() {
-				learning = (String) unit.getLearnTalents().toArray()[random.nextInt(unit
-						.getLearnTalents().size())];
+				learning = (String) unit.getLearnTalents().toArray()[random.nextInt(unit.getLearnTalents()
+						.size())];
 			}
 
 			public String toString() {
@@ -208,7 +242,29 @@ public class Teacher {
 				return teacher;
 			}
 
+			public int getRandomTeacher() {
+				List<Integer> teachers = getSUnit().getTeachers();
+				if (teachers.size() == 0)
+					return -1;
+				return teachers.get(random.nextInt(teachers.size()));
+			}
+
+			public int getFreeTeacher() {
+				List<Integer> teachers = getSUnit().getTeachers();
+				if (teachers.size() == 0)
+					return -1;
+				int firstTeacher = random.nextInt(teachers.size());
+				for (int i = 0; i < teachers.size(); ++i) {
+					if (validTeacher(this, teachers.get((firstTeacher + i) % teachers.size())))
+						return teachers.get((firstTeacher + i) % teachers.size());
+				}
+
+				return -1;
+			}
 		}
+
+		private static final double LEVEL_VALUE = .2;
+		private static final double WRONGLEVEL_VALUE = .5;
 
 		SUnit[] units;
 		Info[] infos;
@@ -254,10 +310,9 @@ public class Teacher {
 				if (info.learning != null) {
 					value = su.getPrio(info.learning);
 					value *= su.getUnit().getModifiedPersons();
-					value *= getLevel(su.getUnit(), info.learning);
+					value *= 1 + LEVEL_VALUE * getLevel(su.getUnit(), info.learning);
 					if (info.getNumTeachers() > 0) {
 						Info teacher = infos[info.teacher];
-						value *= 2;
 						int sLevel = getLevel(info.getUnit(), info.learning);
 						int tLevel = getLevel(teacher.getUnit(), info.learning);
 						int maxDiff = teacher.getSUnit().getMaximumDifference(info.learning);
@@ -266,8 +321,8 @@ public class Teacher {
 						} else if (tLevel - sLevel < 2) {
 							log.warn("diff<2");
 							value = 0;
-						} else if (maxDiff == 0 || maxDiff > tLevel - sLevel) {
-							value *= (1 + sLevel / (double) tLevel);
+						} else if (maxDiff != 0 && maxDiff < tLevel - sLevel) {
+							value *= (1 + WRONGLEVEL_VALUE * sLevel / (double) tLevel);
 						} else
 							value *= 2;
 					}
@@ -293,7 +348,7 @@ public class Teacher {
 		 * Randomly mutate this solution
 		 * 
 		 * @param mutationProb
-		 *            Influences probability of an mutation occuring. Should be between 0 and 1.
+		 *          Influences probability of an mutation occuring. Should be between 0 and 1.
 		 */
 		public void mutate(double mutationProb) {
 			double teachingProb = .3;
@@ -316,8 +371,7 @@ public class Teacher {
 							info.learning = null;
 							info.students = 0;
 							if (info.getTeacher() != -1)
-								infos[info.getTeacher()].students -= info.getUnit()
-										.getModifiedPersons();
+								infos[info.getTeacher()].students -= info.getUnit().getModifiedPersons();
 							info.clearTeachers();
 						}
 					}
@@ -325,8 +379,7 @@ public class Teacher {
 					// assign new teacher
 					if (info.learning != null && random.nextDouble() < teacherProb) {
 						if (info.getTeacher() != -1)
-							infos[info.getTeacher()].students -= info.getUnit()
-									.getModifiedPersons();
+							infos[info.getTeacher()].students -= info.getUnit().getModifiedPersons();
 						info.clearTeachers();
 					}
 				}
@@ -337,7 +390,7 @@ public class Teacher {
 		}
 
 		/**
-		 * Tries to assing a teacher to every unit not already having one.
+		 * Tries to assign a teacher to every unit not already having one.
 		 */
 		protected void assignTeachers() {
 			Collection<Integer> teacherSet = new ArrayList<Integer>();
@@ -364,7 +417,8 @@ public class Teacher {
 				if (student.learning != null) {
 					if (student.getTeacher() == -1) {
 						// find new teacher
-						int teacher = student.getSUnit().getRandomTeacher();
+						// int teacher = student.getRandomTeacher();
+						int teacher = student.getFreeTeacher();
 						if (teacher != -1 && validTeacher(student, teacher)) {
 							assignTeacher(student, teacher);
 						}
@@ -489,23 +543,15 @@ public class Teacher {
 	 * Extracts the teaching units from the orders.
 	 * 
 	 * @param namespace
-	 *            Extract only units of this namespace.
+	 *          Extract only units of this namespace.
 	 * 
 	 * @return A List of units who are teachers or students
 	 */
-	public Collection<SUnit> getUnits(String namespace) {
-		String teachTag, learnTag;
-		if (namespace == null) {
-			teachTag = "$T";
-			learnTag = "$L";
-		} else {
-			teachTag = "$" + namespace + "$T";
-			learnTag = "$" + namespace + "$L";
-		}
+	public Collection<SUnit> getUnits(String namespace, boolean setTags) {
 
 		Collection<SUnit> result = new ArrayList<SUnit>(units.size());
 		for (Unit u : units) {
-			SUnit su = parseUnit(u, teachTag, learnTag);
+			SUnit su = parseUnit(u, setTags);
 			if (su != null) {
 				result.add(su);
 				su.setIndex(result.size() - 1);
@@ -529,12 +575,11 @@ public class Teacher {
 		boolean result = false;
 		for (String talent : student.getLearnTalents()) {
 			int diff = teacher.getMaximumDifference(talent);
-			if (diff == 3)
-				diff = 3;
-			if (student.getPrio(talent) > 0
-					&& diff != 1
-					&& getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent) <= Math
-							.max(2, diff)) {
+
+			if (student.getPrio(talent) > 0 && diff != 1
+			// && getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent)
+					// <=diff
+					&& getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent) >= 2) {
 				result = true;
 				break;
 			}
@@ -549,50 +594,35 @@ public class Teacher {
 	 * @return A {@link SUnit} according to <code>u</code>'s orders, <code>null</code> if this
 	 *         unit has no teaching or learning orders
 	 */
-	public SUnit parseUnit(Unit u, String teachTag, String learnTag) {
+	public SUnit parseUnit(Unit u, boolean setTags) {
 		SUnit su = null;
 		boolean errorFlag = false;
-		for (java.lang.String o : u.getOrders()) {
-			int start = o.indexOf(teachTag);
-			if (start != -1) {
-				try {
-					java.util.StringTokenizer st = new java.util.StringTokenizer(o.substring(start
-							+ learnTag.length()), delim, false);
-					while (st.hasMoreElements()) {
-						String talent = st.nextToken();
-						int prio = Integer.parseInt(st.nextToken());
+		for (String orderString : u.getOrders()) {
+			try {
+				List<Order> orders = parseOrder(orderString, getTeachTag(namespace), getLearnTag(namespace));
+				for (Order order : orders) {
+					String talent = order.getTalent();
+					if (order.getType() == Order.TEACH) {
+						int diff = order.getDiff();
 						if (su == null)
 							su = new SUnit(u);
-						if (talent.equals("ALLES")) {
+						if (talent.equals(Order.ALL)) {
 							if (u.getModifiedSkills().isEmpty())
 								continue;
 
 							// add all skills weighted by their level
 							for (Skill s : u.getModifiedSkills()) {
-								su.addTeach(s.getName(), prio);
+								su.addTeach(s.getName(), diff);
 							}
 						} else {
-							su.addTeach(talent, prio);
+							su.addTeach(talent, diff);
 						}
-					}
-				} catch (Exception e) {
-					log.warn(e + " parse error, unit " + u + " line " + o);
-					errorFlag = true;
-				}
-			}
-
-			start = o.indexOf(learnTag);
-			if (start != -1) {
-				try {
-					java.util.StringTokenizer st = new java.util.StringTokenizer(o.substring(start
-							+ teachTag.length()), delim, false);
-					while (st.hasMoreElements()) {
-						String talent = st.nextToken();
-						double prio = Double.parseDouble(st.nextToken()), prio2 = 0;
+					} else {
+						double prio = order.getValue();
 						if (su == null)
 							su = new SUnit(u);
-						if (talent.equals("ALLES")) {
-							prio2 = Integer.parseInt(st.nextToken());
+						if (talent.equals(Order.ALL)) {
+							double prio2 = order.getLowValue();
 
 							if (u.getModifiedSkills().isEmpty())
 								continue;
@@ -608,49 +638,99 @@ public class Teacher {
 							}
 							// add all skills weighted by their level
 							for (Skill s : u.getModifiedSkills()) {
-								su.addLearn(s.getName(), s.getLevel() / (double) maxSkill
-										* (prio - prio2) + prio2);
+								su.addLearn(s.getName(), s.getLevel() / (double) maxSkill * (prio - prio2) + prio2);
 							}
 						} else {
 							su.addLearn(talent, prio);
 						}
 					}
-				} catch (Exception e) {
-					log.warn(e+" parse error, unit " + u + " line " + o);
-					errorFlag = true;
 				}
+			} catch (Exception e) {
+				log.warn(e + " parse error, unit " + u + " line " + orderString);
+				errorFlag = true;
+				su = null;
 			}
 		}
-		if (errorFlag) {
-			u.addOrder("; $$$ teach error", false, 0);
+
+		if (errorFlag || (su != null && su.getLearnTalents().isEmpty())) {
 			u.setOrdersConfirmed(false);
+			if (setTags)
+				u.putTag(LEARN_TAG, "error");
+			if (errorFlag) {
+				u.addOrder("; $$$ teach error: syntax error", false, 0);
+			} else {
+				u.addOrder("; $$$ teach error: unit needs L order", false, 0);
+			}
 			return null;
 		}
 
-		if (su == null || su.getLearnTalents().isEmpty())
-			return null;
+		if (setTags && su != null)
+			su.setTags();
 		return su;
 	}
 
+	protected static List<Order> parseOrder(String orderString, String teachTag, String learnTag) {
+		List<Order> result = new ArrayList<Order>(4);
+
+		int start = orderString.indexOf(teachTag);
+		if (start != -1) {
+			StringTokenizer st = new java.util.StringTokenizer(orderString.substring(start
+					+ learnTag.length()), delim, false);
+			while (st.hasMoreElements()) {
+				String talent = st.nextToken();
+				int diff = Integer.parseInt(st.nextToken());
+				result.add(new Order(talent, diff));
+			}
+		}
+		start = orderString.indexOf(learnTag);
+		if (start != -1) {
+			java.util.StringTokenizer st = new java.util.StringTokenizer(orderString.substring(start
+					+ teachTag.length()), delim, false);
+			while (st.hasMoreElements()) {
+				String talent = st.nextToken();
+				double prio = Double.parseDouble(st.nextToken());
+				if (Order.ALL.equals(talent)) {
+					double prio2 = Double.parseDouble(st.nextToken());
+					result.add(new Order(prio, prio2));
+				} else {
+					result.add(new Order(talent, prio));
+				}
+			}
+		}
+
+		return result;
+	}
+
 	/**
-	 * parses all units and runs the optimization algorithm
+	 * Parses all units and sets tags.
+	 * 
+	 */
+	public void parse() {
+		for (Unit u : units) {
+			SUnit su = parseUnit(u, true);
+		}
+	}
+
+	/**
+	 * Parses all units and runs the optimization algorithm.
 	 * 
 	 * @return The value of the best solution
 	 */
 	public double mainrun() {
-		sUnits = (SUnit[]) getUnits(namespace).toArray(new SUnit[0]);
+		sUnits = (SUnit[]) getUnits(namespace, false).toArray(new SUnit[0]);
 		log.info("teaching " + sUnits.length + " units in namespace \"" + namespace + "\"");
 
 		if (sUnits.length == 0)
 			return 0;
 
-		final int numRounds = Math.max(80, (int) (sUnits.length) * 3 / 2);
-		final int popSize = numRounds;
+		final int minRounds = Math.max(40, (int) (sUnits.length));
+		final int maxRounds = Math.max(120, (int) (sUnits.length) * 8);
+		final int popSize = minRounds * 3 / 2;
 		final int numMetaRounds = 3;
 		final int select = 5;
 
 		ui.setTitle("");
-		ui.setMaximum(numMetaRounds * numRounds + numRounds);
+		ui.setMaximum(numMetaRounds * maxRounds + maxRounds);
 		ui.show();
 
 		Solution[] best = new Solution[numMetaRounds * select * 3 / 2];
@@ -659,33 +739,34 @@ public class Teacher {
 		for (int metaRound = 0; metaRound < numMetaRounds; ++metaRound) {
 			Solution[] population = new Solution[popSize];
 			init(population, sUnits);
+			select(population);
 
-			for (int round = 0; round < numRounds; ++round) {
-				select(population);
+			double oldBest = Double.NEGATIVE_INFINITY;
+			int improved = 0;
+			for (int round = 0; round < minRounds || (round < maxRounds && improved <= minRounds / 10); ++round) {
+				if (population[0].evaluate() > oldBest)
+					improved = 0;
+				else
+					improved++;
+				oldBest = population[0].evaluate();
 				recombine(population);
-				if (round % Math.ceil(numRounds / 10) == 0) {
-					log.info(round + " 0: " + population[0].evaluate() + " " + population.length
-							/ 10 + ": " + population[population.length / 10].evaluate() + " "
-							+ (population.length / 10 * 9) + " "
-							+ population[population.length / 10 * 9].evaluate() + " "
-							+ (population.length - 1) + ": "
-							+ population[population.length - 1].evaluate());
+				if (round % Math.ceil(minRounds / 10) == 0) {
+					log.info(round + " 0: " + population[0].evaluate() + " " + population.length / 10 + ": "
+							+ population[population.length / 10].evaluate() + " " + (population.length / 10 * 9)
+							+ " " + population[population.length / 10 * 9].evaluate() + " "
+							+ (population.length - 1) + ": " + population[population.length - 1].evaluate());
 					ui.setProgress((metaRound > 0 ? best[metaRound - 1].evaluate() : "0") + " - "
-							+ population[0].evaluate(), metaRound * numRounds + round);
+							+ population[0].evaluate(), metaRound * maxRounds + round);
 					mutate(population, Math.min(1 / Math.log(round + 1), .2));
 				} else
 					mutate(population, Math.min(.3 / Math.log(round + 1), .2));
 
+				select(population);
 			}
-			select(population);
-			log
-					.info("***" + numRounds + " 0: " + population[0].evaluate() + " "
-							+ population.length / 10 + ": "
-							+ population[population.length / 10].evaluate() + " "
-							+ (population.length / 10 * 9) + " "
-							+ population[population.length / 10 * 9].evaluate() + " "
-							+ (population.length - 1) + ": "
-							+ population[population.length - 1].evaluate());
+			log.info("***" + minRounds + " 0: " + population[0].evaluate() + " " + population.length / 10
+					+ ": " + population[population.length / 10].evaluate() + " "
+					+ (population.length / 10 * 9) + " " + population[population.length / 10 * 9].evaluate()
+					+ " " + (population.length - 1) + ": " + population[population.length - 1].evaluate());
 			for (int i = 0; i < select; ++i) {
 				best[metaRound * select + i] = population[i];
 			}
@@ -694,15 +775,16 @@ public class Teacher {
 		select(best);
 		log.info(" 0: " + best[0].evaluate() + " l/3: " + best[best.length / 3].evaluate() + " "
 				+ (best.length - 1) + ": " + best[best.length - 1].evaluate());
-		for (int round = 0; round < numRounds * 2; ++round) {
-			ui.setProgress("" + best[0].evaluate(), numMetaRounds * numRounds + round);
+		for (int round = 0; round < minRounds * 2; ++round) {
+			ui.setProgress("" + best[0].evaluate(), numMetaRounds * maxRounds + round);
 			select(best);
 			recombine(best);
 			mutate(best, .1);
 		}
 		select(best);
-		log.info("***** 0: " + best[0].evaluate() + " l/3: " + best[best.length / 3].evaluate()
-				+ " " + (best.length - 1) + ": " + best[best.length - 1].evaluate());
+		best[0].assignTeachers();
+		log.info("***** 0: " + best[0].evaluate() + " l/3: " + best[best.length / 3].evaluate() + " "
+				+ (best.length - 1) + ": " + best[best.length - 1].evaluate());
 		ui.ready();
 
 		if (best.length == 0)
@@ -800,8 +882,7 @@ public class Teacher {
 				info.getUnit().addOrder("; $$$ teaching error", false, 0);
 			else {
 				info.getUnit().addOrder(orders[i].toString(), false, 0);
-				if (info.getTeacher() != -1
-						|| info.students == info.getUnit().getModifiedPersons() * 10)
+				if (info.getTeacher() != -1 || info.students == info.getUnit().getModifiedPersons() * 10)
 					info.getUnit().setOrdersConfirmed(true);
 				else
 					info.getUnit().setOrdersConfirmed(false);
@@ -819,6 +900,123 @@ public class Teacher {
 	public static void clear(Collection<Unit> units, String namespace) {
 		(new Teacher(units, namespace, new NullUserInterface())).clear();
 
+	}
+
+	public static void parse(Collection<Unit> units, String namespace, ProgressBarUI ui) {
+		(new Teacher(units, namespace, ui)).parse();
+	}
+
+	public static void addOrder(Collection<Unit> units, String namespace, Order newOrder) {
+		// add new L order to all units
+		for (Unit u : units) {
+			Collection<String> oldOrders = u.getOrders();
+			List<List<Order>> relevantOrders = new ArrayList<List<Order>>();
+			List<String> newOrders = new ArrayList<String>(oldOrders.size());
+			boolean foundSame = false;
+
+			// look for L order
+			for (String line : oldOrders){
+				boolean isRelevant = false;
+				List<Order> orderList = parseOrder(line, getTeachTag(namespace), getLearnTag(namespace));
+				for (Order order : orderList) {
+					if (order.getType().equals(newOrder.getType())) {
+						if (!isRelevant)
+							relevantOrders.add(orderList);
+						isRelevant = true;
+						if (order.getTalent().equals(newOrder.getTalent()))
+							foundSame = true;
+					}
+				}
+				if (!isRelevant) {
+					newOrders.add(line);
+				}
+			}
+			boolean added = false;
+			if (relevantOrders.isEmpty()) {
+				newOrders.add("// "
+						+ (newOrder.getType().equals(Order.LEARN) ? getLearnTag(namespace)
+								: getTeachTag(namespace)) + " " + newOrder.shortOrder());
+			} else {
+				for (List<Order> orderList : relevantOrders) {
+					StringBuffer line = new StringBuffer("// ");
+					line.append((newOrder.getType().equals(Order.LEARN) ? getLearnTag(namespace)
+							: getTeachTag(namespace)));
+					for (Order order : orderList) {
+						line.append(" ");
+						if (order.getTalent().equals(newOrder.getTalent())) {
+							line.append(newOrder.shortOrder());
+						} else {
+							line.append(order.shortOrder());
+						}
+					}
+					if (!added && !foundSame) {
+						line.append(" ");
+						line.append(newOrder.shortOrder());
+						added = true;
+					}
+					newOrders.add(line.toString());
+				}
+			}
+			u.setOrders(newOrders);
+		}
+	}
+
+	public static void delOrder(Collection<Unit> units, String namespace, Order newOrder) {
+		if (namespace == null)
+			namespace = "";
+		// add new L order to all units
+		for (Unit u : units) {
+			Collection<String> oldOrders = u.getOrders();
+			List<String> newOrders = new ArrayList<String>(oldOrders.size());
+
+			// look for L order
+			for (String line : oldOrders){
+
+				List<Order> orderList = parseOrder(line, getTeachTag(namespace), getLearnTag(namespace));
+				if (orderList.isEmpty()) {
+					newOrders.add(line);
+				} else {
+					List<Order> newOrderList = new ArrayList<Order>(orderList.size());
+					for (Order order : orderList) {
+						if (!order.getType().equals(newOrder.getType())
+								|| !order.getTalent().equals(newOrder.getTalent())) {
+							newOrderList.add(order);
+						}
+					}
+					StringBuffer newLine = new StringBuffer("// ");
+					boolean first = true;
+					for (Order order : newOrderList) {
+						if (first) {
+							newLine.append((order.getType().equals(Order.LEARN) ? getLearnTag(namespace)
+									: getTeachTag(namespace)));
+							first = false;
+						}
+						newLine.append(" ");
+						newLine.append(order.shortOrder());
+					}
+					if (!first) {
+						newOrders.add(newLine.toString());
+					}
+				}
+			}
+			u.setOrders(newOrders);
+		}
+	}
+
+	private static String getLearnTag(String namespace) {
+		if (namespace == null) {
+			return "$L";
+		} else {
+			return "$" + namespace + "$L";
+		}
+	}
+
+	private static String getTeachTag(String namespace) {
+		if (namespace == null) {
+			return "$T";
+		} else {
+			return "$" + namespace + "$T";
+		}
 	}
 
 }
