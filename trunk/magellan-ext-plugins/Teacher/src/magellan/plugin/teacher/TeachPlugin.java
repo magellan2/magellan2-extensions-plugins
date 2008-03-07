@@ -56,6 +56,7 @@ import magellan.library.UnitContainer;
 import magellan.library.event.GameDataEvent;
 import magellan.library.utils.Locales;
 import magellan.library.utils.logging.Logger;
+import magellan.plugin.teacher.Teacher.SUnit;
 
 /**
  * This plug in facilitates making teaching orders. To be included in the process, a unit must have
@@ -112,6 +113,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	private static Logger log = null;
 
 	private Client client = null;
+	@SuppressWarnings("unused")
 	private Properties properties = null;
 	private GameData gd = null;
 
@@ -224,14 +226,23 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		});
 		menu.add(editMenu);
 
-		// clear all $$$ comments
-		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.parse.title"));
+		// set tags
+		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.tag.title"));
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				doParse(container.units());
 			}
 		});
 		menu.add(editMenu);
+
+    // clear tags
+    editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.untag.title"));
+    editMenu.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        doUnTag(container.units());
+      }
+    });
+    menu.add(editMenu);
 
 		// clear all $$$ comments
 		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.clear.title"));
@@ -245,6 +256,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		return menu;
 	}
 
+	@SuppressWarnings("unchecked")
 	public JMenuItem createContextMenu(EventDispatcher dispatcher, GameData data, final Unit unit,
 			final Collection selectedObjects) {
 		JMenu menu = new JMenu(getString("plugin.teacher.contextmenu.title"));
@@ -315,7 +327,6 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 				}
 			}
 		});
-		// executeMenu.setEnabled(commands.hasCommands(unit));
 		menu.add(addTeachMenu);
 
 		JMenuItem delLearnMenu = new JMenuItem(getString("plugin.teacher.contextmenu.dellearn.title",
@@ -349,6 +360,20 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			}
 		});
 		menu.add(delLearnMenu);
+		boolean hasOrder = false;
+		if (selectedObjects==null){
+			hasOrder = hasLearnOrder(unit);
+		} else {
+			for (Object o : selectedObjects){
+				if (o instanceof Unit){
+					if (hasLearnOrder((Unit) o)){
+						hasOrder = true;
+						break;
+					}
+				}
+			}
+		}
+		delLearnMenu.setEnabled(hasOrder);
 
 		JMenuItem delTeachMenu = new JMenuItem(getString("plugin.teacher.contextmenu.delteach.title",
 				new Object[] { unit.getName(), unit.getID().toString() }));
@@ -381,14 +406,38 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			}
 
 		});
-		// executeMenu.setEnabled(commands.hasCommands(unit));
+		menu.add(delLearnMenu);
+		hasOrder = false;
+		if (selectedObjects==null){
+			hasOrder = hasLearnOrder(unit);
+		} else {
+			for (Object o : selectedObjects){
+				if (o instanceof Unit){
+					if (hasTeachOrder((Unit) o)){
+						hasOrder = true;
+						break;
+					}
+				}
+			}
+		}
+		delTeachMenu.setEnabled(hasOrder);
 		menu.add(delTeachMenu);
 
 		return menu;
 
 	}
 
-	protected void delOrder(Unit unit, Collection selectedObjects, Order newOrder) {
+	private boolean hasLearnOrder(Unit unit) {
+		SUnit su = Teacher.parseUnit(unit, namespace, false);
+		return su!=null && !su.getLearnTalents().isEmpty();
+	}
+
+	private boolean hasTeachOrder(Unit unit) {
+		SUnit su = Teacher.parseUnit(unit, namespace, false);
+		return su!=null && !su.getTeachTalents().isEmpty();
+	}
+
+	protected void delOrder(Unit unit, Collection<Unit> selectedObjects, Order newOrder) {
 		Teacher.delOrder(selectedObjects != null ? selectedObjects : Collections.singletonList(unit),
 				namespace, newOrder);
 		client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
@@ -434,16 +483,27 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	}
 
-	private void doParse(final Collection<Unit> values) {
-		new Thread(new Runnable() {
+  private void doParse(final Collection<Unit> values) {
+    new Thread(new Runnable() {
 
-			public void run() {
-				Teacher.parse(values, namespace, new ProgressBarUI(client));
-				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
-			}
-		}).start();
+      public void run() {
+        Teacher.parse(values, namespace, new ProgressBarUI(client));
+        client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+      }
+    }).start();
 
-	}
+  }
+
+  private void doUnTag(final Collection<Unit> values) {
+    new Thread(new Runnable() {
+
+      public void run() {
+        Teacher.untag(values, namespace, new ProgressBarUI(client));
+        client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+      }
+    }).start();
+
+  }
 
 	/**
 	 * @see magellan.client.extern.MagellanPlugIn#quit(boolean)

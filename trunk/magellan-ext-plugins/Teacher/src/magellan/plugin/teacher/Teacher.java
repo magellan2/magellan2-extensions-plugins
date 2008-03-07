@@ -49,7 +49,7 @@ import magellan.library.utils.logging.Logger;
  * 
  */
 public class Teacher {
-	private final Logger log = Logger.getInstance(Teacher.class);
+	private static final Logger log = Logger.getInstance(Teacher.class);
 
 	public static final String TEACH_TAG = "ejcTaggableComparator2";
 	public static final String LEARN_TAG = "ejcTaggableComparator";
@@ -78,7 +78,7 @@ public class Teacher {
 	 * @author stm
 	 * 
 	 */
-	public class SUnit {
+	public static class SUnit {
 
 		Unit unit;
 		Map<String, Integer> teach = new HashMap<String, Integer>();
@@ -527,7 +527,7 @@ public class Teacher {
 	/**
 	 * Returns the skill level of a unit. For example getLevel(unit,"Unterhaltung")
 	 */
-	public int getLevel(Unit unit, String skillName) {
+	public static int getLevel(Unit unit, String skillName) {
 		Collection<Skill> skills = unit.getModifiedSkills();
 		if (skills != null) {
 			for (Skill skill : skills) {
@@ -551,7 +551,7 @@ public class Teacher {
 
 		Collection<SUnit> result = new ArrayList<SUnit>(units.size());
 		for (Unit u : units) {
-			SUnit su = parseUnit(u, setTags);
+			SUnit su = parseUnit(u, namespace, setTags);
 			if (su != null) {
 				result.add(su);
 				su.setIndex(result.size() - 1);
@@ -594,7 +594,7 @@ public class Teacher {
 	 * @return A {@link SUnit} according to <code>u</code>'s orders, <code>null</code> if this
 	 *         unit has no teaching or learning orders
 	 */
-	public SUnit parseUnit(Unit u, boolean setTags) {
+	public static SUnit parseUnit(Unit u, String namespace, boolean setTags) {
 		SUnit su = null;
 		boolean errorFlag = false;
 		for (String orderString : u.getOrders()) {
@@ -707,11 +707,22 @@ public class Teacher {
 	 */
 	public void parse() {
 		for (Unit u : units) {
-			SUnit su = parseUnit(u, true);
+			SUnit su = parseUnit(u, namespace, true);
 		}
 	}
 
-	/**
+  /**
+   * Parses all units and sets tags.
+   * 
+   */
+  public void unTag() {
+    for (Unit u : units) {
+      u.removeTag(TEACH_TAG);
+      u.removeTag(LEARN_TAG);
+    }
+  }
+
+  /**
 	 * Parses all units and runs the optimization algorithm.
 	 * 
 	 * @return The value of the best solution
@@ -905,6 +916,10 @@ public class Teacher {
 	public static void parse(Collection<Unit> units, String namespace, ProgressBarUI ui) {
 		(new Teacher(units, namespace, ui)).parse();
 	}
+
+  public static void untag(Collection<Unit> units, String namespace, ProgressBarUI ui) {
+    (new Teacher(units, namespace, ui)).unTag();
+  }
 
 	public static void addOrder(Collection<Unit> units, String namespace, Order newOrder) {
 		// add new L order to all units
