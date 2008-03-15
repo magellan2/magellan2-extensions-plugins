@@ -3,10 +3,12 @@
  */
 package magellan.plugin.allianceplugin;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.swing.JMenu;
@@ -123,6 +125,13 @@ public class AlliancePlugIn implements MagellanPlugIn, ActionListener {
    */
   public PreferencesFactory getPreferencesProvider() {
     // we don't need that yet.
+    return null;
+  }
+  
+  /**
+   * @see magellan.client.extern.MagellanPlugIn#getDocks()
+   */
+  public Map<String, Component> getDocks() {
     return null;
   }
 
