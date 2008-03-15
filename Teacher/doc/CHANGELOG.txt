@@ -1,3 +1,0 @@
-2008-02-17 - stm (stm_@users.sourceforge.net)
-	* initial release
-	
