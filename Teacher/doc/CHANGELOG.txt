@@ -1,0 +1,5 @@
+2008-03-07  - stm (stm_@users.sourceforge.net)
+  * added "untag"
+2008-02-28  - stm (stm_@users.sourceforge.net)
+  * improved genetic algorithm
+  * unit context menus for adding/removing orders 
