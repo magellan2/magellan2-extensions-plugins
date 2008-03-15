@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -512,6 +513,16 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		// do nothing
 	}
 
+	/**
+	 * @see magellan.client.extern.MagellanPlugIn#getDocks()
+	 */
+	public Map<String, Component> getDocks() {
+	  return null;
+	}
+	
+	/**
+	 * 
+	 */
 	public PreferencesFactory getPreferencesProvider() {
 		return new PreferencesFactory() {
 
