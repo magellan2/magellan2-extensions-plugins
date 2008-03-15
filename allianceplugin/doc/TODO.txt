@@ -1,0 +1,15 @@
+ERLEDIGT:
+ * Hochladen von Reports
+ * Herunterladen von Reports
+
+NOCH ZU TUN:
+ - Mergen der Reports auf dem Server
+ - Auf dem Client den letzten geladenen Report mit Versionsnummer merken
+ - Hochladen von Befehlen
+ - Abgleichen von Befehlen
+ - Herunterladen von Befehlen
+
+FRAGEN:
+ - wie kann man dafür sorgen, dass nur bestimmte Befehle für bestimmte
+   Einheiten hochgeladen werden (regionsweit, inselweit, 
+   einheitenspezifisch)
