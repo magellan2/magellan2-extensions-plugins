@@ -1,3 +1,5 @@
+2008-03-26  - stm (stm_@users.sourceforge.net)
+  * moved resource files to etc
 2008-03-07  - stm (stm_@users.sourceforge.net)
   * added "untag"
 2008-02-28  - stm (stm_@users.sourceforge.net)
