@@ -30,9 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.Properties;
-import java.util.ResourceBundle;
 import java.util.StringTokenizer;
 
 import javax.swing.BorderFactory;
@@ -55,7 +53,7 @@ import magellan.library.GameData;
 import magellan.library.Unit;
 import magellan.library.UnitContainer;
 import magellan.library.event.GameDataEvent;
-import magellan.library.utils.Locales;
+import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
 import magellan.plugin.teacher.Teacher.SUnit;
 
@@ -161,6 +159,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 		log = Logger.getInstance(TeachPlugin.class);
 		log.info(getName() + " initialized...");
+    Resources.getInstance().initialize(Client.getSettingsDirectory(),"teachplugin_");
 	}
 
 	/**
@@ -574,19 +573,20 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	}
 
-	private static final String BUNDLE_NAME = "magellan.plugin.teacher.teacher_resources";
+//	private static final String BUNDLE_NAME = "magellan.plugin.teacher.teacher_resources";
 
-	private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
+//	private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 
 	protected static String getString(String key) {
-		ResourceBundle bundle = ResourceBundle.getBundle(BUNDLE_NAME, Locales.getGUILocale());
-		try {
-			return bundle.getString(key);
-		} catch (MissingResourceException e) {
-			log.warn("resource key " + key + " not found in bundle " + BUNDLE_NAME + ", "
-					+ Locales.getGUILocale());
-			return '!' + key + '!';
-		}
+		return Resources.get(key);
+//		ResourceBundle bundle = ResourceBundle.getBundle(BUNDLE_NAME, Locales.getGUILocale());
+//		try {
+//			return bundle.getString(key);
+//		} catch (MissingResourceException e) {
+//			log.warn("resource key " + key + " not found in bundle " + BUNDLE_NAME + ", "
+//					+ Locales.getGUILocale());
+//			return '!' + key + '!';
+//		}
 	}
 
 	protected static String getString(String key, Object[] args) {

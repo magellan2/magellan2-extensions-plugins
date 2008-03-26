@@ -1,4 +1,4 @@
-<project name="mapcleaner-plugin">
+<project name="teacher-plugin">
   <description>
     This is the ant script for creating the teacher plugin
   	for Magellan2. You need to setup some paths if you
