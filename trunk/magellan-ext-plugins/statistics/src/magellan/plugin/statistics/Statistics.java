@@ -23,7 +23,10 @@
 // 
 package magellan.plugin.statistics;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -33,6 +36,8 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.tools.bzip2.CBZip2InputStream;
+import org.apache.tools.bzip2.CBZip2OutputStream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -81,7 +86,13 @@ public class Statistics {
   protected void load() {
     try {
       DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-      Document document = builder.parse(statFile);
+      FileInputStream fis = new FileInputStream(statFile);
+      BufferedInputStream bis = new BufferedInputStream(fis);
+      CBZip2InputStream zis = new CBZip2InputStream(bis);
+      Document document = builder.parse(zis);
+      zis.close();
+      bis.close();
+      fis.close();
       if (!document.getDocumentElement().getNodeName().equals("statistics")) {
         log.fatal("The file "+statFile+" does NOT contain statistic informations. Missing XML root element 'statistics'");
         return;
@@ -218,7 +229,9 @@ public class Statistics {
     try {
       log.info("Writing Statistics File: "+statFile);
       FileOutputStream fos = new FileOutputStream(statFile);
-      PrintStream ps = new PrintStream(fos,true,"UTF-8");
+      CBZip2OutputStream zos = new CBZip2OutputStream(fos);
+      BufferedOutputStream bos = new BufferedOutputStream(zos);
+      PrintStream ps = new PrintStream(bos,true,"UTF-8");
       ps.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
       ps.println("<statistics>");
       for (FactionStatistics faction : factions.values()) {
@@ -238,6 +251,8 @@ public class Statistics {
       }
       ps.println("</statistics>");
       ps.close();
+      bos.close();
+      zos.close();
       fos.close();
       
     } catch (Exception exception) {

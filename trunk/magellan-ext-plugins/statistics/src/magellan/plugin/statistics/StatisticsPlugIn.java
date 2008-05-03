@@ -109,7 +109,7 @@ public class StatisticsPlugIn implements MagellanPlugIn {
           // remove file extension
           fileName = fileName.substring(0,fileName.lastIndexOf("."));
         }
-        fileName = fileName+".statistic.xml";
+        fileName = fileName+".statistic.xml.bz2";
         
         File statFile = new File(dataFile.getParentFile(),fileName);
         
