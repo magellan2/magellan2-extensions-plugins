@@ -26,13 +26,24 @@ package magellan.plugin.statistics;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import magellan.client.Client;
 import magellan.client.event.SelectionEvent;
@@ -58,9 +69,15 @@ import magellan.plugin.statistics.data.UnitStatistics.UnitStatisticsData;
 public class StatisticDock extends JPanel implements SelectionListener {
   private static Logger log = Logger.getInstance(StatisticDock.class);
   protected StatisticsPlugIn plugin = null;
+  protected JTabbedPane tabbedPane = null;
   protected JTable table = null;
-  protected JScrollPane pane = null;
+  protected JScrollPane tableTab = null;
+  protected JComponent skillsTab = null;
+  protected JScrollPane itemsTab = null;
 
+  /**
+   * 
+   */
   public StatisticDock(Client client, Properties settings, StatisticsPlugIn statisticsPlugIn) {
     this.plugin = statisticsPlugIn;
     setLayout(new BorderLayout());
@@ -90,49 +107,115 @@ public class StatisticDock extends JPanel implements SelectionListener {
     }
   }
   
+  /**
+   * 
+   */
   protected void showStatistics(Unit unit) {
     log.info("Showing statistics for unit "+unit.getID().toString()+".");
-    if (table != null && pane != null) {
-      pane.remove(table);
-      remove(pane);
-    }
+    if (tabbedPane != null) remove(tabbedPane);
     
     if (plugin.getStatistics() != null) {
       UnitTableModel model = new UnitTableModel(plugin.getStatistics(),unit);
+      
       table = new JTable(model);
       table.setAutoCreateRowSorter(true);
-      pane = new JScrollPane(table);
-      add(pane,BorderLayout.CENTER);
+      tableTab = new JScrollPane(table);
+      
+      skillsTab = createSkillChart(unit);
+      
+      itemsTab = new JScrollPane();
+      
+      tabbedPane = new JTabbedPane();
+      tabbedPane.addTab(Resources.get("statisticsplugin.unit.table"), tableTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.unit.skills"), skillsTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.unit.items"), itemsTab);
+      
+      add(tabbedPane,BorderLayout.CENTER);
     }
   }
+  
+  /**
+   * 
+   */
   protected void showStatistics(Region region) {
     log.info("Showing statistics for region "+region.getID().toString()+".");
-    if (table != null && pane != null) {
-      pane.remove(table);
-      remove(pane);
-    }
+    if (tabbedPane != null) remove(tabbedPane);
     
     if (plugin.getStatistics() != null) {
       RegionTableModel model = new RegionTableModel(plugin.getStatistics(),region);
+      
       table = new JTable(model);
       table.setAutoCreateRowSorter(true);
-      pane = new JScrollPane(table);
-      add(pane,BorderLayout.CENTER);
+      tableTab = new JScrollPane(table);
+      
+      tabbedPane = new JTabbedPane();
+      tabbedPane.addTab(Resources.get("statisticsplugin.unit.table"), tableTab);
+      
+      add(tabbedPane,BorderLayout.CENTER);
     }
   }
+  
+  /**
+   * 
+   */
   protected void showStatistics(Faction faction) {
     log.info("Showing statistics for faction "+faction.getID().toString()+".");
   }
+  
+  /**
+   * 
+   */
   protected void showStatistics(Building building) {
     log.info("Showing statistics for building "+building.getID().toString()+".");
   }
+  
+  /**
+   * 
+   */
   protected void showStatistics(Ship ship) {
     log.info("Showing statistics for ship "+ship.getID().toString()+".");
+  }
+  
+  protected JComponent createSkillChart(Unit unit) {
+    UnitStatistics stats = plugin.getStatistics().getStatistics(unit);
+    if (stats != null) {
+      String title = Resources.get("statisticsplugin.unit.skills");
+      String xAxisTitle = Resources.get("statisticsplugin.unit.skills.xAxis");
+      String yAxisTitle = Resources.get("statisticsplugin.unit.skills.yAxis");
+      
+      XYSeriesCollection dataset = new XYSeriesCollection();
+      Map<String,XYSeries> series = new HashMap<String, XYSeries>();
+      List<Integer> turns = new ArrayList<Integer>(stats.turnData.keySet());
+      Collections.sort(turns);
+      
+      for (Integer turn : turns) {
+        Map<String,Integer> skills = stats.turnData.get(turn).skills;
+        
+        for (String skill : skills.keySet()) {
+          XYSeries serie = null;
+          if (series.containsKey(skill)) {
+            serie = series.get(skill);
+          } else {
+            serie = new XYSeries(skill);
+            series.put(skill, serie);
+          }
+          serie.add(turn, skills.get(skill));
+        }
+      }
+      
+      for (XYSeries serie : series.values()) {
+        dataset.addSeries(serie);
+      }
+      
+      JFreeChart chart = ChartFactory.createXYStepChart(title, xAxisTitle, yAxisTitle, dataset, PlotOrientation.VERTICAL, true, true, false);
+      return new ChartPanel(chart);
+    } else {
+      return new JScrollPane();
+    }
   }
 }
 
 class UnitTableModel extends AbstractTableModel {
-  private static Logger log = Logger.getInstance(UnitTableModel.class);
   protected List<Integer> turns = new ArrayList<Integer>();
   protected List<String> columnNames = new ArrayList<String>();
   protected UnitStatistics statistics = null;
@@ -220,7 +303,6 @@ class UnitTableModel extends AbstractTableModel {
 
 
 class RegionTableModel extends AbstractTableModel {
-  private static Logger log = Logger.getInstance(RegionTableModel.class);
   protected List<Integer> turns = new ArrayList<Integer>();
   protected List<String> columnNames = new ArrayList<String>();
   protected RegionStatistics statistics = null;
