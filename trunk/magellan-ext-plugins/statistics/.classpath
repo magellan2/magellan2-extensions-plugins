@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Magellan2"/>
-	<classpathentry kind="lib" path="/Magellan2/lib/ant-1.5.3.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/Magellan2/lib/ant-1.7.0.jar"/>
 	<classpathentry kind="lib" path="lib/gnujaxp.jar"/>
 	<classpathentry kind="lib" path="lib/itext-2.0.6.jar"/>
 	<classpathentry kind="lib" path="lib/jcommon-1.0.12.jar"/>
