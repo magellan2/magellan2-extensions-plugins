@@ -28,6 +28,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,8 @@ import org.apache.tools.bzip2.CBZip2OutputStream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import magellan.client.Client;
+import magellan.client.utils.ErrorWindow;
 import magellan.library.Building;
 import magellan.library.Faction;
 import magellan.library.GameData;
@@ -88,6 +91,16 @@ public class Statistics {
       DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
       FileInputStream fis = new FileInputStream(statFile);
       BufferedInputStream bis = new BufferedInputStream(fis);
+      int magic3 = fis.read();
+      int magic4 = fis.read();
+
+      if((magic3 != 'B') || (magic4 != 'Z')) {
+        log.error("File " + statFile + " is missing bzip2 header BZ.");
+        bis.close();
+        fis.close();
+        fis = new FileInputStream(statFile);
+        bis = new BufferedInputStream(fis);
+      }
       CBZip2InputStream zis = new CBZip2InputStream(bis);
       Document document = builder.parse(zis);
       zis.close();
@@ -103,7 +116,9 @@ public class Statistics {
         loadIdentifiable(identifiableElement);
       }
     } catch (Exception exception) {
-      log.error("",exception);
+      log.error("Could not load statistic data",exception);
+      ErrorWindow errorWindow = new ErrorWindow(Client.INSTANCE,exception.getMessage(),"",exception);
+      errorWindow.setVisible(true);
     }
   }
   
@@ -229,6 +244,8 @@ public class Statistics {
     try {
       log.info("Writing Statistics File: "+statFile);
       FileOutputStream fos = new FileOutputStream(statFile);
+      fos.write('B');
+      fos.write('Z');
       CBZip2OutputStream zos = new CBZip2OutputStream(fos);
       BufferedOutputStream bos = new BufferedOutputStream(zos);
       PrintStream ps = new PrintStream(bos,true,"UTF-8");

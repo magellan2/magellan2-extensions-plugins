@@ -74,6 +74,7 @@ public class StatisticDock extends JPanel implements SelectionListener {
   protected JScrollPane tableTab = null;
   protected JComponent skillsTab = null;
   protected JScrollPane itemsTab = null;
+  protected Object activeObject = null;
 
   /**
    * 
@@ -89,21 +90,48 @@ public class StatisticDock extends JPanel implements SelectionListener {
    * @see magellan.client.event.SelectionListener#selectionChanged(magellan.client.event.SelectionEvent)
    */
   public void selectionChanged(SelectionEvent e) {
-    if (e.getActiveObject() instanceof Unit) {
-      showStatistics((Unit)e.getActiveObject());
-      
-    } else if (e.getActiveObject() instanceof Region) {
-      showStatistics((Region)e.getActiveObject());
-      
-    } else if (e.getActiveObject() instanceof Faction) {
-      showStatistics((Faction)e.getActiveObject());
-      
-    } else if (e.getActiveObject() instanceof Building) {
-      showStatistics((Building)e.getActiveObject());
-      
-    } else if (e.getActiveObject() instanceof Ship) {
-      showStatistics((Ship)e.getActiveObject());
-      
+    Object o = e.getActiveObject();
+    
+    if (o == null) return;
+    
+    if (activeObject != null ) {
+      if (o.equals(activeObject)) {
+        return;
+      }
+    }
+    
+    activeObject = o;
+    
+    if (o instanceof Unit || o instanceof Region || o instanceof Faction || o instanceof Building || o instanceof Ship) {
+      StatisticDockSelectionChangedThread thread = new StatisticDockSelectionChangedThread(e);
+      thread.start();
+    }
+  }
+  
+  class StatisticDockSelectionChangedThread extends Thread {
+    SelectionEvent e;
+    
+    public StatisticDockSelectionChangedThread(SelectionEvent e) {
+      this.e = e;
+    }
+    
+    public void run() {
+      if (e.getActiveObject() instanceof Unit) {
+        showStatistics((Unit)e.getActiveObject());
+        
+      } else if (e.getActiveObject() instanceof Region) {
+        showStatistics((Region)e.getActiveObject());
+        
+      } else if (e.getActiveObject() instanceof Faction) {
+        showStatistics((Faction)e.getActiveObject());
+        
+      } else if (e.getActiveObject() instanceof Building) {
+        showStatistics((Building)e.getActiveObject());
+        
+      } else if (e.getActiveObject() instanceof Ship) {
+        showStatistics((Ship)e.getActiveObject());
+        
+      }
     }
   }
   
