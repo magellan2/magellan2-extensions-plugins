@@ -47,8 +47,10 @@ import magellan.library.Ship;
 import magellan.library.Unit;
 import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
+import magellan.plugin.statistics.data.FactionStatistics;
 import magellan.plugin.statistics.data.RegionStatistics;
 import magellan.plugin.statistics.data.UnitStatistics;
+import magellan.plugin.statistics.data.FactionStatistics.FactionStatisticsData;
 import magellan.plugin.statistics.data.RegionStatistics.RegionStatisticsData;
 import magellan.plugin.statistics.data.UnitStatistics.UnitStatisticsData;
 
@@ -65,6 +67,10 @@ public class StatisticDock extends JPanel implements SelectionListener {
   protected JTable table = null;
   protected JScrollPane tableTab = null;
   protected JComponent skillsTab = null;
+  protected JComponent resourcesTab = null;
+  protected JComponent tradesTab = null;
+  protected JComponent pointsTab = null;
+  protected JComponent unitsTab = null;
   protected JScrollPane itemsTab = null;
   protected Object activeObject = null;
   protected JLabel waitLabel = null;
@@ -208,8 +214,13 @@ public class StatisticDock extends JPanel implements SelectionListener {
       table.setAutoCreateRowSorter(true);
       tableTab = new JScrollPane(table);
       
+      resourcesTab = StatisticCharts.createResourcesChart(plugin,region);
+      tradesTab = StatisticCharts.createTradeChart(plugin,region);
+      
       tabbedPane = new JTabbedPane();
-      tabbedPane.addTab(Resources.get("statisticsplugin.unit.table"), tableTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.region.table"), tableTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.region.resources"), resourcesTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.region.trades"), tradesTab);
       
       removeAll();
       add(tabbedPane,BorderLayout.CENTER);
@@ -222,9 +233,26 @@ public class StatisticDock extends JPanel implements SelectionListener {
    */
   protected void showStatistics(Faction faction) {
     log.info("Showing statistics for faction "+faction.getID().toString()+".");
-    removeAll();
-    add(notImplementedLavel,BorderLayout.CENTER);
-    repaint();
+
+    if (plugin.getStatistics() != null) {
+      FactionTableModel model = new FactionTableModel(plugin.getStatistics(),faction);
+      
+      table = new JTable(model);
+      table.setAutoCreateRowSorter(true);
+      tableTab = new JScrollPane(table);
+      
+      pointsTab = StatisticCharts.createPointsChart(plugin,faction);
+      unitsTab = StatisticCharts.createUnitsChart(plugin,faction);
+      
+      tabbedPane = new JTabbedPane();
+      tabbedPane.addTab(Resources.get("statisticsplugin.faction.table"), tableTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.faction.points"), pointsTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.faction.units"), unitsTab);
+      
+      removeAll();
+      add(tabbedPane,BorderLayout.CENTER);
+      repaint();
+    }
   }
   
   /**
@@ -248,6 +276,12 @@ public class StatisticDock extends JPanel implements SelectionListener {
   }
 }
 
+/**
+ * A model for statistic unit table informations
+ *
+ * @author Thoralf Rickert
+ * @version 1.0, 11.05.2008
+ */
 class UnitTableModel extends AbstractTableModel {
   protected List<Integer> turns = new ArrayList<Integer>();
   protected List<String> columnNames = new ArrayList<String>();
@@ -333,8 +367,12 @@ class UnitTableModel extends AbstractTableModel {
   }
 }
 
-
-
+/**
+ * A model for statistic region table informations
+ *
+ * @author Thoralf Rickert
+ * @version 1.0, 11.05.2008
+ */
 class RegionTableModel extends AbstractTableModel {
   protected List<Integer> turns = new ArrayList<Integer>();
   protected List<String> columnNames = new ArrayList<String>();
@@ -410,6 +448,81 @@ class RegionTableModel extends AbstractTableModel {
         String columnName = getColumnName(columnIndex);
         if (data.prices.containsKey(columnName)) return data.prices.get(columnName);
       }
+    }
+    
+    return null;
+  }
+  
+  /**
+   * @see javax.swing.table.AbstractTableModel#getColumnName(int)
+   */
+  @Override
+  public String getColumnName(int col) {
+    return columnNames.get(col);
+  }
+}
+
+/**
+ * A model for statistic faction table informations
+ *
+ * @author Thoralf Rickert
+ * @version 1.0, 11.05.2008
+ */
+class FactionTableModel extends AbstractTableModel {
+  protected List<Integer> turns = new ArrayList<Integer>();
+  protected List<String> columnNames = new ArrayList<String>();
+  protected FactionStatistics statistics = null;
+  
+  /**
+   * 
+   */
+  public FactionTableModel(Statistics stat, Faction region) {
+    statistics = stat.getStatistics(region);
+
+    columnNames.add(Resources.get("statisticsplugin.faction.turn"));
+    columnNames.add(Resources.get("statisticsplugin.faction.name"));
+    columnNames.add(Resources.get("statisticsplugin.faction.race"));
+    columnNames.add(Resources.get("statisticsplugin.faction.persons"));
+    columnNames.add(Resources.get("statisticsplugin.faction.heroes"));
+    columnNames.add(Resources.get("statisticsplugin.faction.maxheroes"));
+    columnNames.add(Resources.get("statisticsplugin.faction.score"));
+    columnNames.add(Resources.get("statisticsplugin.faction.averagescore"));
+    
+    if (statistics == null) return;
+    
+    turns = new ArrayList<Integer>(statistics.turnData.keySet());
+    Collections.sort(turns);
+  }
+
+  /**
+   * @see javax.swing.table.TableModel#getColumnCount()
+   */
+  public int getColumnCount() {
+    return columnNames.size();
+  }
+  
+  /**
+   * @see javax.swing.table.TableModel#getRowCount()
+   */
+  public int getRowCount() {
+    return turns.size();
+  }
+
+  /**
+   * @see javax.swing.table.TableModel#getValueAt(int, int)
+   */
+  public Object getValueAt(int rowIndex, int columnIndex) {
+    Integer turn = turns.get(rowIndex);
+    FactionStatisticsData data = statistics.turnData.get(turn);
+    switch (columnIndex) {
+      case 0: return turn;
+      case 1: return data.name;
+      case 2: return data.race;
+      case 3: return data.persons;
+      case 4: return data.heroes;
+      case 5: return data.maxHeroes;
+      case 6: return data.score;
+      case 7: return data.averageScore;
     }
     
     return null;
