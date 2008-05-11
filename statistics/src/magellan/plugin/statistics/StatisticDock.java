@@ -26,24 +26,16 @@ package magellan.plugin.statistics;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
-
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 
 import magellan.client.Client;
 import magellan.client.event.SelectionEvent;
@@ -75,6 +67,8 @@ public class StatisticDock extends JPanel implements SelectionListener {
   protected JComponent skillsTab = null;
   protected JScrollPane itemsTab = null;
   protected Object activeObject = null;
+  protected JLabel waitLabel = null;
+  protected JLabel notImplementedLavel = null;
 
   /**
    * 
@@ -84,6 +78,15 @@ public class StatisticDock extends JPanel implements SelectionListener {
     setLayout(new BorderLayout());
     
     client.getDispatcher().addSelectionListener(this);
+    
+    waitLabel = new JLabel(Resources.get("statisticsplugin.dock.wait"));
+    waitLabel.setHorizontalAlignment(JLabel.HORIZONTAL);
+    notImplementedLavel = new JLabel(Resources.get("statisticsplugin.dock.notimplemented"));
+    notImplementedLavel.setHorizontalAlignment(JLabel.HORIZONTAL);
+    
+    
+    add(waitLabel,BorderLayout.CENTER);
+    repaint();
   }
 
   /**
@@ -103,33 +106,62 @@ public class StatisticDock extends JPanel implements SelectionListener {
     activeObject = o;
     
     if (o instanceof Unit || o instanceof Region || o instanceof Faction || o instanceof Building || o instanceof Ship) {
-      StatisticDockSelectionChangedThread thread = new StatisticDockSelectionChangedThread(e);
+      removeAll();
+      add(waitLabel,BorderLayout.CENTER);
+      repaint();
+      StatisticDockSelectionChangedThread thread = new StatisticDockSelectionChangedThread(e.getActiveObject());
       thread.start();
     }
   }
   
-  class StatisticDockSelectionChangedThread extends Thread {
-    SelectionEvent e;
+  /**
+   * Shows the given region.
+   * Normally used after a loading/merging process in the client.
+   */
+  public void show(Region region) {
+    if (region == null) return;
     
-    public StatisticDockSelectionChangedThread(SelectionEvent e) {
-      this.e = e;
+    removeAll();
+    add(waitLabel,BorderLayout.CENTER);
+    repaint();
+    StatisticDockSelectionChangedThread thread = new StatisticDockSelectionChangedThread(region);
+    thread.start();
+  }
+  
+  /**
+   * This thread opens the given object in the dock. This process can take some seconds
+   * so we put it into a thread to avoid GUI blocking
+   *
+   * @author Thoralf Rickert
+   * @version 1.0, 11.05.2008
+   */
+  class StatisticDockSelectionChangedThread extends Thread {
+    Object activeObject;
+    
+    public StatisticDockSelectionChangedThread(Object activeObject) {
+      this.activeObject = activeObject;
     }
     
+    /**
+     * @see java.lang.Thread#run()
+     */
     public void run() {
-      if (e.getActiveObject() instanceof Unit) {
-        showStatistics((Unit)e.getActiveObject());
+      if (activeObject == null) return;
+      
+      if (activeObject instanceof Unit) {
+        showStatistics((Unit)activeObject);
         
-      } else if (e.getActiveObject() instanceof Region) {
-        showStatistics((Region)e.getActiveObject());
+      } else if (activeObject instanceof Region) {
+        showStatistics((Region)activeObject);
         
-      } else if (e.getActiveObject() instanceof Faction) {
-        showStatistics((Faction)e.getActiveObject());
+      } else if (activeObject instanceof Faction) {
+        showStatistics((Faction)activeObject);
         
-      } else if (e.getActiveObject() instanceof Building) {
-        showStatistics((Building)e.getActiveObject());
+      } else if (activeObject instanceof Building) {
+        showStatistics((Building)activeObject);
         
-      } else if (e.getActiveObject() instanceof Ship) {
-        showStatistics((Ship)e.getActiveObject());
+      } else if (activeObject instanceof Ship) {
+        showStatistics((Ship)activeObject);
         
       }
     }
@@ -140,7 +172,6 @@ public class StatisticDock extends JPanel implements SelectionListener {
    */
   protected void showStatistics(Unit unit) {
     log.info("Showing statistics for unit "+unit.getID().toString()+".");
-    if (tabbedPane != null) remove(tabbedPane);
     
     if (plugin.getStatistics() != null) {
       UnitTableModel model = new UnitTableModel(plugin.getStatistics(),unit);
@@ -149,7 +180,7 @@ public class StatisticDock extends JPanel implements SelectionListener {
       table.setAutoCreateRowSorter(true);
       tableTab = new JScrollPane(table);
       
-      skillsTab = createSkillChart(unit);
+      skillsTab = StatisticCharts.createSkillChart(plugin,unit);
       
       itemsTab = new JScrollPane();
       
@@ -158,7 +189,9 @@ public class StatisticDock extends JPanel implements SelectionListener {
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.skills"), skillsTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.items"), itemsTab);
       
+      removeAll();
       add(tabbedPane,BorderLayout.CENTER);
+      repaint();
     }
   }
   
@@ -167,7 +200,6 @@ public class StatisticDock extends JPanel implements SelectionListener {
    */
   protected void showStatistics(Region region) {
     log.info("Showing statistics for region "+region.getID().toString()+".");
-    if (tabbedPane != null) remove(tabbedPane);
     
     if (plugin.getStatistics() != null) {
       RegionTableModel model = new RegionTableModel(plugin.getStatistics(),region);
@@ -179,7 +211,9 @@ public class StatisticDock extends JPanel implements SelectionListener {
       tabbedPane = new JTabbedPane();
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.table"), tableTab);
       
+      removeAll();
       add(tabbedPane,BorderLayout.CENTER);
+      repaint();
     }
   }
   
@@ -188,6 +222,9 @@ public class StatisticDock extends JPanel implements SelectionListener {
    */
   protected void showStatistics(Faction faction) {
     log.info("Showing statistics for faction "+faction.getID().toString()+".");
+    removeAll();
+    add(notImplementedLavel,BorderLayout.CENTER);
+    repaint();
   }
   
   /**
@@ -195,6 +232,9 @@ public class StatisticDock extends JPanel implements SelectionListener {
    */
   protected void showStatistics(Building building) {
     log.info("Showing statistics for building "+building.getID().toString()+".");
+    removeAll();
+    add(notImplementedLavel,BorderLayout.CENTER);
+    repaint();
   }
   
   /**
@@ -202,44 +242,9 @@ public class StatisticDock extends JPanel implements SelectionListener {
    */
   protected void showStatistics(Ship ship) {
     log.info("Showing statistics for ship "+ship.getID().toString()+".");
-  }
-  
-  protected JComponent createSkillChart(Unit unit) {
-    UnitStatistics stats = plugin.getStatistics().getStatistics(unit);
-    if (stats != null) {
-      String title = Resources.get("statisticsplugin.unit.skills");
-      String xAxisTitle = Resources.get("statisticsplugin.unit.skills.xAxis");
-      String yAxisTitle = Resources.get("statisticsplugin.unit.skills.yAxis");
-      
-      XYSeriesCollection dataset = new XYSeriesCollection();
-      Map<String,XYSeries> series = new HashMap<String, XYSeries>();
-      List<Integer> turns = new ArrayList<Integer>(stats.turnData.keySet());
-      Collections.sort(turns);
-      
-      for (Integer turn : turns) {
-        Map<String,Integer> skills = stats.turnData.get(turn).skills;
-        
-        for (String skill : skills.keySet()) {
-          XYSeries serie = null;
-          if (series.containsKey(skill)) {
-            serie = series.get(skill);
-          } else {
-            serie = new XYSeries(skill);
-            series.put(skill, serie);
-          }
-          serie.add(turn, skills.get(skill));
-        }
-      }
-      
-      for (XYSeries serie : series.values()) {
-        dataset.addSeries(serie);
-      }
-      
-      JFreeChart chart = ChartFactory.createXYStepChart(title, xAxisTitle, yAxisTitle, dataset, PlotOrientation.VERTICAL, true, true, false);
-      return new ChartPanel(chart);
-    } else {
-      return new JScrollPane();
-    }
+    removeAll();
+    add(notImplementedLavel,BorderLayout.CENTER);
+    repaint();
   }
 }
 

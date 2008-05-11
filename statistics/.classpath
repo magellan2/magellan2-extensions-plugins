@@ -7,7 +7,7 @@
 	<classpathentry kind="lib" path="lib/gnujaxp.jar"/>
 	<classpathentry kind="lib" path="lib/itext-2.0.6.jar"/>
 	<classpathentry kind="lib" path="lib/jcommon-1.0.12.jar"/>
-	<classpathentry kind="lib" path="lib/jfreechart-1.0.9.jar"/>
+	<classpathentry kind="lib" path="lib/jfreechart-1.0.9.jar" sourcepath="C:/Users/thoralf/Downloads/jfreechart-1.0.9.zip"/>
 	<classpathentry kind="lib" path="lib/swtgraphics2d.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
