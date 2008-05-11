@@ -27,6 +27,7 @@ public class StatisticsPlugIn implements MagellanPlugIn {
   private Client client = null;
   private Properties settings = null;
   private Statistics statistics = null;
+  private StatisticDock dock = null;
 
   /**
    * @see magellan.client.extern.MagellanPlugIn#init(magellan.client.Client, java.util.Properties)
@@ -55,8 +56,10 @@ public class StatisticsPlugIn implements MagellanPlugIn {
    * @see magellan.client.extern.MagellanPlugIn#getDocks()
    */
   public Map<String, Component> getDocks() {
+    dock = new StatisticDock(client,settings,this);
+    
     Map<String, Component> components = new HashMap<String, Component>();
-    components.put("Statistics", new StatisticDock(client,settings,this));
+    components.put("Statistics", dock);
     return components;
   }
 
@@ -121,6 +124,11 @@ public class StatisticsPlugIn implements MagellanPlugIn {
         
         // add current file
         statistics.add(data);
+        
+        // view dock
+        if (dock != null) {
+          dock.show(data.getActiveRegion());
+        }
         
         // save statistics
         statistics.save();
