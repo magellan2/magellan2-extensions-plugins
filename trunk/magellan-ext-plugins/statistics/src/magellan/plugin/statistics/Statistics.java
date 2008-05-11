@@ -28,7 +28,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
@@ -290,6 +289,13 @@ public class Statistics {
     if (region == null || region.getID() == null) return null;
     String id = region.getID().toString();
     if (regions.containsKey(id)) return regions.get(id);
+    return null;
+  }
+
+  public FactionStatistics getStatistics(Faction faction) {
+    if (faction == null || faction.getID() == null) return null;
+    String id = faction.getID().toString();
+    if (factions.containsKey(id)) return factions.get(id);
     return null;
   }
 }

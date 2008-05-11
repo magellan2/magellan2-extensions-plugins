@@ -41,7 +41,7 @@ import org.w3c.dom.Element;
  */
 public class FactionStatistics {
   protected String id = null;
-  protected Map<Integer,FactionStatisticsData> turnData = new HashMap<Integer,FactionStatisticsData>();
+  public Map<Integer,FactionStatisticsData> turnData = new HashMap<Integer,FactionStatisticsData>();
   
   /**
    * Creates a faction statistics based on the given XML data.
@@ -117,17 +117,17 @@ public class FactionStatistics {
     }
     ps.println(" </identifiable>");
   }
-}
-
-class FactionStatisticsData {
-  public int turn;
-  public String name;
-  public String description;
-  public int persons;
-  public String race;
-  public int heroes;
-  public int maxHeroes;
-  public int maxMigrants;
-  public int averageScore;
-  public int score;
+  
+  public class FactionStatisticsData {
+    public int turn;
+    public String name;
+    public String description;
+    public int persons;
+    public String race;
+    public int heroes;
+    public int maxHeroes;
+    public int maxMigrants;
+    public int averageScore;
+    public int score;
+  }
 }
