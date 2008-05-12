@@ -45,6 +45,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.labels.StandardXYItemLabelGenerator;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -109,12 +110,15 @@ public class StatisticCharts {
       renderer.setBaseShapesVisible(true);
       renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
       renderer.setDefaultEntityRadius(6);
+      renderer.setBaseItemLabelsVisible(true);
+      renderer.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());      
       plot.setRenderer(renderer);
 
       for (int i=0; i<series.size(); i++) {
         renderer.setSeriesShapesVisible(i,true);
         renderer.setSeriesShapesFilled(i,true);
         renderer.setSeriesStroke(i, new BasicStroke(2.0f));
+        renderer.setSeriesToolTipGenerator(i, new StandardXYToolTipGenerator());
       }
 
       plot.setAxisOffset(new RectangleInsets(1.0, 1.0, 1.0, 1.0));
@@ -186,12 +190,14 @@ public class StatisticCharts {
       renderer.setBaseShapesVisible(true);
       renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
       renderer.setDefaultEntityRadius(6);
+      renderer.setBaseItemLabelsVisible(true);
       plot.setRenderer(renderer);
 
       for (int i=0; i<series.size(); i++) {
         renderer.setSeriesShapesVisible(i,true);
         renderer.setSeriesShapesFilled(i,true);
         renderer.setSeriesStroke(i, new BasicStroke(2.0f));
+        renderer.setSeriesToolTipGenerator(i, new StandardXYToolTipGenerator());
       }
 
       plot.setAxisOffset(new RectangleInsets(1.0, 1.0, 1.0, 1.0));
@@ -255,12 +261,15 @@ public class StatisticCharts {
       renderer.setBaseShapesVisible(true);
       renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
       renderer.setDefaultEntityRadius(6);
+      renderer.setBaseItemLabelsVisible(true);
+      renderer.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());      
       plot.setRenderer(renderer);
 
       for (int i=0; i<series.size(); i++) {
         renderer.setSeriesShapesVisible(i,true);
         renderer.setSeriesShapesFilled(i,true);
         renderer.setSeriesStroke(i, new BasicStroke(2.0f));
+        renderer.setSeriesToolTipGenerator(i, new StandardXYToolTipGenerator());
       }
 
       plot.setAxisOffset(new RectangleInsets(1.0, 1.0, 1.0, 1.0));
@@ -290,7 +299,7 @@ public class StatisticCharts {
       XYSeriesCollection dataset = new XYSeriesCollection();
       Map<String,XYSeries> series = new HashMap<String, XYSeries>();
       series.put("points",  new XYSeries(Resources.get("statisticsplugin.faction.points")));
-      series.put("average", new XYSeries(Resources.get("statisticsplugin.faction.averagescores")));
+      series.put("average", new XYSeries(Resources.get("statisticsplugin.faction.averagescore")));
       
       // sort the turn data
       List<Integer> turns = new ArrayList<Integer>(stats.turnData.keySet());
@@ -315,12 +324,15 @@ public class StatisticCharts {
       renderer.setBaseShapesVisible(true);
       renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
       renderer.setDefaultEntityRadius(6);
+      renderer.setBaseItemLabelsVisible(true);
+      renderer.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());      
       plot.setRenderer(renderer);
 
       for (int i=0; i<series.size(); i++) {
         renderer.setSeriesShapesVisible(i,true);
         renderer.setSeriesShapesFilled(i,true);
         renderer.setSeriesStroke(i, new BasicStroke(2.0f));
+        renderer.setSeriesToolTipGenerator(i, new StandardXYToolTipGenerator());
       }
 
       plot.setAxisOffset(new RectangleInsets(1.0, 1.0, 1.0, 1.0));
@@ -377,12 +389,15 @@ public class StatisticCharts {
       renderer.setBaseShapesVisible(true);
       renderer.setBaseToolTipGenerator(new StandardXYToolTipGenerator());
       renderer.setDefaultEntityRadius(6);
+      renderer.setBaseItemLabelsVisible(true);
+      renderer.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());      
       plot.setRenderer(renderer);
 
       for (int i=0; i<series.size(); i++) {
         renderer.setSeriesShapesVisible(i,true);
         renderer.setSeriesShapesFilled(i,true);
         renderer.setSeriesStroke(i, new BasicStroke(2.0f));
+        renderer.setSeriesToolTipGenerator(i, new StandardXYToolTipGenerator());
       }
 
       plot.setAxisOffset(new RectangleInsets(1.0, 1.0, 1.0, 1.0));
