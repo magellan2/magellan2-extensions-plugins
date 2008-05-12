@@ -66,7 +66,6 @@ public class RegionStatistics {
       data.trees = Utils.getIntValue(Utils.getCData(Utils.getChildNode(turnElement, "trees")));
       data.silver = Utils.getIntValue(Utils.getCData(Utils.getChildNode(turnElement, "silver")));
       data.sprouts = Utils.getIntValue(Utils.getCData(Utils.getChildNode(turnElement, "sprouts")));
-      data.recruits = Utils.getIntValue(Utils.getCData(Utils.getChildNode(turnElement, "recruits")));
       data.peasants = Utils.getIntValue(Utils.getCData(Utils.getChildNode(turnElement, "peasants")));
       data.iron = Utils.getIntValue(Utils.getCData(Utils.getChildNode(turnElement, "iron")));
       data.laen = Utils.getIntValue(Utils.getCData(Utils.getChildNode(turnElement, "laen")));
@@ -123,7 +122,6 @@ public class RegionStatistics {
     data.laen = region.getLaen();
     data.iron = region.getIron();
     data.peasants = region.getPeasants();
-    data.recruits = region.getRecruits();
     data.silver = region.getSilver();
     data.sprouts = region.getSprouts();
     data.trees = region.getTrees();
@@ -165,7 +163,6 @@ public class RegionStatistics {
       ps.println("   <trees>"+Utils.escapeXML(data.trees)+"</trees>");
       ps.println("   <silver>"+Utils.escapeXML(data.silver)+"</silver>");
       ps.println("   <sprouts>"+Utils.escapeXML(data.sprouts)+"</sprouts>");
-      ps.println("   <recruits>"+Utils.escapeXML(data.recruits)+"</recruits>");
       ps.println("   <peasants>"+Utils.escapeXML(data.peasants)+"</peasants>");
       ps.println("   <iron>"+Utils.escapeXML(data.iron)+"</iron>");
       ps.println("   <laen>"+Utils.escapeXML(data.laen)+"</laen>");
@@ -208,7 +205,6 @@ public class RegionStatistics {
     public int trees;
     public int silver;
     public int sprouts;
-    public int recruits;
     public int peasants;
     public int iron;
     public int laen;

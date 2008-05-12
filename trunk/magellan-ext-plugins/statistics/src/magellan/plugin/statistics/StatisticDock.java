@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -85,8 +86,10 @@ public class StatisticDock extends JPanel implements SelectionListener {
     
     client.getDispatcher().addSelectionListener(this);
     
-    waitLabel = new JLabel(Resources.get("statisticsplugin.dock.wait"));
-    waitLabel.setHorizontalAlignment(JLabel.HORIZONTAL);
+    ImageIcon wait = client.getMagellanContext().getImageFactory().loadImageIcon("wait30trans");
+    
+    waitLabel = new JLabel(Resources.get("statisticsplugin.dock.wait"),wait,JLabel.HORIZONTAL);
+    
     notImplementedLavel = new JLabel(Resources.get("statisticsplugin.dock.notimplemented"));
     notImplementedLavel.setHorizontalAlignment(JLabel.HORIZONTAL);
     
@@ -365,6 +368,14 @@ class UnitTableModel extends AbstractTableModel {
   public String getColumnName(int col) {
     return columnNames.get(col);
   }
+  
+  /**
+   * @see javax.swing.table.AbstractTableModel#getColumnClass(int)
+   */
+  @Override
+  public Class<?> getColumnClass(int c) {
+    return getValueAt(0, c).getClass();
+  }
 }
 
 /**
@@ -385,7 +396,6 @@ class RegionTableModel extends AbstractTableModel {
     columnNames.add(Resources.get("statisticsplugin.region.name"));
     columnNames.add(Resources.get("statisticsplugin.region.type"));
     columnNames.add(Resources.get("statisticsplugin.region.peasants"));
-    columnNames.add(Resources.get("statisticsplugin.region.recruits"));
     columnNames.add(Resources.get("statisticsplugin.region.maxRecruits"));
     columnNames.add(Resources.get("statisticsplugin.region.silver"));
     columnNames.add(Resources.get("statisticsplugin.region.maxEntertain"));
@@ -434,16 +444,15 @@ class RegionTableModel extends AbstractTableModel {
       case 1: return data.name;
       case 2: return data.type;
       case 3: return data.peasants;
-      case 4: return data.recruits;
-      case 5: return data.maxRecruits;
-      case 6: return data.silver;
-      case 7: return data.maxEntertain;
-      case 8: return data.maxLuxuries;
-      case 9: return data.trees;
-      case 10: return data.sprouts;
-      case 11: return data.stones;
-      case 12: return data.iron;
-      case 13: return data.laen;
+      case 4: return data.maxRecruits;
+      case 5: return data.silver;
+      case 6: return data.maxEntertain;
+      case 7: return data.maxLuxuries;
+      case 8: return data.trees;
+      case 9: return data.sprouts;
+      case 10: return data.stones;
+      case 11: return data.iron;
+      case 12: return data.laen;
       default: {
         String columnName = getColumnName(columnIndex);
         if (data.prices.containsKey(columnName)) return data.prices.get(columnName);
@@ -459,6 +468,14 @@ class RegionTableModel extends AbstractTableModel {
   @Override
   public String getColumnName(int col) {
     return columnNames.get(col);
+  }
+  
+  /**
+   * @see javax.swing.table.AbstractTableModel#getColumnClass(int)
+   */
+  @Override
+  public Class<?> getColumnClass(int c) {
+    return getValueAt(0, c).getClass();
   }
 }
 
@@ -534,5 +551,13 @@ class FactionTableModel extends AbstractTableModel {
   @Override
   public String getColumnName(int col) {
     return columnNames.get(col);
+  }
+  
+  /**
+   * @see javax.swing.table.AbstractTableModel#getColumnClass(int)
+   */
+  @Override
+  public Class<?> getColumnClass(int c) {
+    return getValueAt(0, c).getClass();
   }
 }
