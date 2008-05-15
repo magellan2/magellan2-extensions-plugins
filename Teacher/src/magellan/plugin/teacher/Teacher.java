@@ -707,7 +707,7 @@ public class Teacher {
 	 */
 	public void parse() {
 		for (Unit u : units) {
-			SUnit su = parseUnit(u, namespace, true);
+			parseUnit(u, namespace, true);
 		}
 	}
 
