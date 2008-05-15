@@ -61,7 +61,7 @@ import magellan.plugin.statistics.data.UnitStatistics.UnitStatisticsData;
  * @author Thoralf Rickert.
  * @version 1.0, 03.05.2008
  */
-public class StatisticDock extends JPanel implements SelectionListener {
+public class StatisticDock extends JPanel implements SelectionListener<Object> {
   private static Logger log = Logger.getInstance(StatisticDock.class);
   protected StatisticsPlugIn plugin = null;
   protected JTabbedPane tabbedPane = null;
@@ -101,7 +101,7 @@ public class StatisticDock extends JPanel implements SelectionListener {
   /**
    * @see magellan.client.event.SelectionListener#selectionChanged(magellan.client.event.SelectionEvent)
    */
-  public void selectionChanged(SelectionEvent e) {
+  public void selectionChanged(SelectionEvent<Object> e) {
     Object o = e.getActiveObject();
     
     if (o == null) return;
