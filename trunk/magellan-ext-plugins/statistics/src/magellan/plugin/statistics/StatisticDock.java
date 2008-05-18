@@ -24,6 +24,7 @@
 package magellan.plugin.statistics;
 
 import java.awt.BorderLayout;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,13 +56,18 @@ import magellan.plugin.statistics.data.FactionStatistics.FactionStatisticsData;
 import magellan.plugin.statistics.data.RegionStatistics.RegionStatisticsData;
 import magellan.plugin.statistics.data.UnitStatistics.UnitStatisticsData;
 
+import net.infonode.docking.DockingWindow;
+import net.infonode.docking.DockingWindowListener;
+import net.infonode.docking.OperationAbortedException;
+import net.infonode.docking.View;
+
 /**
  * This is the dock that represents the statistic data.
  *
  * @author Thoralf Rickert.
  * @version 1.0, 03.05.2008
  */
-public class StatisticDock extends JPanel implements SelectionListener<Object> {
+public class StatisticDock extends JPanel implements SelectionListener<Object>, DockingWindowListener {
   private static Logger log = Logger.getInstance(StatisticDock.class);
   protected StatisticsPlugIn plugin = null;
   protected JTabbedPane tabbedPane = null;
@@ -76,6 +82,8 @@ public class StatisticDock extends JPanel implements SelectionListener<Object> {
   protected Object activeObject = null;
   protected JLabel waitLabel = null;
   protected JLabel notImplementedLavel = null;
+  
+  protected boolean isShown = false;
 
   /**
    * 
@@ -114,11 +122,25 @@ public class StatisticDock extends JPanel implements SelectionListener<Object> {
     
     activeObject = o;
     
-    if (o instanceof Unit || o instanceof Region || o instanceof Faction || o instanceof Building || o instanceof Ship) {
+    if (!isShown) return;
+    refresh();
+  }
+  
+  /**
+   * Refreshes the GUI.
+   */
+  protected void refresh() {
+    if (activeObject == null) return;
+    
+    if (activeObject instanceof Unit 
+        || activeObject instanceof Region 
+        || activeObject instanceof Faction 
+        || activeObject instanceof Building 
+        || activeObject instanceof Ship) {
       removeAll();
       add(waitLabel,BorderLayout.CENTER);
       repaint();
-      StatisticDockSelectionChangedThread thread = new StatisticDockSelectionChangedThread(e.getActiveObject());
+      StatisticDockSelectionChangedThread thread = new StatisticDockSelectionChangedThread(activeObject);
       thread.start();
     }
   }
@@ -277,6 +299,116 @@ public class StatisticDock extends JPanel implements SelectionListener<Object> {
     add(notImplementedLavel,BorderLayout.CENTER);
     repaint();
   }
+
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#viewFocusChanged(net.infonode.docking.View, net.infonode.docking.View)
+   */
+  public void viewFocusChanged(View arg0, View arg1) {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowAdded(net.infonode.docking.DockingWindow, net.infonode.docking.DockingWindow)
+   */
+  public void windowAdded(DockingWindow arg0, DockingWindow arg1) {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowClosed(net.infonode.docking.DockingWindow)
+   */
+  public void windowClosed(DockingWindow arg0) {
+    log.info("Closing dock...");
+    this.isShown=false;
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowClosing(net.infonode.docking.DockingWindow)
+   */
+  public void windowClosing(DockingWindow arg0) throws OperationAbortedException {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowDocked(net.infonode.docking.DockingWindow)
+   */
+  public void windowDocked(DockingWindow arg0) {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowDocking(net.infonode.docking.DockingWindow)
+   */
+  public void windowDocking(DockingWindow arg0) throws OperationAbortedException {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowHidden(net.infonode.docking.DockingWindow)
+   */
+  public void windowHidden(DockingWindow arg0) {
+    log.info("Hidding dock...");
+    this.isShown=false;
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowMaximized(net.infonode.docking.DockingWindow)
+   */
+  public void windowMaximized(DockingWindow arg0) {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowMaximizing(net.infonode.docking.DockingWindow)
+   */
+  public void windowMaximizing(DockingWindow arg0) throws OperationAbortedException {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowMinimized(net.infonode.docking.DockingWindow)
+   */
+  public void windowMinimized(DockingWindow arg0) {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowMinimizing(net.infonode.docking.DockingWindow)
+   */
+  public void windowMinimizing(DockingWindow arg0) throws OperationAbortedException {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowRemoved(net.infonode.docking.DockingWindow, net.infonode.docking.DockingWindow)
+   */
+  public void windowRemoved(DockingWindow arg0, DockingWindow arg1) {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowRestored(net.infonode.docking.DockingWindow)
+   */
+  public void windowRestored(DockingWindow arg0) {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowRestoring(net.infonode.docking.DockingWindow)
+   */
+  public void windowRestoring(DockingWindow arg0) throws OperationAbortedException {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowShown(net.infonode.docking.DockingWindow)
+   */
+  public void windowShown(DockingWindow arg0) {
+    log.info("Showing dock...");
+    this.isShown=true;
+    refresh();
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowUndocked(net.infonode.docking.DockingWindow)
+   */
+  public void windowUndocked(DockingWindow arg0) {
+  }
+
+  /**
+   * @see net.infonode.docking.DockingWindowListener#windowUndocking(net.infonode.docking.DockingWindow)
+   */
+  public void windowUndocking(DockingWindow arg0) throws OperationAbortedException {
+  }
 }
 
 /**
@@ -344,13 +476,13 @@ class UnitTableModel extends AbstractTableModel {
     UnitStatisticsData data = statistics.turnData.get(turn);
     switch (columnIndex) {
       case 0: return turn;
-      case 1: return data.name;
+      case 1: if (data.name != null)     return data.name;  else return "";
       case 2: return data.region;
       case 3: return data.persons;
-      case 4: return data.ship;
-      case 5: return data.building;
-      case 6: return data.race;
-      case 7: return data.weight;
+      case 4: if (data.ship != null)     return data.ship; else return "";
+      case 5: if (data.building != null) return data.building; else return "";
+      case 6: if (data.race != null)     return data.race; else return "";
+      case 7: return new BigDecimal((double)(data.weight / 100)).setScale(2);
       default: {
         String columnName = getColumnName(columnIndex);
         if (data.skills.containsKey(columnName)) return data.skills.get(columnName);
@@ -358,7 +490,7 @@ class UnitTableModel extends AbstractTableModel {
       }
     }
     
-    return null;
+    return "";
   }
   
   /**
@@ -374,6 +506,8 @@ class UnitTableModel extends AbstractTableModel {
    */
   @Override
   public Class<?> getColumnClass(int c) {
+    Object o = getValueAt(0, c);
+    if (o == null) return null;
     return getValueAt(0, c).getClass();
   }
 }
@@ -459,7 +593,7 @@ class RegionTableModel extends AbstractTableModel {
       }
     }
     
-    return null;
+    return "";
   }
   
   /**
@@ -475,6 +609,8 @@ class RegionTableModel extends AbstractTableModel {
    */
   @Override
   public Class<?> getColumnClass(int c) {
+    Object o = getValueAt(0, c);
+    if (o == null) return null;
     return getValueAt(0, c).getClass();
   }
 }
@@ -542,7 +678,7 @@ class FactionTableModel extends AbstractTableModel {
       case 7: return data.averageScore;
     }
     
-    return null;
+    return "";
   }
   
   /**
@@ -558,6 +694,8 @@ class FactionTableModel extends AbstractTableModel {
    */
   @Override
   public Class<?> getColumnClass(int c) {
+    Object o = getValueAt(0, c);
+    if (o == null) return null;
     return getValueAt(0, c).getClass();
   }
 }

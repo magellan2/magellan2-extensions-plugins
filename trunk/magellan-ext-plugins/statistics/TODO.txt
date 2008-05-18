@@ -1,0 +1,8 @@
+
+TODO:
+ - Speichern Dialog für Grafiken und Tabellendaten
+ + schnelleres Initialisieren (irgendwie)
+ - externes Tool zum Generieren von Statistiken auf Basis mehrerer Datensätze 
+ - Statistiken für Schiffe und Gebäude
+ - mehr Statistiken für Einheiten und Regionen (auftrennen)
+ + im Fehlerfall die Originaldatei nicht überschreiben (Backups machen)
