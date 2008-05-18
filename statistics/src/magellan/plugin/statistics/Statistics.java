@@ -28,6 +28,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +50,7 @@ import magellan.library.GameData;
 import magellan.library.Region;
 import magellan.library.Ship;
 import magellan.library.Unit;
+import magellan.library.io.file.FileBackup;
 import magellan.library.utils.Utils;
 import magellan.library.utils.logging.Logger;
 import magellan.plugin.statistics.data.BuildingStatistics;
@@ -241,6 +243,18 @@ public class Statistics {
    */
   public void save() {
     try {
+      log.info("Creating Backupfile: "+statFile);
+      
+      if(statFile.exists() && statFile.canWrite()) {
+        // create backup file
+        try {
+          File backup = FileBackup.create(statFile);
+          log.info("Created backupfile " + backup);
+        } catch(IOException ie) {
+          log.warn("Could not create backupfile for file " + statFile);
+        }
+      } 
+      
       log.info("Writing Statistics File: "+statFile);
       FileOutputStream fos = new FileOutputStream(statFile);
       fos.write('B');
