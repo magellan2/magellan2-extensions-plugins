@@ -1,0 +1,401 @@
+<?xml version="1.0"?>
+<!DOCTYPE database SYSTEM "http://db.apache.org/torque/dtd/database_3_2.dtd">
+<database name="statistics">
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *       This table contains informations about statistics.          * -->
+  <!-- *       This is the entry point to all statistic data.              * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="report" javaName="Report" description="Contains informations about a computer reports">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="filename"     javaName="Filename"    required="true" type="VARCHAR" size="1024" description="This is the filename of the report"/>
+    
+    <unique>
+      <unique-column name="filename"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+
+
+
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *      Contains informations about turn specific building data      * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="building_statistics_data" javaName="BuildingStatisticsData" description="Contains informations about turn specific building data">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="building_id"  javaName="BuildingId"  required="true" type="BIGINT"             description="This is the building"/>
+    <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the building"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the building"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the building"/>
+    <column name="size"         javaName="Size"                        type="INTEGER"            description="The turn bases size of the building"/>
+    <column name="owner"        javaName="Owner"                       type="VARCHAR" size="20"  description="The turn bases owner of the building"/>
+    <column name="inmates"      javaName="Inmates"                     type="INTEGER"            description="The turn bases number of inmates of the building"/>
+    
+    <foreign-key foreignTable="building_statistics"><reference local="building_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="building_id"/>
+      <unique-column name="turn"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *       This table contains informations about buildings.           * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="building_statistics" javaName="BuildingStatistics" description="Contains informations about buildings">
+    <column name="id"              javaName="ID"             required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="report_id"       javaName="ReportId"       required="true" type="BIGINT" description="This is the report"/>
+    <column name="building_number" javaName="BuildingNumber" required="true" type="VARCHAR" size="20" description="The unique id of the building"/>
+    <column name="type"            javaName="Type"           required="true" type="VARCHAR" size="50" description="The type of the building"/>
+    
+    <foreign-key foreignTable="report"><reference local="report_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="report_id"/>
+      <unique-column name="building_number"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+
+
+
+
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *      Contains informations about turn specific faction data       * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="faction_statistics_data" javaName="FactionStatisticsData" description="Contains informations about turn specific faction data">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="faction_id"   javaName="FactionId"   required="true" type="BIGINT"             description="This is the faction"/>
+    <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the faction"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the faction"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the faction"/>
+    <column name="persons"      javaName="Persons"                     type="INTEGER"            description="The turn bases number of persons in the faction"/>
+    <column name="units"        javaName="Units"                       type="INTEGER"            description="The turn bases number of units in the faction"/>
+    <column name="race"         javaName="Race"                        type="VARCHAR" size="50"  description="The turn bases race of the faction"/>
+    <column name="heroes"       javaName="Heroes"                      type="INTEGER"            description="The turn bases number of heroes of the faction"/>
+    <column name="max_heroes"   javaName="MaxHeroes"                   type="INTEGER"            description="The turn bases number of max heroes of the faction"/>
+    <column name="max_migrants" javaName="MaxMigrants"                 type="INTEGER"            description="The turn bases number of max migrants of the faction"/>
+    <column name="average_score" javaName="AverageScore"               type="INTEGER"            description="The turn bases number of average score of the faction"/>
+    <column name="score"        javaName="Score"                       type="INTEGER"            description="The turn bases number of score of the faction"/>
+    
+    <foreign-key foreignTable="faction_statistics"><reference local="faction_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="faction_id"/>
+      <unique-column name="turn"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *       This table contains informations about factions.            * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="faction_statistics" javaName="FactionStatistics" description="Contains informations about factions">
+    <column name="id"              javaName="ID"             required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="report_id"       javaName="ReportId"       required="true" type="BIGINT" description="This is the report"/>
+    <column name="faction_number"  javaName="FactionNumber"  required="true" type="VARCHAR" size="20" description="The unique id of the faction"/>
+    
+    <foreign-key foreignTable="report"><reference local="report_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="report_id"/>
+      <unique-column name="faction_number"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+
+
+
+
+
+
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *        Contains informations about turn specific ship data        * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="ship_statistics_data" javaName="ShipStatisticsData" description="Contains informations about turn specific ship data">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="ship_id"      javaName="ShipId"      required="true" type="BIGINT"             description="This is the ship"/>
+    <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the ship"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the ship"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the ship"/>
+    <column name="size"         javaName="Size"                        type="INTEGER"            description="The turn bases size of the ship"/>
+    <column name="owner"        javaName="Owner"                       type="VARCHAR" size="20"  description="The turn bases owner of the ship"/>
+    <column name="region"       javaName="Region"                      type="VARCHAR" size="20"  description="The turn bases position of the ship"/>
+    <column name="passengers"   javaName="passengers"                  type="INTEGER"            description="The turn bases number of passengers of the ship"/>
+    <column name="max_cargo"    javaName="MaxCargo"                    type="INTEGER"            description="The turn bases max cargo of the ship"/>
+    <column name="cargo"        javaName="Cargo"                       type="INTEGER"            description="The turn bases cargo of the ship"/>
+    <column name="capacity"     javaName="Capacity"                    type="INTEGER"            description="The turn bases capacity of the ship"/>
+    <column name="damage_ratio" javaName="DamageRatio"                 type="INTEGER"            description="The turn bases damage ratio of the ship"/>
+    
+    <foreign-key foreignTable="ship_statistics"><reference local="ship_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="ship_id"/>
+      <unique-column name="turn"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *         This table contains informations about ships.             * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="ship_statistics" javaName="ShipStatistics" description="Contains informations about ships">
+    <column name="id"              javaName="ID"             required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="report_id"       javaName="ReportId"       required="true" type="BIGINT" description="This is the report"/>
+    <column name="ship_number"     javaName="ShipNumber"     required="true" type="VARCHAR" size="20" description="The unique id of the ship"/>
+    <column name="type"            javaName="Type"           required="true" type="VARCHAR" size="50" description="The type of the ship"/>
+    
+    <foreign-key foreignTable="report"><reference local="report_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="report_id"/>
+      <unique-column name="ship_number"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+
+
+
+
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *       Contains informations about turn specific region data       * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="region_statistics_data" javaName="RegionStatisticsData" description="Contains informations about turn specific region data">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="region_id"    javaName="RegionId"    required="true" type="BIGINT"             description="This is the region"/>
+    <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the region"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the region"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the region"/>
+    <column name="max_recruits" javaName="MaxRecruits"                 type="INTEGER"            description="The turn bases max number of recruits in the region"/>
+    <column name="max_luxuries" javaName="MaxLuxuries"                 type="INTEGER"            description="The turn bases max number of buyable luxuries in the region"/>
+    <column name="max_entertain" javaName="MaxEntertain"               type="INTEGER"            description="The turn bases max entertainment silber in the region"/>
+    <column name="stones"       javaName="Stones"                      type="INTEGER"            description="The turn bases number of stones in the region"/>
+    <column name="trees"        javaName="Trees"                       type="INTEGER"            description="The turn bases number of trees in the region"/>
+    <column name="sprouts"      javaName="Sprouts"                     type="INTEGER"            description="The turn bases number of sprouts in the region"/>
+    <column name="silver"       javaName="Silver"                      type="INTEGER"            description="The turn bases silver in the region"/>
+    <column name="peasants"     javaName="Peasants"                    type="INTEGER"            description="The turn bases number of peasants in the region"/>
+    <column name="inhabitants"  javaName="Inhabitants"                 type="INTEGER"            description="The turn bases number of inhabitants in the region"/>
+    <column name="iron"         javaName="Iron"                        type="INTEGER"            description="The turn bases number of iron in the region"/>
+    <column name="laen"         javaName="Laen"                        type="INTEGER"            description="The turn bases number of laen in the region"/>
+    <column name="herb"         javaName="Herb"                        type="VARCHAR" size="50"  description="The turn bases herb in the region"/>
+    
+    <foreign-key foreignTable="region_statistics"><reference local="region_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="region_id"/>
+      <unique-column name="turn"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *       Contains informations about turn specific region data       * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="region_statistics_ship_data" javaName="RegionStatisticsShipData" description="Contains informations about turn specific region ship data">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="turn_id"      javaName="TurnId"      required="true" type="BIGINT"             description="The statistic id"/>
+    <column name="ship_number"  javaName="ShipNumber"  required="true" type="VARCHAR" size="50"  description="The turn bases ship in the region"/>
+    
+    <foreign-key foreignTable="region_statistics_data"><reference local="turn_id" foreign="id"/></foreign-key>
+
+    <unique>
+      <unique-column name="turn_id"/>
+      <unique-column name="ship_number"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+  
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *       Contains informations about turn specific region data       * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="region_statistics_prices_data" javaName="RegionStatisticsPricesData" description="Contains informations about turn specific region prices">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="turn_id"      javaName="TurnId"      required="true" type="BIGINT"             description="The statistic id"/>
+    <column name="region_id"    javaName="RegionId"    required="true" type="BIGINT"             description="This is the region"/>
+    <column name="luxury_item"  javaName="LuxuryItem"  required="true" type="VARCHAR" size="50"  description="The name of the luxury item"/>
+    <column name="price"        javaName="Price"       required="true" type="INTEGER"            description="The turn bases price of the luxury item in the region"/>
+    
+    <foreign-key foreignTable="region_statistics_data"><reference local="turn_id" foreign="id"/></foreign-key>
+    <foreign-key foreignTable="region_statistics"><reference local="region_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="turn_id"/>
+      <unique-column name="luxury_item"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+  
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *       Contains informations about turn specific region data       * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="region_statistics_resources_data" javaName="RegionStatisticsResourcesData" description="Contains informations about turn specific region resources">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="turn_id"      javaName="TurnId"      required="true" type="BIGINT"             description="The statistic id"/>
+    <column name="region_id"    javaName="RegionId"    required="true" type="BIGINT"             description="This is the region"/>
+    <column name="item_type"    javaName="ItemType"    required="true" type="VARCHAR" size="50"  description="The name of the item type"/>
+    <column name="skill_level"  javaName="SkillLevel"  required="true" type="INTEGER"            description="The turn bases skill level of the item in the region"/>
+    <column name="amount"       javaName="Amount"      required="true" type="INTEGER"            description="The turn bases amount of the item in the region"/>
+    
+    <foreign-key foreignTable="region_statistics_data"><reference local="turn_id" foreign="id"/></foreign-key>
+    <foreign-key foreignTable="region_statistics"><reference local="region_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="turn_id"/>
+      <unique-column name="item_type"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+  
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *        This table contains informations about regions.            * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="region_statistics" javaName="RegionStatistics" description="Contains informations about regions">
+    <column name="id"              javaName="ID"             required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="report_id"       javaName="ReportId"       required="true" type="BIGINT" description="This is the report"/>
+    <column name="region_number"   javaName="RegionNumber"   required="true" type="VARCHAR" size="20" description="The unique id of the region"/>
+    
+    <foreign-key foreignTable="report"><reference local="report_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="report_id"/>
+      <unique-column name="region_number"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+
+
+
+
+
+
+
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *        Contains informations about turn specific unit data        * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="unit_statistics_data" javaName="UnitStatisticsData" description="Contains informations about turn specific unit data">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="unit_id"      javaName="unitId"      required="true" type="BIGINT"             description="This is the unit"/>
+    <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the unit"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the unit"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the unit"/>
+    <column name="persons"      javaName="Persons"                     type="INTEGER"            description="The turn bases number of persons in the unit"/>
+    <column name="faction"      javaName="Faction"                     type="VARCHAR" size="20"  description="The turn bases faction of the unit"/>
+    <column name="region"       javaName="Region"                      type="VARCHAR" size="20"  description="The turn bases position of the unit"/>
+    <column name="building"     javaName="Building"                    type="VARCHAR" size="20"  description="The turn bases building of the unit"/>
+    <column name="ship"         javaName="Ship"                        type="VARCHAR" size="20"  description="The turn bases ship of the unit"/>
+    <column name="race"         javaName="Race"                        type="VARCHAR" size="50"  description="The turn bases race of the unit"/>
+    <column name="weight"       javaName="Weight"                      type="INTEGER"            description="The turn bases weight of the unit"/>
+    <column name="aura"         javaName="Aura"                        type="INTEGER"            description="The turn bases auro of the unit"/>
+    <column name="health"       javaName="Health"                      type="VARCHAR" size="20"  description="The turn bases health of the unit"/>
+    <column name="hero"         javaName="Hero"                        type="BOOLEANINT"         description="The turn bases hero of the unit"/>
+    <column name="guard"        javaName="Guard"                       type="INTEGER"            description="The turn bases guard of the unit"/>
+    
+    public Map<String,Integer> skills = new HashMap<String,Integer>();
+    public Map<String,Integer> items = new HashMap<String,Integer>();
+
+    <foreign-key foreignTable="unit_statistics"><reference local="unit_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="unit_id"/>
+      <unique-column name="turn"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+  
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *        Contains informations about turn specific unit data        * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="unit_statistics_skill_data" javaName="UnitStatisticsSkillData" description="Contains informations about turn specific unit skills">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="turn_id"      javaName="TurnId"      required="true" type="BIGINT"             description="The statistic id"/>
+    <column name="unit_id"      javaName="UnitId"      required="true" type="BIGINT"             description="This is the region"/>
+    <column name="skill"        javaName="Skill"       required="true" type="VARCHAR" size="50"  description="The name of the skill"/>
+    <column name="level"        javaName="Level"       required="true" type="INTEGER"            description="The turn bases level of the skill"/>
+    
+    <foreign-key foreignTable="unit_statistics_data"><reference local="turn_id" foreign="id"/></foreign-key>
+    <foreign-key foreignTable="unit_statistics"><reference local="unit_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="turn_id"/>
+      <unique-column name="luxury_item"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+  
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *        Contains informations about turn specific unit data        * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="unit_statistics_item_data" javaName="UnitStatisticsItemData" description="Contains informations about turn specific unit items">
+    <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="turn_id"      javaName="TurnId"      required="true" type="BIGINT"             description="The statistic id"/>
+    <column name="unit_id"      javaName="UnitId"      required="true" type="BIGINT"             description="This is the region"/>
+    <column name="item_type"    javaName="item_type"   required="true" type="VARCHAR" size="50"  description="The name of the item"/>
+    <column name="amount"       javaName="Amount"      required="true" type="INTEGER"            description="The turn bases amount of the item"/>
+    
+    <foreign-key foreignTable="unit_statistics_data"><reference local="turn_id" foreign="id"/></foreign-key>
+    <foreign-key foreignTable="unit_statistics"><reference local="unit_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="turn_id"/>
+      <unique-column name="luxury_item"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+  
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *         This table contains informations about units.             * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
+  <table name="unit_statistics" javaName="UnitStatistics" description="Contains informations about units">
+    <column name="id"              javaName="ID"             required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
+    <column name="report_id"       javaName="ReportId"       required="true" type="BIGINT" description="This is the report"/>
+    <column name="unit_number"     javaName="UnitNumber"     required="true" type="VARCHAR" size="20" description="The unique id of the unit"/>
+    
+    <foreign-key foreignTable="report"><reference local="report_id" foreign="id"/></foreign-key>
+    
+    <unique>
+      <unique-column name="report_id"/>
+      <unique-column name="unit_number"/>
+    </unique>
+  </table>
+  <!-- ********************************************************************* -->
+
+
+
+</database>
