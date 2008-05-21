@@ -280,6 +280,10 @@ public class Statistics {
         unit.save(ps);
       }
       ps.println("</statistics>");
+      ps.flush();
+      bos.flush();
+      zos.flush();
+      fos.flush();
       ps.close();
       bos.close();
       zos.close();
