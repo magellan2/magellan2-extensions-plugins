@@ -321,9 +321,6 @@
     <column name="hero"         javaName="Hero"                        type="BOOLEANINT"         description="The turn bases hero of the unit"/>
     <column name="guard"        javaName="Guard"                       type="INTEGER"            description="The turn bases guard of the unit"/>
     
-    public Map<String,Integer> skills = new HashMap<String,Integer>();
-    public Map<String,Integer> items = new HashMap<String,Integer>();
-
     <foreign-key foreignTable="unit_statistics"><reference local="unit_id" foreign="id"/></foreign-key>
     
     <unique>

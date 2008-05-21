@@ -12,5 +12,20 @@
 	<classpathentry kind="lib" path="/Magellan2/lib/idw-gpl.jar" sourcepath="C:/Users/thoralf/Downloads/infonode docking framework/idw-gpl-1.5.0-src.zip"/>
 	<classpathentry kind="lib" path="lib/derby.jar"/>
 	<classpathentry kind="lib" path="lib/derbytools.jar"/>
+	<classpathentry kind="lib" path="lib/avalon-framework-api-4.3.jar"/>
+	<classpathentry kind="lib" path="lib/avalon-logkit-2.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-beanutils-core-1.7.0.jar"/>
+	<classpathentry kind="lib" path="lib/commons-collections-3.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-configuration-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/commons-dbcp-1.2.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.3.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-pool-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/concurrent-1.3.4.jar"/>
+	<classpathentry kind="lib" path="lib/jcs-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/torque-3.3.jar"/>
+	<classpathentry kind="lib" path="lib/village-3.3.jar"/>
+	<classpathentry kind="lib" path="lib/xercesImpl-2.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/xml-apis-2.0.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
