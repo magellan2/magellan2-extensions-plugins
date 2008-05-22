@@ -23,8 +23,13 @@
 // 
 package magellan.plugin.statistics.db;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.LineNumberReader;
+import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.Properties;
 
@@ -32,6 +37,7 @@ import magellan.plugin.statistics.torque.Report;
 import magellan.plugin.statistics.torque.ReportPeer;
 
 import org.apache.torque.Torque;
+import org.apache.torque.util.BasePeer;
 import org.apache.torque.util.Criteria;
 
 public class DerbyConnector {
@@ -59,9 +65,10 @@ public class DerbyConnector {
       
       // create database
       System.out.println("Create database");
-      Class.forName(DATABASE_DRIVER).newInstance();
-      connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
-      connection.close();
+//      Class.forName(DATABASE_DRIVER).newInstance();
+//      connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
+//      createDatabase(connection);
+//      connection.close();
       
       // initialize torque
       System.out.println("Initializing persistance layer");
@@ -107,6 +114,45 @@ public class DerbyConnector {
     }
   }
   
+  
+  public boolean createDatabase(Connection connection) {
+    try {
+      System.out.println("Creating database structure");
+      FileReader fr = new FileReader("torque/schema/statistics-schema.sql");
+      BufferedReader br = new BufferedReader(fr);
+      LineNumberReader reader = new LineNumberReader(br);
+      StringBuffer buffer = new StringBuffer();
+      String line = null;
+      while ((line = reader.readLine()) != null) {
+        if (line.startsWith("--")) continue;
+        if (line.trim().endsWith(";")) {
+          line = line.trim();
+          line = line.substring(0,line.length()-1);
+          buffer.append(line);
+          
+          String sql = buffer.toString();
+          System.out.println("'"+sql+"'");
+          
+          buffer = new StringBuffer();
+          
+          
+//          PreparedStatement statement = connection.prepareStatement(sql);
+//          statement.execute();
+        } else {
+          buffer.append(line).append("\r\n");
+        }
+      }
+      
+      reader.close();
+      br.close();
+      fr.close();
+      
+      return true;
+    } catch (Exception exception) {
+      exception.printStackTrace(System.err);
+      return false;
+    }
+  }
   
   public static void main(String[] args) {
     DerbyConnector connector = DerbyConnector.getInstance();
