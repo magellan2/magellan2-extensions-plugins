@@ -25,7 +25,14 @@ package magellan.plugin.statistics.db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.List;
 import java.util.Properties;
+
+import magellan.plugin.statistics.torque.Report;
+import magellan.plugin.statistics.torque.ReportPeer;
+
+import org.apache.torque.Torque;
+import org.apache.torque.util.Criteria;
 
 public class DerbyConnector {
   protected static final String DATABASE_DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
@@ -50,9 +57,31 @@ public class DerbyConnector {
       properties.put("password", DATABASE_PWD);
       //properties.put("derby.system.home", value);
       
+      // create database
+      System.out.println("Create database");
       Class.forName(DATABASE_DRIVER).newInstance();
       connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
       connection.close();
+      
+      // initialize torque
+      System.out.println("Initializing persistance layer");
+      Torque.init("torque.properties");
+      connection = Torque.getConnection();
+      if (connection != null) {
+        System.out.println("Database connection established");
+        connection.close();
+      } else {
+        System.out.println("ERROR: no database connection availabe");
+        return;
+      }
+      
+      
+      List<Report> reports = ReportPeer.doSelect(new Criteria());
+      System.out.println(reports);
+      
+      Report report = new Report();
+      report.setFilename("Test");
+      report.save();
       
       initialized = true;
     } catch (Exception exception) {
@@ -70,6 +99,8 @@ public class DerbyConnector {
   
   public void shutdown() {
     try {
+      System.out.println("Shutting down database connections");
+      if (Torque.isInit()) Torque.shutdown();
       DriverManager.getConnection("jdbc:derby:;shutdown=true");
     } catch (Exception exception) {
       exception.printStackTrace(System.err);
@@ -79,5 +110,6 @@ public class DerbyConnector {
   
   public static void main(String[] args) {
     DerbyConnector connector = DerbyConnector.getInstance();
+    connector.shutdown();
   }
 }
