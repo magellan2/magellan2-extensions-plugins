@@ -5,7 +5,7 @@ drop table report;
 
 CREATE TABLE report
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     filename VARCHAR(1024) NOT NULL,
     PRIMARY KEY(id),
     UNIQUE (filename));
@@ -17,7 +17,7 @@ drop table building_statistics_data;
 
 CREATE TABLE building_statistics_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     building_id BIGINT NOT NULL,
     turn INTEGER NOT NULL,
     name VARCHAR(50),
@@ -35,7 +35,7 @@ drop table building_statistics;
 
 CREATE TABLE building_statistics
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     report_id BIGINT NOT NULL,
     building_number VARCHAR(20) NOT NULL,
     type VARCHAR(50) NOT NULL,
@@ -49,7 +49,7 @@ drop table faction_statistics_data;
 
 CREATE TABLE faction_statistics_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     faction_id BIGINT NOT NULL,
     turn INTEGER NOT NULL,
     name VARCHAR(50),
@@ -72,7 +72,7 @@ drop table faction_statistics;
 
 CREATE TABLE faction_statistics
 (
-    id BIGINT NOT NULL,
+    id NOT NULL GENERATED ALWAYS AS IDENTITY BIGINT ,
     report_id BIGINT NOT NULL,
     faction_number VARCHAR(20) NOT NULL,
     PRIMARY KEY(id),
@@ -85,7 +85,7 @@ drop table ship_statistics_data;
 
 CREATE TABLE ship_statistics_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     ship_id BIGINT NOT NULL,
     turn INTEGER NOT NULL,
     name VARCHAR(50),
@@ -108,7 +108,7 @@ drop table ship_statistics;
 
 CREATE TABLE ship_statistics
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     report_id BIGINT NOT NULL,
     ship_number VARCHAR(20) NOT NULL,
     type VARCHAR(50) NOT NULL,
@@ -122,7 +122,7 @@ drop table region_statistics_data;
 
 CREATE TABLE region_statistics_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     region_id BIGINT NOT NULL,
     turn INTEGER NOT NULL,
     name VARCHAR(50),
@@ -149,7 +149,7 @@ drop table region_statistics_ship_data;
 
 CREATE TABLE region_statistics_ship_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     turn_id BIGINT NOT NULL,
     ship_number VARCHAR(50) NOT NULL,
     PRIMARY KEY(id),
@@ -162,7 +162,7 @@ drop table region_statistics_prices_data;
 
 CREATE TABLE region_statistics_prices_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     turn_id BIGINT NOT NULL,
     region_id BIGINT NOT NULL,
     luxury_item VARCHAR(50) NOT NULL,
@@ -177,7 +177,7 @@ drop table region_statistics_resources_data;
 
 CREATE TABLE region_statistics_resources_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     turn_id BIGINT NOT NULL,
     region_id BIGINT NOT NULL,
     item_type VARCHAR(50) NOT NULL,
@@ -193,7 +193,7 @@ drop table region_statistics;
 
 CREATE TABLE region_statistics
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     report_id BIGINT NOT NULL,
     region_number VARCHAR(20) NOT NULL,
     PRIMARY KEY(id),
@@ -206,7 +206,7 @@ drop table unit_statistics_data;
 
 CREATE TABLE unit_statistics_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     unit_id BIGINT NOT NULL,
     turn INTEGER NOT NULL,
     name VARCHAR(50),
@@ -232,13 +232,13 @@ drop table unit_statistics_skill_data;
 
 CREATE TABLE unit_statistics_skill_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     turn_id BIGINT NOT NULL,
     unit_id BIGINT NOT NULL,
     skill VARCHAR(50) NOT NULL,
     level INTEGER NOT NULL,
     PRIMARY KEY(id),
-    UNIQUE (turn_id, luxury_item));
+    UNIQUE (turn_id, skill));
 
 -----------------------------------------------------------------------------
 -- unit_statistics_item_data
@@ -247,13 +247,13 @@ drop table unit_statistics_item_data;
 
 CREATE TABLE unit_statistics_item_data
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     turn_id BIGINT NOT NULL,
     unit_id BIGINT NOT NULL,
     item_type VARCHAR(50) NOT NULL,
     amount INTEGER NOT NULL,
     PRIMARY KEY(id),
-    UNIQUE (turn_id, luxury_item));
+    UNIQUE (turn_id, item_type));
 
 -----------------------------------------------------------------------------
 -- unit_statistics
@@ -262,7 +262,7 @@ drop table unit_statistics;
 
 CREATE TABLE unit_statistics
 (
-    id BIGINT NOT NULL,
+    id BIGINT NOT NULL GENERATED ALWAYS AS IDENTITY,
     report_id BIGINT NOT NULL,
     unit_number VARCHAR(20) NOT NULL,
     PRIMARY KEY(id),

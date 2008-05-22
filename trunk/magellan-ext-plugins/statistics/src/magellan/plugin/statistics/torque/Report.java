@@ -14,11 +14,5 @@ import org.apache.torque.om.Persistent;
  * application requirements.  This class will only be generated as
  * long as it does not already exist in the output directory.
  */
-public  class Report
-    extends magellan.plugin.statistics.torque.BaseReport
-    implements Persistent
-{
-    /** Serial version */
-    private static final long serialVersionUID = 1211386799035L;
-
+public class Report extends BaseReport implements Persistent {
 }
