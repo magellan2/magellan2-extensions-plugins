@@ -347,7 +347,7 @@
     
     <unique>
       <unique-column name="turn_id"/>
-      <unique-column name="luxury_item"/>
+      <unique-column name="skill"/>
     </unique>
   </table>
   <!-- ********************************************************************* -->
@@ -369,7 +369,7 @@
     
     <unique>
       <unique-column name="turn_id"/>
-      <unique-column name="luxury_item"/>
+      <unique-column name="item_type"/>
     </unique>
   </table>
   <!-- ********************************************************************* -->

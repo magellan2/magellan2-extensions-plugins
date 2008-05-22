@@ -27,5 +27,6 @@
 	<classpathentry kind="lib" path="lib/village-3.3.jar"/>
 	<classpathentry kind="lib" path="lib/xercesImpl-2.6.2.jar"/>
 	<classpathentry kind="lib" path="lib/xml-apis-2.0.2.jar"/>
+	<classpathentry kind="con" path="DERBY_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

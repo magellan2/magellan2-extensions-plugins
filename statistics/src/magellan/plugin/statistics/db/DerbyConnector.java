@@ -30,6 +30,7 @@ import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Properties;
 
@@ -37,7 +38,6 @@ import magellan.plugin.statistics.torque.Report;
 import magellan.plugin.statistics.torque.ReportPeer;
 
 import org.apache.torque.Torque;
-import org.apache.torque.util.BasePeer;
 import org.apache.torque.util.Criteria;
 
 public class DerbyConnector {
@@ -61,14 +61,14 @@ public class DerbyConnector {
       Properties properties = new Properties();
       properties.put("user", DATABASE_USER);
       properties.put("password", DATABASE_PWD);
-      //properties.put("derby.system.home", value);
+      properties.put("derby.system.home", ".");
       
       // create database
       System.out.println("Create database");
-//      Class.forName(DATABASE_DRIVER).newInstance();
-//      connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
-//      createDatabase(connection);
-//      connection.close();
+      Class.forName(DATABASE_DRIVER).newInstance();
+      connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
+      createDatabase(connection);
+      connection.close();
       
       // initialize torque
       System.out.println("Initializing persistance layer");
@@ -87,7 +87,7 @@ public class DerbyConnector {
       System.out.println(reports);
       
       Report report = new Report();
-      report.setFilename("Test");
+      report.setFilename("Test-"+reports.size());
       report.save();
       
       initialized = true;
@@ -107,8 +107,8 @@ public class DerbyConnector {
   public void shutdown() {
     try {
       System.out.println("Shutting down database connections");
-      if (Torque.isInit()) Torque.shutdown();
-      DriverManager.getConnection("jdbc:derby:;shutdown=true");
+  //    if (Torque.isInit()) Torque.shutdown();
+  //    DriverManager.getConnection("jdbc:derby:;shutdown=true");
     } catch (Exception exception) {
       exception.printStackTrace(System.err);
     }
@@ -125,6 +125,7 @@ public class DerbyConnector {
       String line = null;
       while ((line = reader.readLine()) != null) {
         if (line.startsWith("--")) continue;
+     //   if (line.startsWith("drop ")) continue;
         if (line.trim().endsWith(";")) {
           line = line.trim();
           line = line.substring(0,line.length()-1);
@@ -135,9 +136,12 @@ public class DerbyConnector {
           
           buffer = new StringBuffer();
           
-          
-//          PreparedStatement statement = connection.prepareStatement(sql);
-//          statement.execute();
+          try {
+            Statement s = connection.createStatement();
+            s.execute(sql);
+          } catch (Exception exception) {
+            exception.printStackTrace(System.err);
+          }
         } else {
           buffer.append(line).append("\r\n");
         }
