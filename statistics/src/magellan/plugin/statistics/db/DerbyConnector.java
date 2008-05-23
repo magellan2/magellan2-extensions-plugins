@@ -64,11 +64,11 @@ public class DerbyConnector {
       properties.put("derby.system.home", ".");
       
       // create database
-      System.out.println("Create database");
-      Class.forName(DATABASE_DRIVER).newInstance();
-      connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
-      createDatabase(connection);
-      connection.close();
+//      System.out.println("Create database");
+//      Class.forName(DATABASE_DRIVER).newInstance();
+//      connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
+//      createDatabase(connection);
+//      connection.close();
       
       // initialize torque
       System.out.println("Initializing persistance layer");

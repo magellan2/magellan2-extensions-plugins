@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE database SYSTEM "http://db.apache.org/torque/dtd/database_3_2.dtd">
-<database name="statistics">
+<database name="statistics" defaultIdMethod="native">
   <!-- ********************************************************************* -->
   <!-- *                                                                   * -->
   <!-- *       This table contains informations about statistics.          * -->
