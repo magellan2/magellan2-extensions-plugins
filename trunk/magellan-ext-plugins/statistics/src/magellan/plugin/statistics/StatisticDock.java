@@ -26,7 +26,6 @@ package magellan.plugin.statistics;
 import java.awt.BorderLayout;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -49,13 +48,15 @@ import magellan.library.Ship;
 import magellan.library.Unit;
 import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
-import magellan.plugin.statistics.data.FactionStatistics;
-import magellan.plugin.statistics.data.RegionStatistics;
-import magellan.plugin.statistics.data.UnitStatistics;
-import magellan.plugin.statistics.data.FactionStatistics.FactionStatisticsData;
-import magellan.plugin.statistics.data.RegionStatistics.RegionStatisticsData;
-import magellan.plugin.statistics.data.UnitStatistics.UnitStatisticsData;
-
+import magellan.plugin.statistics.torque.FactionStatistics;
+import magellan.plugin.statistics.torque.FactionStatisticsData;
+import magellan.plugin.statistics.torque.RegionStatistics;
+import magellan.plugin.statistics.torque.RegionStatisticsData;
+import magellan.plugin.statistics.torque.RegionStatisticsPricesData;
+import magellan.plugin.statistics.torque.UnitStatistics;
+import magellan.plugin.statistics.torque.UnitStatisticsData;
+import magellan.plugin.statistics.torque.UnitStatisticsItemData;
+import magellan.plugin.statistics.torque.UnitStatisticsSkillData;
 import net.infonode.docking.DockingWindow;
 import net.infonode.docking.DockingWindowListener;
 import net.infonode.docking.OperationAbortedException;
@@ -418,7 +419,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
  * @version 1.0, 11.05.2008
  */
 class UnitTableModel extends AbstractTableModel {
-  protected List<Integer> turns = new ArrayList<Integer>();
+  protected List<UnitStatisticsData> turns = new ArrayList<UnitStatisticsData>();
   protected List<String> columnNames = new ArrayList<String>();
   protected UnitStatistics statistics = null;
   
@@ -436,20 +437,21 @@ class UnitTableModel extends AbstractTableModel {
     
     if (statistics == null) return;
     
-    turns = new ArrayList<Integer>(statistics.turnData.keySet());
-    Collections.sort(turns);
+    turns = statistics.getData();
     
-    for (Integer turn : turns) {
-      UnitStatisticsData data = statistics.turnData.get(turn);
-      for (String skill : data.skills.keySet()) {
-        if (!columnNames.contains(skill)) columnNames.add(skill);
+    // 1. columns for all skills
+    for (UnitStatisticsData turn : turns) {
+      List<UnitStatisticsSkillData> skills = turn.getSkillData();
+      for (UnitStatisticsSkillData skill : skills) {
+        if (!columnNames.contains(skill.getSkill())) columnNames.add(skill.getSkill());
       }
     }
     
-    for (Integer turn : turns) {
-      UnitStatisticsData data = statistics.turnData.get(turn);
-      for (String item : data.items.keySet()) {
-        if (!columnNames.contains(item)) columnNames.add(item);
+    // 2. columns for all items
+    for (UnitStatisticsData turn : turns) {
+      List<UnitStatisticsItemData> items = turn.getItemData();
+      for (UnitStatisticsItemData item : items) {
+        if (!columnNames.contains(item.getItemType())) columnNames.add(item.getItemType());
       }
     }
   }
@@ -472,21 +474,26 @@ class UnitTableModel extends AbstractTableModel {
    * @see javax.swing.table.TableModel#getValueAt(int, int)
    */
   public Object getValueAt(int rowIndex, int columnIndex) {
-    Integer turn = turns.get(rowIndex);
-    UnitStatisticsData data = statistics.turnData.get(turn);
+    UnitStatisticsData turn = turns.get(rowIndex);
     switch (columnIndex) {
-      case 0: return turn;
-      case 1: if (data.name != null)     return data.name;  else return "";
-      case 2: return data.region;
-      case 3: return data.persons;
-      case 4: if (data.ship != null)     return data.ship; else return "";
-      case 5: if (data.building != null) return data.building; else return "";
-      case 6: if (data.race != null)     return data.race; else return "";
-      case 7: return new BigDecimal((double)(data.weight / 100)).setScale(2);
+      case 0: return turn.getTurn();
+      case 1: if (turn.getName() != null)     return turn.getName();  else return "";
+      case 2: return turn.getRegion();
+      case 3: return turn.getPersons();
+      case 4: if (turn.getShip() != null)     return turn.getShip(); else return "";
+      case 5: if (turn.getBuilding() != null) return turn.getBuilding(); else return "";
+      case 6: if (turn.getRace() != null)     return turn.getRace(); else return "";
+      case 7: return new BigDecimal((double)(turn.getWeight() / 100)).setScale(2);
       default: {
         String columnName = getColumnName(columnIndex);
-        if (data.skills.containsKey(columnName)) return data.skills.get(columnName);
-        if (data.items.containsKey(columnName)) return data.items.get(columnName);
+        List<UnitStatisticsSkillData> skills = turn.getSkillData();
+        for (UnitStatisticsSkillData skill : skills) {
+          if (skill.getSkill().equals(columnName)) return skill.getLevel();
+        }
+        List<UnitStatisticsItemData> itemdata = turn.getItemData();
+        for (UnitStatisticsItemData item : itemdata) {
+          if (item.getItemType().equals(columnName)) return item.getAmount();
+        }
       }
     }
     
@@ -519,7 +526,7 @@ class UnitTableModel extends AbstractTableModel {
  * @version 1.0, 11.05.2008
  */
 class RegionTableModel extends AbstractTableModel {
-  protected List<Integer> turns = new ArrayList<Integer>();
+  protected List<RegionStatisticsData> turns = new ArrayList<RegionStatisticsData>();
   protected List<String> columnNames = new ArrayList<String>();
   protected RegionStatistics statistics = null;
   
@@ -530,6 +537,7 @@ class RegionTableModel extends AbstractTableModel {
     columnNames.add(Resources.get("statisticsplugin.region.name"));
     columnNames.add(Resources.get("statisticsplugin.region.type"));
     columnNames.add(Resources.get("statisticsplugin.region.peasants"));
+    columnNames.add(Resources.get("statisticsplugin.region.inhabitants"));
     columnNames.add(Resources.get("statisticsplugin.region.maxRecruits"));
     columnNames.add(Resources.get("statisticsplugin.region.silver"));
     columnNames.add(Resources.get("statisticsplugin.region.maxEntertain"));
@@ -542,13 +550,12 @@ class RegionTableModel extends AbstractTableModel {
     
     if (statistics == null) return;
     
-    turns = new ArrayList<Integer>(statistics.turnData.keySet());
-    Collections.sort(turns);
+    turns = statistics.getData();
     
-    for (Integer turn : turns) {
-      RegionStatisticsData data = statistics.turnData.get(turn);
-      for (String price : data.prices.keySet()) {
-        if (!columnNames.contains(price)) columnNames.add(price);
+    for (RegionStatisticsData turn : turns) {
+      List<RegionStatisticsPricesData> prices = turn.getPrices();
+      for (RegionStatisticsPricesData price : prices) {
+        if (!columnNames.contains(price.getLuxuryItem())) columnNames.add(price.getLuxuryItem());
       }
     }
   }
@@ -571,25 +578,28 @@ class RegionTableModel extends AbstractTableModel {
    * @see javax.swing.table.TableModel#getValueAt(int, int)
    */
   public Object getValueAt(int rowIndex, int columnIndex) {
-    Integer turn = turns.get(rowIndex);
-    RegionStatisticsData data = statistics.turnData.get(turn);
+    RegionStatisticsData turn = turns.get(rowIndex);
     switch (columnIndex) {
-      case 0: return turn;
-      case 1: return data.name;
-      case 2: return data.type;
-      case 3: return data.peasants;
-      case 4: return data.maxRecruits;
-      case 5: return data.silver;
-      case 6: return data.maxEntertain;
-      case 7: return data.maxLuxuries;
-      case 8: return data.trees;
-      case 9: return data.sprouts;
-      case 10: return data.stones;
-      case 11: return data.iron;
-      case 12: return data.laen;
+      case 0: return turn.getTurn();
+      case 1: return turn.getName();
+      case 2: return turn.getType();
+      case 3: return turn.getPeasants();
+      case 4: return turn.getInhabitants();
+      case 5: return turn.getMaxRecruits();
+      case 6: return turn.getSilver();
+      case 7: return turn.getMaxEntertain();
+      case 8: return turn.getMaxLuxuries();
+      case 9: return turn.getTrees();
+      case 10: return turn.getSprouts();
+      case 11: return turn.getStones();
+      case 12: return turn.getIron();
+      case 13: return turn.getLaen();
       default: {
         String columnName = getColumnName(columnIndex);
-        if (data.prices.containsKey(columnName)) return data.prices.get(columnName);
+        List<RegionStatisticsPricesData> prices = turn.getPrices();
+        for (RegionStatisticsPricesData price : prices) {
+          if (price.getLuxuryItem().equals(columnName)) return price.getPrice();
+        }
       }
     }
     
@@ -622,7 +632,7 @@ class RegionTableModel extends AbstractTableModel {
  * @version 1.0, 11.05.2008
  */
 class FactionTableModel extends AbstractTableModel {
-  protected List<Integer> turns = new ArrayList<Integer>();
+  protected List<FactionStatisticsData> turns = new ArrayList<FactionStatisticsData>();
   protected List<String> columnNames = new ArrayList<String>();
   protected FactionStatistics statistics = null;
   
@@ -643,8 +653,7 @@ class FactionTableModel extends AbstractTableModel {
     
     if (statistics == null) return;
     
-    turns = new ArrayList<Integer>(statistics.turnData.keySet());
-    Collections.sort(turns);
+    turns = statistics.getData();
   }
 
   /**
@@ -665,17 +674,16 @@ class FactionTableModel extends AbstractTableModel {
    * @see javax.swing.table.TableModel#getValueAt(int, int)
    */
   public Object getValueAt(int rowIndex, int columnIndex) {
-    Integer turn = turns.get(rowIndex);
-    FactionStatisticsData data = statistics.turnData.get(turn);
+    FactionStatisticsData turn = turns.get(rowIndex);
     switch (columnIndex) {
-      case 0: return turn;
-      case 1: return data.name;
-      case 2: return data.race;
-      case 3: return data.persons;
-      case 4: return data.heroes;
-      case 5: return data.maxHeroes;
-      case 6: return data.score;
-      case 7: return data.averageScore;
+      case 0: return turn.getTurn();
+      case 1: return turn.getName();
+      case 2: return turn.getRace();
+      case 3: return turn.getPersons();
+      case 4: return turn.getHeroes();
+      case 5: return turn.getMaxHeroes();
+      case 6: return turn.getScore();
+      case 7: return turn.getAverageScore();
     }
     
     return "";

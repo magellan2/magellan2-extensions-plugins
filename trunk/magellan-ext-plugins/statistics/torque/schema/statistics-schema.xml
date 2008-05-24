@@ -184,6 +184,7 @@
     <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
     <column name="region_id"    javaName="RegionId"    required="true" type="BIGINT"             description="This is the region"/>
     <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the region"/>
+    <column name="type"         javaName="Type"        required="true" type="VARCHAR" size="50"  description="The type of the region"/>
     <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the region"/>
     <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the region"/>
     <column name="max_recruits" javaName="MaxRecruits"                 type="INTEGER"            description="The turn bases max number of recruits in the region"/>
@@ -361,7 +362,7 @@
     <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
     <column name="turn_id"      javaName="TurnId"      required="true" type="BIGINT"             description="The statistic id"/>
     <column name="unit_id"      javaName="UnitId"      required="true" type="BIGINT"             description="This is the region"/>
-    <column name="item_type"    javaName="item_type"   required="true" type="VARCHAR" size="50"  description="The name of the item"/>
+    <column name="item_type"    javaName="ItemType"    required="true" type="VARCHAR" size="50"  description="The name of the item"/>
     <column name="amount"       javaName="Amount"      required="true" type="INTEGER"            description="The turn bases amount of the item"/>
     
     <foreign-key foreignTable="unit_statistics_data"><reference local="turn_id" foreign="id"/></foreign-key>

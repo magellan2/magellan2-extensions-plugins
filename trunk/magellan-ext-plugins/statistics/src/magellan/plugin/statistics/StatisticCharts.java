@@ -24,8 +24,6 @@
 package magellan.plugin.statistics;
 
 import java.awt.BasicStroke;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,13 +31,18 @@ import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 
-import magellan.library.*;
+import magellan.library.Faction;
+import magellan.library.Region;
+import magellan.library.Unit;
 import magellan.library.utils.Resources;
-import magellan.plugin.statistics.data.FactionStatistics;
-import magellan.plugin.statistics.data.RegionStatistics;
-import magellan.plugin.statistics.data.UnitStatistics;
-import magellan.plugin.statistics.data.FactionStatistics.FactionStatisticsData;
-import magellan.plugin.statistics.data.RegionStatistics.RegionStatisticsData;
+import magellan.plugin.statistics.torque.FactionStatistics;
+import magellan.plugin.statistics.torque.FactionStatisticsData;
+import magellan.plugin.statistics.torque.RegionStatistics;
+import magellan.plugin.statistics.torque.RegionStatisticsData;
+import magellan.plugin.statistics.torque.RegionStatisticsPricesData;
+import magellan.plugin.statistics.torque.UnitStatistics;
+import magellan.plugin.statistics.torque.UnitStatisticsData;
+import magellan.plugin.statistics.torque.UnitStatisticsSkillData;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -73,29 +76,29 @@ public class StatisticCharts {
       Map<String,XYSeries> series = new HashMap<String, XYSeries>();
       
       // sort the turn data
-      List<Integer> turns = new ArrayList<Integer>(stats.turnData.keySet());
-      Collections.sort(turns);
+      List<UnitStatisticsData> turns = stats.getData();
       
       // for every turn...
-      for (Integer turn : turns) {
-        Map<String,Integer> skills = stats.turnData.get(turn).skills;
+      for (UnitStatisticsData data : turns) {
+        int turn = data.getTurn();
+        List<UnitStatisticsSkillData> skills = data.getSkillData();
         
         // ...get the skills...
-        for (String skill : skills.keySet()) {
+        for (UnitStatisticsSkillData skill : skills) {
           XYSeries serie = null;
           
           // ...check, if we have a known skill...
-          if (series.containsKey(skill)) {
+          if (series.containsKey(skill.getSkill())) {
             // ...yes, get it out of the map...
-            serie = series.get(skill);
+            serie = series.get(skill.getSkill());
           } else {
             // ...no, create a new series for a skill...
-            serie = new XYSeries(skill);
-            series.put(skill, serie);
+            serie = new XYSeries(skill.getSkill());
+            series.put(skill.getSkill(), serie);
           }
           
           // ...and add to this series the new data pair of turn and skill level.
-          serie.add(turn.doubleValue(), skills.get(skill));
+          serie.add(turn, skill.getLevel());
         }
       }
       
@@ -159,23 +162,22 @@ public class StatisticCharts {
       series.put("laen",         new XYSeries(Resources.get("statisticsplugin.region.laen")));
       
       // sort the turn data
-      List<Integer> turns = new ArrayList<Integer>(stats.turnData.keySet());
-      Collections.sort(turns);
+      List<RegionStatisticsData> turns = stats.getData();
       
       // for every turn...
-      for (Integer turn : turns) {
-        RegionStatisticsData data = stats.turnData.get(turn);
+      for (RegionStatisticsData data : turns) {
+        int turn = data.getTurn();
         
-        if (data.peasants>=0)     series.get("peasants").add(turn,new Integer(data.peasants)); 
-        if (data.maxRecruits>=0)  series.get("maxrecruits").add(turn,new Integer(data.maxRecruits)); 
+        if (data.getPeasants()>=0)     series.get("peasants").add(turn,new Integer(data.getPeasants())); 
+        if (data.getMaxRecruits()>=0)  series.get("maxrecruits").add(turn,new Integer(data.getMaxRecruits())); 
       //  if (data.silver>=0)       series.get("silver").add(turn,new Integer(data.silver)); 
-        if (data.maxLuxuries>=0)  series.get("maxluxuries").add(turn,new Integer(data.maxLuxuries)); 
-        if (data.maxEntertain>=0) series.get("maxentertain").add(turn,new Integer(data.maxEntertain/1000)); 
-        if (data.stones>=0)       series.get("stones").add(turn,new Integer(data.stones)); 
-        if (data.trees>=0)        series.get("trees").add(turn,new Integer(data.trees)); 
-        if (data.sprouts>=0)      series.get("sprouts").add(turn,new Integer(data.sprouts)); 
-        if (data.iron>=0)         series.get("iron").add(turn,new Integer(data.iron)); 
-        if (data.laen>=0)         series.get("laen").add(turn,new Integer(data.laen)); 
+        if (data.getMaxLuxuries()>=0)  series.get("maxluxuries").add(turn,new Integer(data.getMaxLuxuries())); 
+        if (data.getMaxEntertain()>=0) series.get("maxentertain").add(turn,new Integer(data.getMaxEntertain()/1000)); 
+        if (data.getStones()>=0)       series.get("stones").add(turn,new Integer(data.getStones())); 
+        if (data.getTrees()>=0)        series.get("trees").add(turn,new Integer(data.getTrees())); 
+        if (data.getSprouts()>=0)      series.get("sprouts").add(turn,new Integer(data.getSprouts())); 
+        if (data.getIron()>=0)         series.get("iron").add(turn,new Integer(data.getIron())); 
+        if (data.getLaen()>=0)         series.get("laen").add(turn,new Integer(data.getLaen())); 
         
       }
       
@@ -228,23 +230,23 @@ public class StatisticCharts {
       Map<String,XYSeries> series = new HashMap<String, XYSeries>();
 
       // sort the turn data
-      List<Integer> turns = new ArrayList<Integer>(stats.turnData.keySet());
-      Collections.sort(turns);
+      List<RegionStatisticsData> turns = stats.getData();
       
       // for every turn...
-      for (Integer turn : turns) {
-        RegionStatisticsData data = stats.turnData.get(turn);
-        Map<String,Integer> prices = data.prices;
+      for (RegionStatisticsData data : turns) {
+        int turn = data.getTurn();
         
-        for (String luxury : prices.keySet()) {
+        List<RegionStatisticsPricesData> prices = data.getPrices();
+        
+        for (RegionStatisticsPricesData luxury : prices) {
           XYSeries serie = null;
-          if (series.containsKey(luxury)) {
-            serie = series.get(luxury);
+          if (series.containsKey(luxury.getLuxuryItem())) {
+            serie = series.get(luxury.getLuxuryItem());
           } else {
-            serie = new XYSeries(luxury);
-            series.put(luxury, serie);
+            serie = new XYSeries(luxury.getLuxuryItem());
+            series.put(luxury.getLuxuryItem(), serie);
           }
-          serie.add(turn,prices.get(luxury));
+          serie.add(turn,luxury.getPrice());
         }
         
       }
@@ -302,15 +304,14 @@ public class StatisticCharts {
       series.put("average", new XYSeries(Resources.get("statisticsplugin.faction.averagescore")));
       
       // sort the turn data
-      List<Integer> turns = new ArrayList<Integer>(stats.turnData.keySet());
-      Collections.sort(turns);
+      List<FactionStatisticsData> turns = stats.getData();
       
       // for every turn...
-      for (Integer turn : turns) {
-        FactionStatisticsData data = stats.turnData.get(turn);
+      for (FactionStatisticsData data : turns) {
+        int turn = data.getTurn();
         
-        if (data.score>=0)        series.get("points").add(turn,new Integer(data.score)); 
-        if (data.averageScore>=0) series.get("average").add(turn,new Integer(data.averageScore)); 
+        if (data.getScore()>=0)        series.get("points").add(turn,new Integer(data.getScore())); 
+        if (data.getAverageScore()>=0) series.get("average").add(turn,new Integer(data.getAverageScore())); 
       }
       
       for (XYSeries serie : series.values()) {
@@ -366,16 +367,15 @@ public class StatisticCharts {
       series.put("maxheroes", new XYSeries(Resources.get("statisticsplugin.faction.maxheroes")));
       
       // sort the turn data
-      List<Integer> turns = new ArrayList<Integer>(stats.turnData.keySet());
-      Collections.sort(turns);
+      List<FactionStatisticsData> turns = stats.getData();
       
       // for every turn...
-      for (Integer turn : turns) {
-        FactionStatisticsData data = stats.turnData.get(turn);
+      for (FactionStatisticsData data : turns) {
+        int turn = data.getTurn();
         
-        if (data.persons>=0)   series.get("persons").add(turn,new Integer(data.persons)); 
-        if (data.heroes>=0)    series.get("heroes").add(turn,new Integer(data.heroes)); 
-        if (data.maxHeroes>=0) series.get("maxheroes").add(turn,new Integer(data.maxHeroes)); 
+        if (data.getPersons()>=0)   series.get("persons").add(turn,new Integer(data.getPersons())); 
+        if (data.getHeroes()>=0)    series.get("heroes").add(turn,new Integer(data.getHeroes())); 
+        if (data.getMaxHeroes()>=0) series.get("maxheroes").add(turn,new Integer(data.getMaxHeroes())); 
       }
       
       for (XYSeries serie : series.values()) {

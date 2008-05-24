@@ -1,5 +1,11 @@
 package magellan.plugin.statistics.torque;
 
+import java.util.List;
+
+import magellan.library.utils.logging.Logger;
+
+import org.apache.torque.util.Criteria;
+
 /**
  * Contains informations about factions
  *
@@ -11,10 +17,34 @@ package magellan.plugin.statistics.torque;
  *  application requirements.  This class will only be generated as
  *  long as it does not already exist in the output directory.
  */
-public class FactionStatisticsPeer
-    extends magellan.plugin.statistics.torque.BaseFactionStatisticsPeer
-{
-    /** Serial version */
-    private static final long serialVersionUID = 1211386799035L;
+public class FactionStatisticsPeer extends BaseFactionStatisticsPeer {
+  /** Log instance */
+  private static Logger log = Logger.getInstance(FactionStatisticsPeer.class);
+  
+  /**
+   * Search for a faction.
+   */
+  public static FactionStatistics get(Report report, String factionId, boolean create) {
+    try {
+      Criteria criteria = new Criteria();
+      criteria.add(REPORT_ID,report.getID());
+      criteria.add(FACTION_NUMBER,factionId);
+      criteria.setLimit(1);
+      List<FactionStatistics> statistics = doSelect(criteria);
+      
+      if (statistics != null && statistics.size() > 0) return statistics.get(0); 
+      
+      if (create) {
+        FactionStatistics statistic = new FactionStatistics();
+        statistic.setReport(report);
+        statistic.setFactionNumber(factionId);
+        statistic.save();
+        return statistic;
+      }
 
+    } catch (Exception exception) {
+      log.error(exception);
+    }
+    return null;
+  }
 }
