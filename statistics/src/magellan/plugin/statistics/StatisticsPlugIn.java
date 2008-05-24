@@ -15,6 +15,7 @@ import magellan.client.swing.preferences.PreferencesFactory;
 import magellan.library.GameData;
 import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
+import magellan.plugin.statistics.db.DerbyConnector;
 
 /**
  * This is the entry class for this plugin
@@ -38,6 +39,9 @@ public class StatisticsPlugIn implements MagellanPlugIn {
     Resources.getInstance().initialize(Client.getSettingsDirectory(),"statisticsplugin_");
     this.client = client;
     this.settings = properties;
+    
+    DerbyConnector.getInstance().init(Client.getMagellanDirectory(), Client.getSettingsDirectory());
+    
     log.info(getName()+" initialized...(Client)");
   }
 
@@ -88,7 +92,8 @@ public class StatisticsPlugIn implements MagellanPlugIn {
    * @see magellan.client.extern.MagellanPlugIn#quit(boolean)
    */
   public void quit(boolean storeSettings) {
-    // do nothing (it's only a read process)
+    // close the database
+    DerbyConnector.getInstance().shutdown();
   }
   
   class LoadThread extends Thread {
@@ -107,20 +112,11 @@ public class StatisticsPlugIn implements MagellanPlugIn {
         if (!dataFile.exists()) return;
         
         // build filename for statistics...
-        String fileName = dataFile.getName();
-        if (fileName.indexOf(".") > 0) {
-          // remove file extension
-          fileName = fileName.substring(0,fileName.lastIndexOf("."));
-        }
-        fileName = fileName+".statistic.xml.bz2";
-        
-        File statFile = new File(dataFile.getParentFile(),fileName);
-        
+        String reportName = dataFile.getName();
         log.info("GameData file is "+dataFile);
-        log.info("StatData file is "+statFile);
         
         // load the statistics file
-        statistics = new Statistics(statFile);
+        statistics = new Statistics(reportName);
         
         // add current file
         statistics.add(data);
@@ -129,9 +125,6 @@ public class StatisticsPlugIn implements MagellanPlugIn {
         if (dock != null) {
           dock.show(data.getActiveRegion());
         }
-        
-        // save statistics
-        statistics.save();
         
       } catch (Exception exception) {
         log.error(exception);

@@ -24,23 +24,25 @@
 package magellan.plugin.statistics.db;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.LineNumberReader;
-import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.List;
 import java.util.Properties;
 
-import magellan.plugin.statistics.torque.Report;
-import magellan.plugin.statistics.torque.ReportPeer;
+import magellan.library.utils.logging.Logger;
 
 import org.apache.torque.Torque;
-import org.apache.torque.util.Criteria;
 
 public class DerbyConnector {
+  private static Logger log = Logger.getInstance(DerbyConnector.class);
+  
+  protected static String DERBY_HOME = ".";
+  protected static String MAGELLAN_HOME = ".";
+  protected static final String DATABASE_SCHEMA_FILE = "etc/statistics/statistics-schema.sql";
+  protected static final String TORQUE_PROPERTIES_FILE = "etc/statistics/torque.properties";
   protected static final String DATABASE_DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
   protected static final String DATABASE_NAME = "statistics";
   protected static final String DATABASE_USER = "statistics";
@@ -55,45 +57,6 @@ public class DerbyConnector {
    */
   protected DerbyConnector() {
     _instance = this;
-    Connection connection = null;
-    
-    try {
-      Properties properties = new Properties();
-      properties.put("user", DATABASE_USER);
-      properties.put("password", DATABASE_PWD);
-      properties.put("derby.system.home", ".");
-      
-      // create database
-//      System.out.println("Create database");
-//      Class.forName(DATABASE_DRIVER).newInstance();
-//      connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
-//      createDatabase(connection);
-//      connection.close();
-      
-      // initialize torque
-      System.out.println("Initializing persistance layer");
-      Torque.init("torque.properties");
-      connection = Torque.getConnection();
-      if (connection != null) {
-        System.out.println("Database connection established");
-        connection.close();
-      } else {
-        System.out.println("ERROR: no database connection availabe");
-        return;
-      }
-      
-      
-      List<Report> reports = ReportPeer.doSelect(new Criteria());
-      System.out.println(reports);
-      
-      Report report = new Report();
-      report.setFilename("Test-"+reports.size());
-      report.save();
-      
-      initialized = true;
-    } catch (Exception exception) {
-      exception.printStackTrace(System.err);
-    }
   }
   
   /**
@@ -104,28 +67,100 @@ public class DerbyConnector {
     return _instance;
   }
   
+  /**
+   * This method initializes the database system. If the database doesn't
+   * exist it will be created.
+   */
+  public boolean init() {
+    return init(null,null);
+  }
+  
+  
+  /**
+   * This method initializes the database system. If the database doesn't
+   * exist it will be created.
+   */
+  public boolean init(File magellanHome, File settingsDirectory) {
+    if (initialized) return true;
+    
+    if (settingsDirectory != null) DERBY_HOME = settingsDirectory.getAbsolutePath();
+    if (magellanHome != null) MAGELLAN_HOME = magellanHome.getAbsolutePath();
+    
+    if (!checkDatabase()) {
+      if (!createDatabase()) {
+        log.error("Could not create database");
+        return false;
+      }
+    }
+
+    try {
+      // initialize torque
+      log.info("Initializing persistance layer");
+      Torque.init(TORQUE_PROPERTIES_FILE);
+      Connection connection = Torque.getConnection();
+      if (connection != null) {
+        log.info("Database connection established");
+        connection.close();
+      } else {
+        log.error("no database connection availabe");
+        return false;
+      }
+    } catch (Exception exception) {
+      exception.printStackTrace(System.err);
+    }
+    
+    initialized = true;
+    
+    return true;
+  }
+  
+  /**
+   * This method shuts down the database connection. It's equivalent to init()
+   */
   public void shutdown() {
     try {
-      System.out.println("Shutting down database connections");
-  //    if (Torque.isInit()) Torque.shutdown();
+      log.info("Shutting down database connections");
+      if (Torque.isInit()) Torque.shutdown();
   //    DriverManager.getConnection("jdbc:derby:;shutdown=true");
     } catch (Exception exception) {
       exception.printStackTrace(System.err);
     }
   }
   
+  /**
+   * This method checks, if the database files exists. It checks, if there
+   * is a directory called "statistics" in the Magellan home directory.
+   */
+  protected boolean checkDatabase() {
+    File directory = new File(DERBY_HOME+"/"+DATABASE_NAME);
+    return directory.exists() && directory.canWrite();
+  }
   
-  public boolean createDatabase(Connection connection) {
+  /**
+   * This method creates a new database inside the Magellan home and
+   * imports the database structure from a known sql file.
+   */
+  protected boolean createDatabase() {
     try {
-      System.out.println("Creating database structure");
-      FileReader fr = new FileReader("torque/schema/statistics-schema.sql");
+      Properties properties = new Properties();
+      properties.put("user", DATABASE_USER);
+      properties.put("password", DATABASE_PWD);
+      properties.put("derby.system.home", DERBY_HOME);
+      
+      // create database
+      log.info("Create database");
+      Class.forName(DATABASE_DRIVER).newInstance();
+      Connection connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
+      
+      log.info("Creating database structure");
+      FileReader fr = new FileReader(MAGELLAN_HOME+"/"+DATABASE_SCHEMA_FILE);
       BufferedReader br = new BufferedReader(fr);
       LineNumberReader reader = new LineNumberReader(br);
       StringBuffer buffer = new StringBuffer();
       String line = null;
       while ((line = reader.readLine()) != null) {
-        if (line.startsWith("--")) continue;
-     //   if (line.startsWith("drop ")) continue;
+        if (line.startsWith("--")) continue; // ignore comments
+        if (line.startsWith("drop ")) continue; // ignore drop table
         if (line.trim().endsWith(";")) {
           line = line.trim();
           line = line.substring(0,line.length()-1);
@@ -137,9 +172,11 @@ public class DerbyConnector {
           buffer = new StringBuffer();
           
           try {
+            // execute single SQL commands (with multiple lines).
             Statement s = connection.createStatement();
             s.execute(sql);
           } catch (Exception exception) {
+            // ignore single sql errors.
             exception.printStackTrace(System.err);
           }
         } else {
@@ -160,6 +197,7 @@ public class DerbyConnector {
   
   public static void main(String[] args) {
     DerbyConnector connector = DerbyConnector.getInstance();
+    connector.init();
     connector.shutdown();
   }
 }

@@ -1,5 +1,13 @@
 package magellan.plugin.statistics.torque;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import magellan.library.utils.logging.Logger;
+
+import org.apache.torque.TorqueException;
+import org.apache.torque.util.Criteria;
+
 /**
  * Contains informations about turn specific region data
  *
@@ -11,10 +19,33 @@ package magellan.plugin.statistics.torque;
  *  application requirements.  This class will only be generated as
  *  long as it does not already exist in the output directory.
  */
-public class RegionStatisticsDataPeer
-    extends magellan.plugin.statistics.torque.BaseRegionStatisticsDataPeer
-{
-    /** Serial version */
-    private static final long serialVersionUID = 1211386799035L;
+public class RegionStatisticsDataPeer  extends BaseRegionStatisticsDataPeer {
+  private static Logger log = Logger.getInstance(RegionStatisticsDataPeer.class);
+  
+  /**
+   * Returns the data for the given region.
+   */
+  public static List<RegionStatisticsData> get(RegionStatistics statistics) {
+    try {
+      Criteria criteria = new Criteria();
+      criteria.addAscendingOrderByColumn(TURN);
+      return statistics.getRegionStatisticsDatas(criteria);
+    } catch (Exception exception) {
+      log.error(exception);
+      return new ArrayList<RegionStatisticsData>();
+    }
+  }
 
+  /**
+   * Returns the data for the given region in the given turn.
+   */
+  public static RegionStatisticsData get(RegionStatistics statistics, int turn) throws TorqueException {
+    Criteria criteria = new Criteria();
+    criteria.add(REGION_ID,statistics.getID());
+    criteria.add(TURN,turn);
+    criteria.setLimit(1);
+    List<RegionStatisticsData> data = doSelect(criteria);
+    if (data != null && data.size()>0) return data.get(0);
+    return null;
+  }
 }

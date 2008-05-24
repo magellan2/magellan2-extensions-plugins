@@ -1,5 +1,11 @@
 package magellan.plugin.statistics.torque;
 
+import java.util.List;
+
+import magellan.library.utils.logging.Logger;
+
+import org.apache.torque.util.Criteria;
+
 /**
  * Contains informations about ships
  *
@@ -11,10 +17,34 @@ package magellan.plugin.statistics.torque;
  *  application requirements.  This class will only be generated as
  *  long as it does not already exist in the output directory.
  */
-public class ShipStatisticsPeer
-    extends magellan.plugin.statistics.torque.BaseShipStatisticsPeer
-{
-    /** Serial version */
-    private static final long serialVersionUID = 1211386799035L;
+public class ShipStatisticsPeer extends BaseShipStatisticsPeer {
+  /** Log instance */
+  private static Logger log = Logger.getInstance(FactionStatisticsPeer.class);
+  
+  /**
+   * Search for a ship.
+   */
+  public static ShipStatistics get(Report report, String shipId, boolean create) {
+    try {
+      Criteria criteria = new Criteria();
+      criteria.add(REPORT_ID,report.getID());
+      criteria.add(SHIP_NUMBER,shipId);
+      criteria.setLimit(1);
+      List<ShipStatistics> statistics = doSelect(criteria);
+      
+      if (statistics != null && statistics.size() > 0) return statistics.get(0); 
+      
+      if (create) {
+        ShipStatistics statistic = new ShipStatistics();
+        statistic.setReport(report);
+        statistic.setShipNumber(shipId);
+        statistic.save();
+        return statistic;
+      }
 
+    } catch (Exception exception) {
+      log.error(exception);
+    }
+    return null;
+  }
 }

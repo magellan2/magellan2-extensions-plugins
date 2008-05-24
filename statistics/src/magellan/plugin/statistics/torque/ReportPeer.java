@@ -1,5 +1,11 @@
 package magellan.plugin.statistics.torque;
 
+import java.util.List;
+
+import magellan.library.utils.logging.Logger;
+
+import org.apache.torque.util.Criteria;
+
 /**
  * Contains informations about a computer reports
  *
@@ -11,10 +17,31 @@ package magellan.plugin.statistics.torque;
  *  application requirements.  This class will only be generated as
  *  long as it does not already exist in the output directory.
  */
-public class ReportPeer
-    extends magellan.plugin.statistics.torque.BaseReportPeer
-{
-    /** Serial version */
-    private static final long serialVersionUID = 1211386799035L;
+public class ReportPeer extends BaseReportPeer {
+  /** Log instance */
+  private static Logger log = Logger.getInstance(ReportPeer.class);
+  
+  /**
+   * Returns the report with the given file name
+   */
+  public static Report getReport(String reportFile, boolean create) {
+    try {
+      Criteria criteria = new Criteria();
+      criteria.add(FILENAME,reportFile);
+      criteria.setLimit(1);
+      List<Report> reports = doSelect(criteria);
+      if (reports != null && reports.size() > 0) return reports.get(0);
+      
+      if (create) {
+        Report report = new Report();
+        report.setFilename(reportFile);
+        report.save();
+        return report;
+      }
+    } catch (Exception exception) {
+      log.error("Exception during report loading.",exception);
+    }
+    return null;
+  }
 
 }
