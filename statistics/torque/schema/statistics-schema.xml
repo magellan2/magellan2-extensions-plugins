@@ -9,7 +9,7 @@
   <!-- ********************************************************************* -->
   <table name="report" javaName="Report" description="Contains informations about a computer reports">
     <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
-    <column name="filename"     javaName="Filename"    required="true" type="VARCHAR" size="1024" description="This is the filename of the report"/>
+    <column name="filename"     javaName="Filename"    required="true" type="VARCHAR" size="4096" description="This is the filename of the report"/>
     
     <unique>
       <unique-column name="filename"/>
@@ -29,8 +29,8 @@
     <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
     <column name="building_id"  javaName="BuildingId"  required="true" type="BIGINT"             description="This is the building"/>
     <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the building"/>
-    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the building"/>
-    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the building"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="255" description="The turn bases name of the building"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="4096" description="The turn bases description of the building"/>
     <column name="size"         javaName="Size"                        type="INTEGER"            description="The turn bases size of the building"/>
     <column name="owner"        javaName="Owner"                       type="VARCHAR" size="20"  description="The turn bases owner of the building"/>
     <column name="inmates"      javaName="Inmates"                     type="INTEGER"            description="The turn bases number of inmates of the building"/>
@@ -77,8 +77,8 @@
     <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
     <column name="faction_id"   javaName="FactionId"   required="true" type="BIGINT"             description="This is the faction"/>
     <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the faction"/>
-    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the faction"/>
-    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the faction"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="255" description="The turn bases name of the faction"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="4096" description="The turn bases description of the faction"/>
     <column name="persons"      javaName="Persons"                     type="INTEGER"            description="The turn bases number of persons in the faction"/>
     <column name="units"        javaName="Units"                       type="INTEGER"            description="The turn bases number of units in the faction"/>
     <column name="race"         javaName="Race"                        type="VARCHAR" size="50"  description="The turn bases race of the faction"/>
@@ -131,8 +131,8 @@
     <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
     <column name="ship_id"      javaName="ShipId"      required="true" type="BIGINT"             description="This is the ship"/>
     <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the ship"/>
-    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the ship"/>
-    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the ship"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="255" description="The turn bases name of the ship"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="4096" description="The turn bases description of the ship"/>
     <column name="size"         javaName="Size"                        type="INTEGER"            description="The turn bases size of the ship"/>
     <column name="owner"        javaName="Owner"                       type="VARCHAR" size="20"  description="The turn bases owner of the ship"/>
     <column name="region"       javaName="Region"                      type="VARCHAR" size="20"  description="The turn bases position of the ship"/>
@@ -185,8 +185,8 @@
     <column name="region_id"    javaName="RegionId"    required="true" type="BIGINT"             description="This is the region"/>
     <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the region"/>
     <column name="type"         javaName="Type"        required="true" type="VARCHAR" size="50"  description="The type of the region"/>
-    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the region"/>
-    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the region"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="255" description="The turn bases name of the region"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="4096" description="The turn bases description of the region"/>
     <column name="max_recruits" javaName="MaxRecruits"                 type="INTEGER"            description="The turn bases max number of recruits in the region"/>
     <column name="max_luxuries" javaName="MaxLuxuries"                 type="INTEGER"            description="The turn bases max number of buyable luxuries in the region"/>
     <column name="max_entertain" javaName="MaxEntertain"               type="INTEGER"            description="The turn bases max entertainment silber in the region"/>
@@ -308,8 +308,8 @@
     <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
     <column name="unit_id"      javaName="unitId"      required="true" type="BIGINT"             description="This is the unit"/>
     <column name="turn"         javaName="Turn"        required="true" type="INTEGER"            description="The unique turn data of the unit"/>
-    <column name="name"         javaName="Name"                        type="VARCHAR" size="50"  description="The turn bases name of the unit"/>
-    <column name="description"  javaName="Description"                 type="VARCHAR" size="255" description="The turn bases description of the unit"/>
+    <column name="name"         javaName="Name"                        type="VARCHAR" size="255" description="The turn bases name of the unit"/>
+    <column name="description"  javaName="Description"                 type="VARCHAR" size="4096" description="The turn bases description of the unit"/>
     <column name="persons"      javaName="Persons"                     type="INTEGER"            description="The turn bases number of persons in the unit"/>
     <column name="faction"      javaName="Faction"                     type="VARCHAR" size="20"  description="The turn bases faction of the unit"/>
     <column name="region"       javaName="Region"                      type="VARCHAR" size="20"  description="The turn bases position of the unit"/>

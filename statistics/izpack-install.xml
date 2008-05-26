@@ -2,7 +2,7 @@
 <installation version="1.0">
   <info>
     <appname>Magellan Alliance Plugin</appname>
-    <appversion>0.4</appversion>
+    <appversion>0.5</appversion>
     <appsubpath>Magellan</appsubpath>
     <authors>
       <author name="Thoralf Rickert" email="thoralf@m84.de"/>
