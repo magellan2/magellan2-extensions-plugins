@@ -24,7 +24,7 @@ public class BuildingStatisticsPeer extends BaseBuildingStatisticsPeer {
   /**
    * Search for a building.
    */
-  public static BuildingStatistics get(Report report, String buildingId, boolean create) {
+  public static BuildingStatistics get(Report report, String buildingId, String type, boolean create) {
     try {
       Criteria criteria = new Criteria();
       criteria.add(REPORT_ID,report.getID());
@@ -38,6 +38,7 @@ public class BuildingStatisticsPeer extends BaseBuildingStatisticsPeer {
         BuildingStatistics statistic = new BuildingStatistics();
         statistic.setReport(report);
         statistic.setBuildingNumber(buildingId);
+        statistic.setType(type);
         statistic.save();
         return statistic;
       }

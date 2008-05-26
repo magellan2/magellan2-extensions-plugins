@@ -24,7 +24,7 @@ public class ShipStatisticsPeer extends BaseShipStatisticsPeer {
   /**
    * Search for a ship.
    */
-  public static ShipStatistics get(Report report, String shipId, boolean create) {
+  public static ShipStatistics get(Report report, String shipId, String type, boolean create) {
     try {
       Criteria criteria = new Criteria();
       criteria.add(REPORT_ID,report.getID());
@@ -38,6 +38,7 @@ public class ShipStatisticsPeer extends BaseShipStatisticsPeer {
         ShipStatistics statistic = new ShipStatistics();
         statistic.setReport(report);
         statistic.setShipNumber(shipId);
+        statistic.setType(type);
         statistic.save();
         return statistic;
       }

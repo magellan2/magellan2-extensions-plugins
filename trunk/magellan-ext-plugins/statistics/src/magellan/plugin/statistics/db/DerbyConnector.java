@@ -51,6 +51,7 @@ public class DerbyConnector {
   
   protected static DerbyConnector _instance = null;
   protected boolean initialized = false;
+  protected Properties settings = null;
   
   /**
    * Creates the singleton of this class.
@@ -72,7 +73,7 @@ public class DerbyConnector {
    * exist it will be created.
    */
   public boolean init() {
-    return init(null,null);
+    return init(null,null,null);
   }
   
   
@@ -80,11 +81,12 @@ public class DerbyConnector {
    * This method initializes the database system. If the database doesn't
    * exist it will be created.
    */
-  public boolean init(File magellanHome, File settingsDirectory) {
+  public boolean init(Properties settings, File magellanHome, File settingsDirectory) {
     if (initialized) return true;
     
     if (settingsDirectory != null) DERBY_HOME = settingsDirectory.getAbsolutePath();
     if (magellanHome != null) MAGELLAN_HOME = magellanHome.getAbsolutePath();
+    this.settings = settings;
     
     if (!checkDatabase()) {
       if (!createDatabase()) {
@@ -149,6 +151,9 @@ public class DerbyConnector {
       
       // create database
       log.info("Create database");
+      ClassPathHack.addFile(new File(MAGELLAN_HOME+"/plugins/statisticsplugin/lib/derby.jar"));
+      ClassPathHack.addFile(new File(MAGELLAN_HOME+"/plugins/statisticsplugin/lib/derbytools.jar"));
+      
       Class.forName(DATABASE_DRIVER).newInstance();
       Connection connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
       
