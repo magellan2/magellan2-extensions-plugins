@@ -88,6 +88,16 @@ public class DerbyConnector {
     if (magellanHome != null) MAGELLAN_HOME = magellanHome.getAbsolutePath();
     this.settings = settings;
     
+    try {
+      log.info("Load Derby drivers");
+      ClassPathHack.addFile(new File(MAGELLAN_HOME+"/plugins/statisticsplugin/lib/derby.jar"));
+      ClassPathHack.addFile(new File(MAGELLAN_HOME+"/plugins/statisticsplugin/lib/derbytools.jar"));
+      Class.forName(DATABASE_DRIVER).newInstance();
+    } catch (Exception exception) {
+      log.error(exception);
+    }
+
+    
     if (!checkDatabase()) {
       if (!createDatabase()) {
         log.error("Could not create database");
@@ -151,10 +161,6 @@ public class DerbyConnector {
       
       // create database
       log.info("Create database");
-      ClassPathHack.addFile(new File(MAGELLAN_HOME+"/plugins/statisticsplugin/lib/derby.jar"));
-      ClassPathHack.addFile(new File(MAGELLAN_HOME+"/plugins/statisticsplugin/lib/derbytools.jar"));
-      
-      Class.forName(DATABASE_DRIVER).newInstance();
       Connection connection = DriverManager.getConnection(protocol + DATABASE_NAME + ";create=true", properties);
       
       log.info("Creating database structure");
