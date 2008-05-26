@@ -85,13 +85,13 @@ public class Statistics {
     
     for (Building building : world.buildings().values()) {
       String buildingId = building.getID().toString();
-      BuildingStatistics statistics = BuildingStatisticsPeer.get(report,buildingId,true);
+      BuildingStatistics statistics = BuildingStatisticsPeer.get(report,buildingId,building.getType().getName(),true);
       if (statistics != null) statistics.add(turn,building);
     }
 
     for (Ship ship : world.ships().values()) {
       String shipId = ship.getID().toString();
-      ShipStatistics statistics = ShipStatisticsPeer.get(report,shipId,true);
+      ShipStatistics statistics = ShipStatisticsPeer.get(report,shipId,ship.getType().getName(),true);
       if (statistics != null) statistics.add(turn,ship);
     }
 

@@ -40,7 +40,7 @@ public class StatisticsPlugIn implements MagellanPlugIn {
     this.client = client;
     this.settings = properties;
     
-    DerbyConnector.getInstance().init(Client.getMagellanDirectory(), Client.getSettingsDirectory());
+    DerbyConnector.getInstance().init(properties, Client.getMagellanDirectory(), Client.getSettingsDirectory());
     
     log.info(getName()+" initialized...(Client)");
   }
@@ -113,6 +113,9 @@ public class StatisticsPlugIn implements MagellanPlugIn {
         
         // build filename for statistics...
         String reportName = dataFile.getName();
+        if (reportName.lastIndexOf(".")>0) { 
+          reportName = reportName.substring(0,reportName.lastIndexOf("."));
+        }
         log.info("GameData file is "+dataFile);
         
         // load the statistics file
