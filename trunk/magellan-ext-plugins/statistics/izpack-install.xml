@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
 <installation version="1.0">
   <info>
-    <appname>Magellan Alliance Plugin</appname>
+    <appname>Magellan Statistics Plugin</appname>
     <appversion>0.5</appversion>
     <appsubpath>Magellan</appsubpath>
     <authors>
