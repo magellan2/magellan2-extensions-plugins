@@ -10,7 +10,8 @@
   <table name="report" javaName="Report" description="Contains informations about a computer reports">
     <column name="id"           javaName="ID"          required="true" type="BIGINT" primaryKey="true" autoIncrement="true"/>
     <column name="filename"     javaName="Filename"    required="true" type="VARCHAR" size="4096" description="This is the filename of the report"/>
-    
+    <column name="lastsave"     javaName="LastSave"                    type="BIGINT"              description="Time of last save"/>
+ 
     <unique>
       <unique-column name="filename"/>
     </unique>
