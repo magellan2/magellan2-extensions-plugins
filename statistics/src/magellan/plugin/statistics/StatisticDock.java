@@ -26,6 +26,7 @@ package magellan.plugin.statistics;
 import java.awt.BorderLayout;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -36,7 +37,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import magellan.client.Client;
@@ -86,6 +86,9 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
   protected JLabel notImplementedLavel = null;
   
   protected boolean isShown = false;
+  
+  protected HashMap<VisibleStatisticType, Integer> activeTab = new HashMap<VisibleStatisticType, Integer>();
+  protected VisibleStatisticType currentStatistic = null;
 
   /**
    * 
@@ -139,9 +142,6 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
         || activeObject instanceof Faction 
         || activeObject instanceof Building 
         || activeObject instanceof Ship) {
-      removeAll();
-      add(waitLabel,BorderLayout.CENTER);
-      repaint();
       new StatisticDockSelectionChangedThread(activeObject).start();
     }
   }
@@ -152,10 +152,6 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
    */
   public void show(Region region) {
     if (region == null) return;
-    
-    removeAll();
-    add(waitLabel,BorderLayout.CENTER);
-    repaint();
     new StatisticDockSelectionChangedThread(region).start();
   }
   
@@ -178,22 +174,31 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
      */
     public void run() {
       if (activeObject == null) return;
+
+      removeAll();
+      
+      JComponent component = null;
       
       if (activeObject instanceof Unit) {
-        showStatistics((Unit)activeObject);
+        component = showStatistics((Unit)activeObject);
         
       } else if (activeObject instanceof Region) {
-        showStatistics((Region)activeObject);
+        component = showStatistics((Region)activeObject);
         
       } else if (activeObject instanceof Faction) {
-        showStatistics((Faction)activeObject);
+        component = showStatistics((Faction)activeObject);
         
       } else if (activeObject instanceof Building) {
-        showStatistics((Building)activeObject);
+        component = showStatistics((Building)activeObject);
         
       } else if (activeObject instanceof Ship) {
-        showStatistics((Ship)activeObject);
+        component = showStatistics((Ship)activeObject);
         
+      }
+      
+      if (component != null) {
+        add(component,BorderLayout.CENTER);
+        repaint();
       }
     }
   }
@@ -201,7 +206,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
   /**
    * 
    */
-  protected void showStatistics(Unit unit) {
+  protected JComponent showStatistics(Unit unit) {
     log.info("Showing statistics for unit "+unit.getID().toString()+".");
     
     if (plugin.getStatistics() != null) {
@@ -215,25 +220,35 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       
       itemsTab = new JScrollPane();
       
+      // save last tab position
+      if (tabbedPane != null) {
+        if (currentStatistic != null) {
+          activeTab.put(currentStatistic,tabbedPane.getSelectedIndex());
+        } 
+      }
+      
       tabbedPane = new JTabbedPane();
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.table"), tableTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.skills"), skillsTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.items"), itemsTab);
       
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          removeAll();
-          add(tabbedPane,BorderLayout.CENTER);
-          repaint();
-        }
-      });
+      // reload last tab position
+      currentStatistic = VisibleStatisticType.UNIT;
+      if (activeTab.containsKey(currentStatistic)) {
+        int currentTab = activeTab.get(currentStatistic);
+        if (currentTab >= 0) tabbedPane.setSelectedIndex(currentTab);
+      }
+      
+      return tabbedPane;
     }
+    
+    return null;
   }
   
   /**
    * 
    */
-  protected void showStatistics(Region region) {
+  protected JComponent showStatistics(Region region) {
     log.info("Showing statistics for region "+region.getID().toString()+".");
     
     if (plugin.getStatistics() != null) {
@@ -246,25 +261,35 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       resourcesTab = StatisticCharts.createResourcesChart(plugin,region);
       tradesTab = StatisticCharts.createTradeChart(plugin,region);
       
+      // save last tab position
+      if (tabbedPane != null) {
+        if (currentStatistic != null) {
+          activeTab.put(currentStatistic,tabbedPane.getSelectedIndex());
+        } 
+      }
+      
       tabbedPane = new JTabbedPane();
       tabbedPane.addTab(Resources.get("statisticsplugin.region.table"), tableTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.region.resources"), resourcesTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.region.trades"), tradesTab);
+
+      // reload last tab position
+      currentStatistic = VisibleStatisticType.REGION;
+      if (activeTab.containsKey(currentStatistic)) {
+        int currentTab = activeTab.get(currentStatistic);
+        if (currentTab >= 0) tabbedPane.setSelectedIndex(currentTab);
+      }
       
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          removeAll();
-          add(tabbedPane,BorderLayout.CENTER);
-          repaint();
-        }
-      });
+      return tabbedPane;
     }
+    
+    return null;
   }
   
   /**
    * 
    */
-  protected void showStatistics(Faction faction) {
+  protected JComponent showStatistics(Faction faction) {
     log.info("Showing statistics for faction "+faction.getID().toString()+".");
 
     if (plugin.getStatistics() != null) {
@@ -277,47 +302,45 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       pointsTab = StatisticCharts.createPointsChart(plugin,faction);
       unitsTab = StatisticCharts.createUnitsChart(plugin,faction);
       
+      // save last tab position
+      if (tabbedPane != null) {
+        if (currentStatistic != null) {
+          activeTab.put(currentStatistic,tabbedPane.getSelectedIndex());
+        } 
+      }
+
       tabbedPane = new JTabbedPane();
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.table"), tableTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.points"), pointsTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.units"), unitsTab);
       
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          removeAll();
-          add(tabbedPane,BorderLayout.CENTER);
-          repaint();
-        }
-      });
+      // reload last tab position
+      currentStatistic = VisibleStatisticType.FACTION;
+      if (activeTab.containsKey(currentStatistic)) {
+        int currentTab = activeTab.get(currentStatistic);
+        if (currentTab >= 0) tabbedPane.setSelectedIndex(currentTab);
+      }
+      
+      return tabbedPane;
     }
+    
+    return null;
   }
   
   /**
    * 
    */
-  protected void showStatistics(Building building) {
+  protected JComponent showStatistics(Building building) {
     log.info("Showing statistics for building "+building.getID().toString()+".");
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        removeAll();
-        add(notImplementedLavel,BorderLayout.CENTER);
-        repaint();
-      }
-    });
+    return notImplementedLavel;
   }
   
   /**
    * 
    */
-  protected void showStatistics(Ship ship) {
+  protected JComponent showStatistics(Ship ship) {
     log.info("Showing statistics for ship "+ship.getID().toString()+".");
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        removeAll();
-        add(notImplementedLavel,BorderLayout.CENTER);
-        repaint();
-      }
-    });
+    return notImplementedLavel;
   }
 
 
