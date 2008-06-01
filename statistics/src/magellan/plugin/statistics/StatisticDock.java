@@ -36,6 +36,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import magellan.client.Client;
@@ -141,8 +142,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       removeAll();
       add(waitLabel,BorderLayout.CENTER);
       repaint();
-      StatisticDockSelectionChangedThread thread = new StatisticDockSelectionChangedThread(activeObject);
-      thread.start();
+      new StatisticDockSelectionChangedThread(activeObject).start();
     }
   }
   
@@ -156,8 +156,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
     removeAll();
     add(waitLabel,BorderLayout.CENTER);
     repaint();
-    StatisticDockSelectionChangedThread thread = new StatisticDockSelectionChangedThread(region);
-    thread.start();
+    new StatisticDockSelectionChangedThread(region).start();
   }
   
   /**
@@ -221,9 +220,13 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.skills"), skillsTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.items"), itemsTab);
       
-      removeAll();
-      add(tabbedPane,BorderLayout.CENTER);
-      repaint();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          removeAll();
+          add(tabbedPane,BorderLayout.CENTER);
+          repaint();
+        }
+      });
     }
   }
   
@@ -248,9 +251,13 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       tabbedPane.addTab(Resources.get("statisticsplugin.region.resources"), resourcesTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.region.trades"), tradesTab);
       
-      removeAll();
-      add(tabbedPane,BorderLayout.CENTER);
-      repaint();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          removeAll();
+          add(tabbedPane,BorderLayout.CENTER);
+          repaint();
+        }
+      });
     }
   }
   
@@ -275,9 +282,13 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.points"), pointsTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.units"), unitsTab);
       
-      removeAll();
-      add(tabbedPane,BorderLayout.CENTER);
-      repaint();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          removeAll();
+          add(tabbedPane,BorderLayout.CENTER);
+          repaint();
+        }
+      });
     }
   }
   
@@ -286,9 +297,13 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
    */
   protected void showStatistics(Building building) {
     log.info("Showing statistics for building "+building.getID().toString()+".");
-    removeAll();
-    add(notImplementedLavel,BorderLayout.CENTER);
-    repaint();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        removeAll();
+        add(notImplementedLavel,BorderLayout.CENTER);
+        repaint();
+      }
+    });
   }
   
   /**
@@ -296,9 +311,13 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
    */
   protected void showStatistics(Ship ship) {
     log.info("Showing statistics for ship "+ship.getID().toString()+".");
-    removeAll();
-    add(notImplementedLavel,BorderLayout.CENTER);
-    repaint();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        removeAll();
+        add(notImplementedLavel,BorderLayout.CENTER);
+        repaint();
+      }
+    });
   }
 
 

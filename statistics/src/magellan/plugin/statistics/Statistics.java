@@ -64,6 +64,13 @@ public class Statistics {
    */
   protected void add(GameData world) {
     int turn = world.getDate().getDate();
+    long timestamp = world.getTimestamp();
+    
+    if (report.getLastSave() == timestamp) {
+      // we do not compare anything...it's the same report
+      log.info("Abort statistics merge process. Report is the same");
+      return;
+    }
     
     for (Faction faction : world.factions().values()) {
       String factionId = faction.getID().toString();
@@ -95,7 +102,14 @@ public class Statistics {
       if (statistics != null) statistics.add(turn,ship);
     }
 
-    
+    try {
+      if (report.getLastSave() == 0) {
+        report.setLastSave(timestamp);
+        report.save();
+      }
+    } catch (Exception exception) {
+      log.error(exception);
+    }
   }
   
   /**

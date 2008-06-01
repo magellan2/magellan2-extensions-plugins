@@ -29,6 +29,7 @@ import java.io.FileReader;
 import java.io.LineNumberReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
@@ -112,6 +113,9 @@ public class DerbyConnector {
       Connection connection = Torque.getConnection();
       if (connection != null) {
         log.info("Database connection established");
+        
+        updateDatabase(connection);
+        
         connection.close();
       } else {
         log.error("no database connection availabe");
@@ -204,6 +208,11 @@ public class DerbyConnector {
       exception.printStackTrace(System.err);
       return false;
     }
+  }
+  
+  protected void updateDatabase(Connection connection) throws SQLException {
+//    String sql = "ALTER TABLE report ADD lastsave BIGINT";
+//    connection.prepareStatement(sql).execute();
   }
   
   public static void main(String[] args) {
