@@ -59,7 +59,25 @@ public class Teacher {
 	Collection<Unit> units = Collections.emptyList();
 	String namespace = null;
 
+	public boolean confirmFullTeachers = true;
+
+	public boolean confirmEmptyTeachers = false;
+
+	public boolean confirmTaughtStudents = true;
+
+	public boolean confirmUntaughtStudents = false;
+
+	public int percentFull;
+
 	private UserInterface ui = new NullUserInterface();
+
+	public boolean isConfirmUntaughtStudents() {
+		return confirmUntaughtStudents;
+	}
+
+	public void setConfirmUntaughtStudents(boolean confirmUntaughtStudents) {
+		this.confirmUntaughtStudents = confirmUntaughtStudents;
+	}
 
 	Teacher(Collection<Unit> units, String namespace, UserInterface ui) {
 		this.units = units;
@@ -711,18 +729,18 @@ public class Teacher {
 		}
 	}
 
-  /**
-   * Parses all units and sets tags.
-   * 
-   */
-  public void unTag() {
-    for (Unit u : units) {
-      u.removeTag(TEACH_TAG);
-      u.removeTag(LEARN_TAG);
-    }
-  }
+	/**
+	 * Parses all units and sets tags.
+	 * 
+	 */
+	public void unTag() {
+		for (Unit u : units) {
+			u.removeTag(TEACH_TAG);
+			u.removeTag(LEARN_TAG);
+		}
+	}
 
-  /**
+	/**
 	 * Parses all units and runs the optimization algorithm.
 	 * 
 	 * @return The value of the best solution
@@ -893,18 +911,44 @@ public class Teacher {
 				info.getUnit().addOrder("; $$$ teaching error", false, 0);
 			else {
 				info.getUnit().addOrder(orders[i].toString(), false, 0);
-				if (info.getTeacher() != -1 || info.students == info.getUnit().getModifiedPersons() * 10)
-					info.getUnit().setOrdersConfirmed(true);
-				else
-					info.getUnit().setOrdersConfirmed(false);
+				if (info.learning == null) {
+					// Lehrer
+					if (info.students == info.getUnit().getModifiedPersons() * 10)
+						if (isConfirmFullTeachers())
+							info.getUnit().setOrdersConfirmed(true);
+						else
+							info.getUnit().setOrdersConfirmed(false);
+					else if (isConfirmEmptyTeachers()
+							&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
+									/ 100.)
+						info.getUnit().setOrdersConfirmed(true);
+					else
+						info.getUnit().setOrdersConfirmed(false);
+				} else {
+					if (info.getTeacher() != -1 && isConfirmTaughtStudents())
+						info.getUnit().setOrdersConfirmed(true);
+					else if (info.getTeacher() == -1 && isConfirmUntaughtStudents())
+						info.getUnit().setOrdersConfirmed(true);
+					else
+						info.getUnit().setOrdersConfirmed(false);
+				}
 			}
 		}
 
 		return best.evaluate();
 	}
 
-	public static void teach(final Collection<Unit> units, String namespace, final UserInterface ui) {
-		(new Teacher(units, namespace, ui)).mainrun();
+	public static void teach(final Collection<Unit> units, String namespace, final UserInterface ui,
+			boolean confirmFullTeachers, boolean confirmEmptyTeachers, int percentFull,
+			boolean confirmTaughtStudents, boolean confirmUntaughtStudents) {
+		Teacher t = new Teacher(units, namespace, ui);
+		t.setConfirmFullTeachers(confirmFullTeachers);
+		t.setConfirmEmptyTeachers(confirmEmptyTeachers);
+		t.setPercentFull(percentFull);
+		t.setConfirmTaughtStudents(confirmTaughtStudents);
+		t.setConfirmUntaughtStudents(confirmUntaughtStudents);
+
+		t.mainrun();
 
 	}
 
@@ -917,9 +961,9 @@ public class Teacher {
 		(new Teacher(units, namespace, ui)).parse();
 	}
 
-  public static void untag(Collection<Unit> units, String namespace, ProgressBarUI ui) {
-    (new Teacher(units, namespace, ui)).unTag();
-  }
+	public static void untag(Collection<Unit> units, String namespace, ProgressBarUI ui) {
+		(new Teacher(units, namespace, ui)).unTag();
+	}
 
 	public static void addOrder(Collection<Unit> units, String namespace, Order newOrder) {
 		// add new L order to all units
@@ -930,7 +974,7 @@ public class Teacher {
 			boolean foundSame = false;
 
 			// look for L order
-			for (String line : oldOrders){
+			for (String line : oldOrders) {
 				boolean isRelevant = false;
 				List<Order> orderList = parseOrder(line, getTeachTag(namespace), getLearnTag(namespace));
 				for (Order order : orderList) {
@@ -985,7 +1029,7 @@ public class Teacher {
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
 
 			// look for L order
-			for (String line : oldOrders){
+			for (String line : oldOrders) {
 
 				List<Order> orderList = parseOrder(line, getTeachTag(namespace), getLearnTag(namespace));
 				if (orderList.isEmpty()) {
@@ -1032,6 +1076,38 @@ public class Teacher {
 		} else {
 			return "$" + namespace + "$T";
 		}
+	}
+
+	public boolean isConfirmFullTeachers() {
+		return confirmFullTeachers;
+	}
+
+	public void setConfirmFullTeachers(boolean confirmFullTeachers) {
+		this.confirmFullTeachers = confirmFullTeachers;
+	}
+
+	public boolean isConfirmEmptyTeachers() {
+		return confirmEmptyTeachers;
+	}
+
+	public void setConfirmEmptyTeachers(boolean confirmEmptyTeachers) {
+		this.confirmEmptyTeachers = confirmEmptyTeachers;
+	}
+
+	public boolean isConfirmTaughtStudents() {
+		return confirmTaughtStudents;
+	}
+
+	public void setConfirmTaughtStudents(boolean confirmTaughtStudents) {
+		this.confirmTaughtStudents = confirmTaughtStudents;
+	}
+
+	public int getPercentFull() {
+		return percentFull;
+	}
+
+	public void setPercentFull(int percentFull) {
+		this.percentFull = percentFull;
 	}
 
 }

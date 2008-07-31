@@ -1,1 +1,1 @@
-The Teacher plug in makes teaching easy.
+The Teacher plug in makes teaching easy. This version is still experimental!!
