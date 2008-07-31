@@ -17,6 +17,7 @@
 // 
 package magellan.plugin.teacher;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -34,11 +35,13 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 
 import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.JTextArea;
 
 import magellan.client.Client;
@@ -50,6 +53,7 @@ import magellan.client.swing.context.UnitContextMenuProvider;
 import magellan.client.swing.preferences.PreferencesAdapter;
 import magellan.client.swing.preferences.PreferencesFactory;
 import magellan.library.GameData;
+import magellan.library.Region;
 import magellan.library.Unit;
 import magellan.library.UnitContainer;
 import magellan.library.event.GameDataEvent;
@@ -118,14 +122,24 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	private String namespace = null;
 
+	public boolean confirmFullTeachers = true;
+
+	public boolean confirmEmptyTeachers = false;
+
+	public boolean confirmTaughtStudents = true;
+
+	public boolean confirmUntaughtStudents = false;
+
+	public int percentFull;
+
 	/**
 	 * An enum for all action types in this plugin.
 	 * 
 	 * @author Thoralf Rickert
 	 */
 	public enum PlugInAction {
-		EXECUTE("mainmenu.execute"), EXECUTE_ALL("mainmenu.executeall"), CLEAR("mainmenu.clear"), CLEAR_ALL(
-				"mainmenu.clearall"), UNKNOWN("");
+		EXECUTE("mainmenu.execute"), EXECUTE_ALL("mainmenu.executeall"), TAG_ALL("mainmenu.tagall"), UNTAG_ALL(
+				"mainmenu.untagall"), CLEAR("mainmenu.clear"), CLEAR_ALL("mainmenu.clearall"), UNKNOWN("");
 
 		private String id;
 
@@ -159,7 +173,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 		log = Logger.getInstance(TeachPlugin.class);
 		log.info(getName() + " initialized...");
-    Resources.getInstance().initialize(Client.getSettingsDirectory(),"teachplugin_");
+		Resources.getInstance().initialize(Client.getSettingsDirectory(), "teachplugin_");
 	}
 
 	/**
@@ -189,10 +203,15 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		executeAllMenu.addActionListener(this);
 		menu.add(executeAllMenu);
 
-		// JMenuItem clearMenu = new JMenuItem(getString("mainmenu.clear.title"));
-		// clearMenu.setActionCommand(PlugInAction.CLEAR.getID());
-		// clearMenu.addActionListener(this);
-		// menu.add(clearMenu);
+		JMenuItem tagAllMenu = new JMenuItem(getString("plugin.teacher.mainmenu.tagall.title"));
+		tagAllMenu.setActionCommand(PlugInAction.TAG_ALL.getID());
+		tagAllMenu.addActionListener(this);
+		menu.add(tagAllMenu);
+
+		JMenuItem untagAllMenu = new JMenuItem(getString("plugin.teacher.mainmenu.untagall.title"));
+		untagAllMenu.setActionCommand(PlugInAction.UNTAG_ALL.getID());
+		untagAllMenu.addActionListener(this);
+		menu.add(untagAllMenu);
 
 		JMenuItem clearAllMenu = new JMenuItem(getString("plugin.teacher.mainmenu.clearall.title"));
 		clearAllMenu.setActionCommand(PlugInAction.CLEAR_ALL.getID());
@@ -235,14 +254,14 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		});
 		menu.add(editMenu);
 
-    // clear tags
-    editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.untag.title"));
-    editMenu.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doUnTag(container.units());
-      }
-    });
-    menu.add(editMenu);
+		// clear tags
+		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.untag.title"));
+		editMenu.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				doUnTag(container.units());
+			}
+		});
+		menu.add(editMenu);
 
 		// clear all $$$ comments
 		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.clear.title"));
@@ -256,6 +275,12 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		return menu;
 	}
 
+	/**
+	 * 
+	 * 
+	 * @see magellan.client.swing.context.UnitContextMenuProvider#createContextMenu(magellan.client.event.EventDispatcher,
+	 *      magellan.library.GameData, magellan.library.Unit, java.util.Collection)
+	 */
 	@SuppressWarnings("unchecked")
 	public JMenuItem createContextMenu(EventDispatcher dispatcher, GameData data, final Unit unit,
 			final Collection selectedObjects) {
@@ -361,12 +386,12 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		});
 		menu.add(delLearnMenu);
 		boolean hasOrder = false;
-		if (selectedObjects==null){
+		if (selectedObjects == null) {
 			hasOrder = hasLearnOrder(unit);
 		} else {
-			for (Object o : selectedObjects){
-				if (o instanceof Unit){
-					if (hasLearnOrder((Unit) o)){
+			for (Object o : selectedObjects) {
+				if (o instanceof Unit) {
+					if (hasLearnOrder((Unit) o)) {
 						hasOrder = true;
 						break;
 					}
@@ -408,12 +433,12 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		});
 		menu.add(delLearnMenu);
 		hasOrder = false;
-		if (selectedObjects==null){
+		if (selectedObjects == null) {
 			hasOrder = hasLearnOrder(unit);
 		} else {
-			for (Object o : selectedObjects){
-				if (o instanceof Unit){
-					if (hasTeachOrder((Unit) o)){
+			for (Object o : selectedObjects) {
+				if (o instanceof Unit) {
+					if (hasTeachOrder((Unit) o)) {
 						hasOrder = true;
 						break;
 					}
@@ -429,12 +454,12 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	private boolean hasLearnOrder(Unit unit) {
 		SUnit su = Teacher.parseUnit(unit, namespace, false);
-		return su!=null && !su.getLearnTalents().isEmpty();
+		return su != null && !su.getLearnTalents().isEmpty();
 	}
 
 	private boolean hasTeachOrder(Unit unit) {
 		SUnit su = Teacher.parseUnit(unit, namespace, false);
-		return su!=null && !su.getTeachTalents().isEmpty();
+		return su != null && !su.getTeachTalents().isEmpty();
 	}
 
 	protected void delOrder(Unit unit, Collection<Unit> selectedObjects, Order newOrder) {
@@ -453,7 +478,21 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		log.info(e.getActionCommand());
 		switch (PlugInAction.getAction(e)) {
 		case EXECUTE_ALL: {
-			doTeach(gd.units().values());
+			for (Region r : gd.regions().values()) {
+				doTeach(r.units());
+			}
+			break;
+		}
+		case TAG_ALL: {
+			for (Region r : gd.regions().values()) {
+				doParse(r.units());
+			}
+			break;
+		}
+		case UNTAG_ALL: {
+			for (Region r : gd.regions().values()) {
+				doUnTag(r.units());
+			}
 			break;
 		}
 		case CLEAR_ALL: {
@@ -476,34 +515,35 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		new Thread(new Runnable() {
 
 			public void run() {
-				Teacher.teach(values, namespace, new ProgressBarUI(client));
+				Teacher.teach(values, namespace, new ProgressBarUI(client), confirmFullTeachers,
+						confirmEmptyTeachers, percentFull, confirmTaughtStudents, confirmUntaughtStudents);
 				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 			}
 		}).start();
 
 	}
 
-  private void doParse(final Collection<Unit> values) {
-    new Thread(new Runnable() {
+	private void doParse(final Collection<Unit> values) {
+		new Thread(new Runnable() {
 
-      public void run() {
-        Teacher.parse(values, namespace, new ProgressBarUI(client));
-        client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
-      }
-    }).start();
+			public void run() {
+				Teacher.parse(values, namespace, new ProgressBarUI(client));
+				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+			}
+		}).start();
 
-  }
+	}
 
-  private void doUnTag(final Collection<Unit> values) {
-    new Thread(new Runnable() {
+	private void doUnTag(final Collection<Unit> values) {
+		new Thread(new Runnable() {
 
-      public void run() {
-        Teacher.untag(values, namespace, new ProgressBarUI(client));
-        client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
-      }
-    }).start();
+			public void run() {
+				Teacher.untag(values, namespace, new ProgressBarUI(client));
+				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+			}
+		}).start();
 
-  }
+	}
 
 	/**
 	 * @see magellan.client.extern.MagellanPlugIn#quit(boolean)
@@ -516,9 +556,9 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 * @see magellan.client.extern.MagellanPlugIn#getDocks()
 	 */
 	public Map<String, Component> getDocks() {
-	  return null;
+		return null;
 	}
-	
+
 	/**
 	 * 
 	 */
@@ -535,32 +575,105 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	class TeachPreferences implements PreferencesAdapter {
 
 		JTextArea txtNamespace;
+		private JCheckBox chkConfirmFullTeachers;
+		private JCheckBox chkConfirmEmptyTeachers;
+		private JCheckBox chkConfirmTaughtStudents;
+		private JCheckBox chkConfirmUntaughtStudents;
+		private JSlider sldPercentTeacher;
+		private JPanel westPanel;
+
+		public TeachPreferences(){
+		  initGUI();
+		}
+		
+		private void initGUI() {
+      JPanel panel = new JPanel(new GridBagLayout());
+
+      txtNamespace = new JTextArea(namespace);
+      txtNamespace.setMinimumSize(new Dimension(100, 20));
+      txtNamespace.setPreferredSize(new java.awt.Dimension(100, 20));
+      JLabel lblNamespace = new JLabel(getString("plugin.teacher.preferences.label.namespace"));
+      lblNamespace.setLabelFor(txtNamespace);
+
+      chkConfirmFullTeachers = new JCheckBox(
+          getString("plugin.teacher.preferences.label.confirmfullteachers"));
+      chkConfirmEmptyTeachers = new JCheckBox(
+          getString("plugin.teacher.preferences.label.confirmemptyteachers"));
+      JLabel lblPercentTeacher = new JLabel(
+          getString("plugin.teacher.preferences.label.percentTeacher"));
+      sldPercentTeacher = new JSlider();
+      sldPercentTeacher.setMajorTickSpacing(20);
+      sldPercentTeacher.setMinorTickSpacing(5);
+      sldPercentTeacher.setPaintTicks(true);
+      sldPercentTeacher.setPaintLabels(true);
+      sldPercentTeacher.setPaintTrack(true);
+      lblPercentTeacher.setLabelFor(sldPercentTeacher);
+      chkConfirmTaughtStudents = new JCheckBox(
+          getString("plugin.teacher.preferences.label.confirmtaughtstudents"));
+      chkConfirmUntaughtStudents = new JCheckBox(
+          getString("plugin.teacher.preferences.label.confirmuntaughtstudents"));
+
+      // GridBagConstraints con = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
+      // GridBagConstraints.HORIZONTAL, new Insets(3, 3, 3, 3), 0, 0);
+      GridBagConstraints con = new GridBagConstraints();
+      con.insets = new Insets(2, 2, 2, 2);
+      con.fill = GridBagConstraints.HORIZONTAL;
+      con.anchor = GridBagConstraints.WEST;
+
+      con.insets.left = 0;
+      con.gridx = 0;
+      con.gridy = 0;
+      panel.add(lblNamespace, con);
+
+      con.insets.left = 0;
+      con.gridy++;
+      panel.add(txtNamespace, con);
+
+      con.gridx = 0;
+      con.gridy++;
+      panel.add(chkConfirmFullTeachers, con);
+
+      con.gridy++;
+      panel.add(chkConfirmEmptyTeachers, con);
+
+      con.gridy++;
+      panel.add(lblPercentTeacher, con);
+      con.gridy++;
+      panel.add(sldPercentTeacher, con);
+      con.gridx = 0;
+
+      con.gridy++;
+      panel.add(chkConfirmTaughtStudents, con);
+
+      con.gridy++;
+      panel.add(chkConfirmUntaughtStudents, con);
+
+      con.gridx = 1;
+      con.gridy = 0;
+      con.fill = GridBagConstraints.NONE;
+      con.anchor = GridBagConstraints.EAST;
+      con.weightx = 0.1;
+      panel.add(new JLabel(""), con);
+
+      JPanel restrictPanel = new JPanel(new BorderLayout());
+      westPanel = new JPanel(new BorderLayout());
+      westPanel.add(restrictPanel, BorderLayout.CENTER);
+      restrictPanel.add(panel, BorderLayout.NORTH);
+      restrictPanel.setBorder(new javax.swing.border.TitledBorder(BorderFactory
+          .createEtchedBorder(), getString("plugin.teacher.preferences.label.namespace")));
+		}
 
 		public void applyPreferences() {
 			namespace = txtNamespace.getText();
+			confirmFullTeachers = chkConfirmFullTeachers.isSelected();
+			confirmEmptyTeachers = chkConfirmEmptyTeachers.isSelected();
+			confirmTaughtStudents = chkConfirmTaughtStudents.isSelected();
+			confirmUntaughtStudents = chkConfirmUntaughtStudents.isSelected();
+			percentFull = sldPercentTeacher.getValue();
 		}
 
 		public Component getComponent() {
-			JPanel panel = new JPanel(new GridBagLayout());
-			panel.setBorder(new javax.swing.border.TitledBorder(BorderFactory.createEtchedBorder(),
-					getString("plugin.teacher.preferences.label.namespace")));
-
-			GridBagConstraints con = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-					GridBagConstraints.HORIZONTAL, new Insets(3, 3, 3, 3), 0, 0);
-
-			JLabel lblNamespace = new JLabel(getString("plugin.teacher.preferences.label.namespace"));
-			panel.add(lblNamespace, con);
-
-			txtNamespace = new JTextArea(namespace);
-			txtNamespace.setMinimumSize(new Dimension(100, 20));
-			txtNamespace.setPreferredSize(new java.awt.Dimension(100, 20));
-			// txtNamespace.setText("stm");
-
-			con.insets.left = 0;
-			con.gridx = 1;
-			panel.add(txtNamespace, con);
-
-			return panel;
+			return westPanel;
 		}
 
 		public String getTitle() {
@@ -568,25 +681,29 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		}
 
 		public void initPreferences() {
-
+			chkConfirmEmptyTeachers.setSelected(confirmEmptyTeachers);
+			chkConfirmFullTeachers.setSelected(confirmFullTeachers);
+			chkConfirmTaughtStudents.setSelected(confirmTaughtStudents);
+			chkConfirmUntaughtStudents.setSelected(confirmUntaughtStudents);
+			sldPercentTeacher.setValue(percentFull);
 		}
 
 	}
 
-//	private static final String BUNDLE_NAME = "magellan.plugin.teacher.teacher_resources";
+	// private static final String BUNDLE_NAME = "magellan.plugin.teacher.teacher_resources";
 
-//	private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
+	// private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 
 	protected static String getString(String key) {
 		return Resources.get(key);
-//		ResourceBundle bundle = ResourceBundle.getBundle(BUNDLE_NAME, Locales.getGUILocale());
-//		try {
-//			return bundle.getString(key);
-//		} catch (MissingResourceException e) {
-//			log.warn("resource key " + key + " not found in bundle " + BUNDLE_NAME + ", "
-//					+ Locales.getGUILocale());
-//			return '!' + key + '!';
-//		}
+		// ResourceBundle bundle = ResourceBundle.getBundle(BUNDLE_NAME, Locales.getGUILocale());
+		// try {
+		// return bundle.getString(key);
+		// } catch (MissingResourceException e) {
+		// log.warn("resource key " + key + " not found in bundle " + BUNDLE_NAME + ", "
+		// + Locales.getGUILocale());
+		// return '!' + key + '!';
+		// }
 	}
 
 	protected static String getString(String key, Object[] args) {
