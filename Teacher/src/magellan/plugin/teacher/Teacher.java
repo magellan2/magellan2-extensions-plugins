@@ -36,6 +36,8 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import magellan.client.swing.ProgressBarUI;
+import magellan.library.ID;
+import magellan.library.Named;
 import magellan.library.Skill;
 import magellan.library.Unit;
 import magellan.library.utils.NullUserInterface;
@@ -96,11 +98,14 @@ public class Teacher {
 	 * @author stm
 	 * 
 	 */
-	public static class SUnit {
+	public static class SUnit implements Named {
 
-		Unit unit;
-		Map<String, Integer> teach = new HashMap<String, Integer>();
-		Map<String, Double> learn = new HashMap<String, Double>();
+		private Unit unit;
+		private Map<String, Integer> teach = new HashMap<String, Integer>();
+		private Map<String, Double> learn = new HashMap<String, Double>();
+
+		private Map<String, Integer> talentLevels = new HashMap<String, Integer>();
+
 		private int index;
 		private ArrayList<Integer> teachers = new ArrayList<Integer>();
 
@@ -108,19 +113,21 @@ public class Teacher {
 			this.unit = unit;
 		}
 
-		public void addTeach(String talent, Integer prio) {
-			teach.put(talent, prio);
+		public void addTeach(String talent, Integer diff) {
+			teach.put(talent, diff);
+			talentLevels.put(talent, getLevel(getUnit(), talent));
 		}
 
 		public void addLearn(String talent, Double prio) {
 			learn.put(talent, prio);
+			talentLevels.put(talent, getLevel(getUnit(), talent));
 		}
 
 		public Unit getUnit() {
 			return unit;
 		}
 
-		public double getPrio(String learning) {
+		public double getDiff(String learning) {
 			if (learning == null)
 				return 0;
 			return (Double) (learn.get(learning) != null ? learn.get(learning) : -1);
@@ -166,8 +173,8 @@ public class Teacher {
 			String maxLearning = null;
 			String maxTeaching = null;
 			for (String t : getLearnTalents()) {
-				if (getPrio(t) > maxPrio) {
-					maxPrio = getPrio(t);
+				if (getDiff(t) > maxPrio) {
+					maxPrio = getDiff(t);
 					maxLearning = t;
 				}
 
@@ -187,6 +194,51 @@ public class Teacher {
 				u.putTag(TEACH_TAG, maxTeaching);
 			}
 
+		}
+
+		public String getModifiedName() {
+			return getUnit().getModifiedName();
+		}
+
+		public String getName() {
+			return getUnit().getName();
+		}
+
+		public void setName(String name) {
+
+		}
+
+		public int compareTo(Object o) {
+			if (o instanceof SUnit) {
+				return getUnit().compareTo(((SUnit) o).getUnit());
+			}
+			return 0;
+		}
+
+		public ID getID() {
+			return getUnit().getID();
+		}
+
+		public Object clone() throws CloneNotSupportedException {
+			throw new CloneNotSupportedException();
+		}
+
+		/**
+		 * More efficient variant of getLevel(SUnig, String).
+		 * 
+		 * @param skill
+		 * @return
+		 */
+		public int getSkillLevel(String skill) {
+			if (talentLevels != null) {
+				Integer result = talentLevels.get(skill);
+				if (result != null) {
+					return result;
+				}
+			}
+			int level = getLevel(getUnit(), skill);
+			talentLevels.put(skill, level);
+			return level;
 		}
 	}
 
@@ -281,7 +333,7 @@ public class Teacher {
 			}
 		}
 
-		private static final double LEVEL_VALUE = .2;
+		private static final double LEVEL_VALUE = .1;
 		private static final double WRONGLEVEL_VALUE = .5;
 
 		SUnit[] units;
@@ -326,13 +378,15 @@ public class Teacher {
 				SUnit su = info.getSUnit();
 				double value = 0;
 				if (info.learning != null) {
-					value = su.getPrio(info.learning);
+					value = su.getDiff(info.learning);
 					value *= su.getUnit().getModifiedPersons();
-					value *= 1 + LEVEL_VALUE * getLevel(su.getUnit(), info.learning);
+					value *= 1 + LEVEL_VALUE * (2 + su.getSkillLevel(info.learning));
 					if (info.getNumTeachers() > 0) {
 						Info teacher = infos[info.teacher];
-						int sLevel = getLevel(info.getUnit(), info.learning);
-						int tLevel = getLevel(teacher.getUnit(), info.learning);
+						int sLevel = info.getSUnit().getSkillLevel(info.learning);// getLevel(info.getUnit(),
+																																			// info.learning);
+						int tLevel = teacher.getSUnit().getSkillLevel(info.learning); //getLevel(teacher.getUnit
+																																					// (), info.learning);
 						int maxDiff = teacher.getSUnit().getMaximumDifference(info.learning);
 						if (maxDiff == 1) {
 							value = 0;
@@ -525,7 +579,7 @@ public class Teacher {
 			Info teacher = infos[t];
 
 			if (teacher.learning != null
-					|| getLevel(teacher.getUnit(), student.learning) < getLevel(student.getUnit(),
+					|| teacher.getSUnit().getSkillLevel(student.learning) < student.getSUnit().getSkillLevel(
 							student.learning) + 2)
 				return false;
 			else
@@ -594,7 +648,7 @@ public class Teacher {
 		for (String talent : student.getLearnTalents()) {
 			int diff = teacher.getMaximumDifference(talent);
 
-			if (student.getPrio(talent) > 0 && diff != 1
+			if (student.getDiff(talent) > 0 && diff != 1
 			// && getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent)
 					// <=diff
 					&& getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent) >= 2) {
@@ -609,8 +663,8 @@ public class Teacher {
 	 * Parse the orders of <code>u</code>.
 	 * 
 	 * @param u
-	 * @return A {@link SUnit} according to <code>u</code>'s orders, <code>null</code> if this
-	 *         unit has no teaching or learning orders
+	 * @return A {@link SUnit} according to <code>u</code>'s orders, <code>null</code> if this unit
+	 *         has no teaching or learning orders
 	 */
 	public static SUnit parseUnit(Unit u, String namespace, boolean setTags) {
 		SUnit su = null;
@@ -872,6 +926,30 @@ public class Teacher {
 		}
 	}
 
+	public static Order getCurrentOrder(Unit u) {
+		List<String> orders = new ArrayList<String>(u.getOrders());
+		Order value = null;
+		for (Iterator<String> it = orders.iterator(); it.hasNext();) {
+			String o = (String) it.next().trim();
+			if (o.toUpperCase().startsWith("LEHRE")) {
+				if (value != null) {
+					return null;
+				}
+				value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 0);
+			}
+			if (o.toUpperCase().startsWith("LERNE")) {
+				if (value != null) {
+					return null;
+				}
+				value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 0.0);
+			}
+		}
+		if (value == null)
+			return new Order(0, 0);
+
+		return value;
+	}
+
 	/**
 	 * Sets the orders according to the solution
 	 * 
@@ -883,7 +961,7 @@ public class Teacher {
 		for (Solution.Info info : best.infos) {
 			List<String> orders = new ArrayList<String>(info.getUnit().getOrders());
 			for (Iterator<String> it = orders.iterator(); it.hasNext();) {
-				String o = (String) it.next();
+				String o = (String) it.next().trim();
 				if (o.startsWith("LEHRE") || o.startsWith("LERNE")) {
 					it.remove();
 				}
@@ -966,6 +1044,7 @@ public class Teacher {
 	}
 
 	public static void addOrder(Collection<Unit> units, String namespace, Order newOrder) {
+		delOrder(units, namespace, newOrder);
 		// add new L order to all units
 		for (Unit u : units) {
 			Collection<String> oldOrders = u.getOrders();
@@ -1021,6 +1100,15 @@ public class Teacher {
 	}
 
 	public static void delOrder(Collection<Unit> units, String namespace, Order newOrder) {
+		delOrder(units, namespace, newOrder, false);
+	}
+
+	public static void delAllOrders(Collection<Unit> units, String namespace) {
+		delOrder(units, namespace, null, true);
+	}
+
+	protected static void delOrder(Collection<Unit> units, String namespace, Order newOrder,
+			boolean safety) {
 		if (namespace == null)
 			namespace = "";
 		// add new L order to all units
@@ -1034,6 +1122,13 @@ public class Teacher {
 				List<Order> orderList = parseOrder(line, getTeachTag(namespace), getLearnTag(namespace));
 				if (orderList.isEmpty()) {
 					newOrders.add(line);
+				} else if (newOrder == null) {
+					if (!safety) {
+						throw new IllegalArgumentException(
+								"you didn't intend to delete all meta orders, did you?");
+					} else {
+						// delete this line
+					}
 				} else {
 					List<Order> newOrderList = new ArrayList<Order>(orderList.size());
 					for (Order order : orderList) {
@@ -1053,7 +1148,7 @@ public class Teacher {
 						newLine.append(" ");
 						newLine.append(order.shortOrder());
 					}
-					if (!first) {
+					if (!newOrderList.isEmpty()) {
 						newOrders.add(newLine.toString());
 					}
 				}
