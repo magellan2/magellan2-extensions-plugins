@@ -22,7 +22,7 @@ public class Order {
 	 */
 	public Order(String talent, int diff) {
 		this.type = TEACH;
-		this.talent = talent;
+		this.talent = talent.trim();
 		this.diff = diff;
 	}
 
@@ -34,7 +34,7 @@ public class Order {
 	 */
 	public Order(String talent, double value) {
 		this.type = LEARN;
-		this.talent = talent;
+		this.talent = talent.trim();
 		this.value = value;
 	}
 

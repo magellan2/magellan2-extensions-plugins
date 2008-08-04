@@ -116,7 +116,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	private static Logger log = null;
 
 	private Client client = null;
-	@SuppressWarnings("unused")
+
 	private Properties properties = null;
 	private GameData gd = null;
 
@@ -139,7 +139,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 */
 	public enum PlugInAction {
 		EXECUTE("mainmenu.execute"), EXECUTE_ALL("mainmenu.executeall"), TAG_ALL("mainmenu.tagall"), UNTAG_ALL(
-				"mainmenu.untagall"), CLEAR("mainmenu.clear"), CLEAR_ALL("mainmenu.clearall"), UNKNOWN("");
+				"mainmenu.untagall"), CLEAR("mainmenu.clear"), CLEAR_ALL("mainmenu.clearall"), PANEL(
+				"mainmenu.panel"), UNKNOWN("");
 
 		private String id;
 
@@ -218,6 +219,11 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		clearAllMenu.addActionListener(this);
 		menu.add(clearAllMenu);
 
+		JMenuItem panelMenu = new JMenuItem(getString("plugin.teacher.mainmenu.panel.title"));
+		panelMenu.setActionCommand(PlugInAction.PANEL.getID());
+		panelMenu.addActionListener(this);
+		menu.add(panelMenu);
+
 		return items;
 	}
 
@@ -268,6 +274,20 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				doClear(container.units());
+			}
+		});
+		menu.add(editMenu);
+
+		// clear all $$$ comments
+		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.deleteall.title"));
+		editMenu.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (JOptionPane.showConfirmDialog(client, Resources
+						.get("plugin.teacher.delall.confirm.message"), Resources
+						.get("plugin.teacher.delall.confirm.title"), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+					Teacher.delAllOrders(container.units(), namespace);
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+				}
 			}
 		});
 		menu.add(editMenu);
@@ -498,7 +518,15 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		case CLEAR_ALL: {
 			doClear(gd.units().values());
 		}
+		case PANEL: {
+			showPanel();
 		}
+		}
+
+	}
+
+	private void showPanel() {
+		new TeachPanel(client, client.getDispatcher(), gd, properties, null);
 
 	}
 
@@ -582,85 +610,85 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		private JSlider sldPercentTeacher;
 		private JPanel westPanel;
 
-		public TeachPreferences(){
-		  initGUI();
+		public TeachPreferences() {
+			initGUI();
 		}
-		
+
 		private void initGUI() {
-      JPanel panel = new JPanel(new GridBagLayout());
+			JPanel panel = new JPanel(new GridBagLayout());
 
-      txtNamespace = new JTextArea(namespace);
-      txtNamespace.setMinimumSize(new Dimension(100, 20));
-      txtNamespace.setPreferredSize(new java.awt.Dimension(100, 20));
-      JLabel lblNamespace = new JLabel(getString("plugin.teacher.preferences.label.namespace"));
-      lblNamespace.setLabelFor(txtNamespace);
+			txtNamespace = new JTextArea(namespace);
+			txtNamespace.setMinimumSize(new Dimension(100, 20));
+			txtNamespace.setPreferredSize(new java.awt.Dimension(100, 20));
+			JLabel lblNamespace = new JLabel(getString("plugin.teacher.preferences.label.namespace"));
+			lblNamespace.setLabelFor(txtNamespace);
 
-      chkConfirmFullTeachers = new JCheckBox(
-          getString("plugin.teacher.preferences.label.confirmfullteachers"));
-      chkConfirmEmptyTeachers = new JCheckBox(
-          getString("plugin.teacher.preferences.label.confirmemptyteachers"));
-      JLabel lblPercentTeacher = new JLabel(
-          getString("plugin.teacher.preferences.label.percentTeacher"));
-      sldPercentTeacher = new JSlider();
-      sldPercentTeacher.setMajorTickSpacing(20);
-      sldPercentTeacher.setMinorTickSpacing(5);
-      sldPercentTeacher.setPaintTicks(true);
-      sldPercentTeacher.setPaintLabels(true);
-      sldPercentTeacher.setPaintTrack(true);
-      lblPercentTeacher.setLabelFor(sldPercentTeacher);
-      chkConfirmTaughtStudents = new JCheckBox(
-          getString("plugin.teacher.preferences.label.confirmtaughtstudents"));
-      chkConfirmUntaughtStudents = new JCheckBox(
-          getString("plugin.teacher.preferences.label.confirmuntaughtstudents"));
+			chkConfirmFullTeachers = new JCheckBox(
+					getString("plugin.teacher.preferences.label.confirmfullteachers"));
+			chkConfirmEmptyTeachers = new JCheckBox(
+					getString("plugin.teacher.preferences.label.confirmemptyteachers"));
+			JLabel lblPercentTeacher = new JLabel(
+					getString("plugin.teacher.preferences.label.percentTeacher"));
+			sldPercentTeacher = new JSlider();
+			sldPercentTeacher.setMajorTickSpacing(20);
+			sldPercentTeacher.setMinorTickSpacing(5);
+			sldPercentTeacher.setPaintTicks(true);
+			sldPercentTeacher.setPaintLabels(true);
+			sldPercentTeacher.setPaintTrack(true);
+			lblPercentTeacher.setLabelFor(sldPercentTeacher);
+			chkConfirmTaughtStudents = new JCheckBox(
+					getString("plugin.teacher.preferences.label.confirmtaughtstudents"));
+			chkConfirmUntaughtStudents = new JCheckBox(
+					getString("plugin.teacher.preferences.label.confirmuntaughtstudents"));
 
-      // GridBagConstraints con = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
-      // GridBagConstraints.HORIZONTAL, new Insets(3, 3, 3, 3), 0, 0);
-      GridBagConstraints con = new GridBagConstraints();
-      con.insets = new Insets(2, 2, 2, 2);
-      con.fill = GridBagConstraints.HORIZONTAL;
-      con.anchor = GridBagConstraints.WEST;
+			// GridBagConstraints con = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
+			// GridBagConstraints.HORIZONTAL, new Insets(3, 3, 3, 3), 0, 0);
+			GridBagConstraints con = new GridBagConstraints();
+			con.insets = new Insets(2, 2, 2, 2);
+			con.fill = GridBagConstraints.HORIZONTAL;
+			con.anchor = GridBagConstraints.WEST;
 
-      con.insets.left = 0;
-      con.gridx = 0;
-      con.gridy = 0;
-      panel.add(lblNamespace, con);
+			con.insets.left = 0;
+			con.gridx = 0;
+			con.gridy = 0;
+			panel.add(lblNamespace, con);
 
-      con.insets.left = 0;
-      con.gridy++;
-      panel.add(txtNamespace, con);
+			con.insets.left = 0;
+			con.gridy++;
+			panel.add(txtNamespace, con);
 
-      con.gridx = 0;
-      con.gridy++;
-      panel.add(chkConfirmFullTeachers, con);
+			con.gridx = 0;
+			con.gridy++;
+			panel.add(chkConfirmFullTeachers, con);
 
-      con.gridy++;
-      panel.add(chkConfirmEmptyTeachers, con);
+			con.gridy++;
+			panel.add(chkConfirmEmptyTeachers, con);
 
-      con.gridy++;
-      panel.add(lblPercentTeacher, con);
-      con.gridy++;
-      panel.add(sldPercentTeacher, con);
-      con.gridx = 0;
+			con.gridy++;
+			panel.add(lblPercentTeacher, con);
+			con.gridy++;
+			panel.add(sldPercentTeacher, con);
+			con.gridx = 0;
 
-      con.gridy++;
-      panel.add(chkConfirmTaughtStudents, con);
+			con.gridy++;
+			panel.add(chkConfirmTaughtStudents, con);
 
-      con.gridy++;
-      panel.add(chkConfirmUntaughtStudents, con);
+			con.gridy++;
+			panel.add(chkConfirmUntaughtStudents, con);
 
-      con.gridx = 1;
-      con.gridy = 0;
-      con.fill = GridBagConstraints.NONE;
-      con.anchor = GridBagConstraints.EAST;
-      con.weightx = 0.1;
-      panel.add(new JLabel(""), con);
+			con.gridx = 1;
+			con.gridy = 0;
+			con.fill = GridBagConstraints.NONE;
+			con.anchor = GridBagConstraints.EAST;
+			con.weightx = 0.1;
+			panel.add(new JLabel(""), con);
 
-      JPanel restrictPanel = new JPanel(new BorderLayout());
-      westPanel = new JPanel(new BorderLayout());
-      westPanel.add(restrictPanel, BorderLayout.CENTER);
-      restrictPanel.add(panel, BorderLayout.NORTH);
-      restrictPanel.setBorder(new javax.swing.border.TitledBorder(BorderFactory
-          .createEtchedBorder(), getString("plugin.teacher.preferences.label.namespace")));
+			JPanel restrictPanel = new JPanel(new BorderLayout());
+			westPanel = new JPanel(new BorderLayout());
+			westPanel.add(restrictPanel, BorderLayout.CENTER);
+			restrictPanel.add(panel, BorderLayout.NORTH);
+			restrictPanel.setBorder(new javax.swing.border.TitledBorder(BorderFactory
+					.createEtchedBorder(), getString("plugin.teacher.preferences.label.namespace")));
 		}
 
 		public void applyPreferences() {
