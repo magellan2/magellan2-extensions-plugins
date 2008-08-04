@@ -127,7 +127,7 @@ public class Teacher {
 			return unit;
 		}
 
-		public double getDiff(String learning) {
+		public double getPrio(String learning) {
 			if (learning == null)
 				return 0;
 			return (Double) (learn.get(learning) != null ? learn.get(learning) : -1);
@@ -173,8 +173,8 @@ public class Teacher {
 			String maxLearning = null;
 			String maxTeaching = null;
 			for (String t : getLearnTalents()) {
-				if (getDiff(t) > maxPrio) {
-					maxPrio = getDiff(t);
+				if (getPrio(t) > maxPrio) {
+					maxPrio = getPrio(t);
 					maxLearning = t;
 				}
 
@@ -378,7 +378,7 @@ public class Teacher {
 				SUnit su = info.getSUnit();
 				double value = 0;
 				if (info.learning != null) {
-					value = su.getDiff(info.learning);
+					value = su.getPrio(info.learning);
 					value *= su.getUnit().getModifiedPersons();
 					value *= 1 + LEVEL_VALUE * (2 + su.getSkillLevel(info.learning));
 					if (info.getNumTeachers() > 0) {
@@ -648,7 +648,7 @@ public class Teacher {
 		for (String talent : student.getLearnTalents()) {
 			int diff = teacher.getMaximumDifference(talent);
 
-			if (student.getDiff(talent) > 0 && diff != 1
+			if (student.getPrio(talent) > 0 && diff != 1
 			// && getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent)
 					// <=diff
 					&& getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent) >= 2) {
