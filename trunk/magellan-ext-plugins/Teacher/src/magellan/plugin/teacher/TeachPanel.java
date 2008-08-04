@@ -583,7 +583,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 				}
 
 				for (String lTalent : unit.getLearnTalents()) {
-					content[count][numFixedColumns + talentIndices.get(lTalent) * 3] = unit.getDiff(lTalent);
+					content[count][numFixedColumns + talentIndices.get(lTalent) * 3] = unit.getPrio(lTalent);
 					content[count][numFixedColumns + talentIndices.get(lTalent) * 3 + 2] = Teacher.getLevel(
 							unit.getUnit(), lTalent);
 				}
