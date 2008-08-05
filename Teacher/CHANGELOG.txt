@@ -1,3 +1,6 @@
+2008-08-05  - Fiete  <Fiete@users.sourceforge.net>
+  * first load resources, then call getName in Init
+
 2008-08-04  - stm (stm_@users.sourceforge.net)
   * added TeachPanel
   * tweaked evaluate
