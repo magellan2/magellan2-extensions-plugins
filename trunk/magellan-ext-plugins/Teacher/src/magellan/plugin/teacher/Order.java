@@ -10,9 +10,12 @@ public class Order {
 
 	private String type;
 	private String talent;
+	
 	private int diff;
-	private double value;
-	private double lowValue = Double.NaN;
+	
+	private double prio;
+	private int target;
+	private int max;
 
 	/**
 	 * Create a new teaching order.
@@ -20,7 +23,7 @@ public class Order {
 	 * @param talent
 	 * @param diff
 	 */
-	public Order(String talent, int diff) {
+	public Order(String talent, int diff, boolean sec) {
 		this.type = TEACH;
 		this.talent = talent.trim();
 		this.diff = diff;
@@ -31,25 +34,30 @@ public class Order {
 	 * 
 	 * @param talent
 	 * @param value
+	 * @throws IllegalArgumentException if target is <= 0
 	 */
-	public Order(String talent, double value) {
+	public Order(String talent, double prio,  int target, int max) {
+		if (target<=0)
+			throw new IllegalArgumentException("target must be > 0");
 		this.type = LEARN;
+		this.prio = prio;
 		this.talent = talent.trim();
-		this.value = value;
+		this.target = target;
+		this.max = max;
 	}
 
-	/**
-	 * Create a new learn ALLES order.
-	 * 
-	 * @param upper
-	 * @param lower
-	 */
-	public Order(double upper, double lower) {
-		this.type = LEARN;
-		this.talent = ALL;
-		this.value = upper;
-		this.lowValue = lower;
-	}
+	// /**
+	// * Create a new learn ALLES order.
+	// *
+	// * @param upper
+	// * @param lower
+	// */
+	// public Order(double upper, double lower) {
+	// this.type = LEARN;
+	// this.talent = ALL;
+	// this.value = upper;
+	// this.lowValue = lower;
+	// }
 
 	/**
 	 * Create a new teach ALLES order.
@@ -79,34 +87,63 @@ public class Order {
 	}
 
 	/**
-	 * The value of a learn order.
+	 * The priority of a learn order.
 	 * 
-	 * @return
-	 * @throws IllegalArgumentException if this is called for a {@link #TEACH} order.
+	 * @return 
+	 * @throws IllegalArgumentException
+	 *           if this is called for a {@link #TEACH} order.
 	 */
-	public double getValue() {
+	public double getPrio() {
 		if (TEACH.equals(type))
-			throw new IllegalArgumentException("TEACH has no value");
-		return value;
+			throw new IllegalArgumentException("TEACH has no priority");
+		return prio;
 	}
 
 	/**
-	 * The lower value of a learn ALL order.
+	 * Change priority of learn order.
+	 * 
+	 * @param prio2
+	 * @throws IllegalArgumentException
+	 *           if this is called for a {@link #TEACH} order.
+	 */
+	public void setPrio(double prio) {
+		if (TEACH.equals(type))
+			throw new IllegalArgumentException("TEACH has no priority");
+		this.prio = prio;
+	}
+
+	/**
+	 * The target value of a learn order.
 	 * 
 	 * @return
-	 * @throws IllegalArgumentException if this is not called from a {@link #LEARN} {@link #ALL} order.
+	 * @throws IllegalArgumentException
+	 *           if this is called for a {@link #TEACH} order.
 	 */
-	public double getLowValue() {
-		if (TEACH.equals(type) || !ALL.equals(talent))
-			throw new IllegalArgumentException("no low value");
-		return lowValue;
+	public int getTarget() {
+		if (TEACH.equals(type))
+			throw new IllegalArgumentException("TEACH has no target");
+		return target;
+	}
+
+	/**
+	 * The value of a learn order.
+	 * 
+	 * @return
+	 * @throws IllegalArgumentException
+	 *           if this is called for a {@link #TEACH} order.
+	 */
+	public int getMax() {
+		if (TEACH.equals(type))
+			throw new IllegalArgumentException("TEACH has no max");
+		return max;
 	}
 
 	/**
 	 * The difference of a teach order.
 	 * 
 	 * @return
-	 * @throws IllegalArgumentException if this is called from a {@link #LEARN}.
+	 * @throws IllegalArgumentException
+	 *           if this is called from a {@link #LEARN}.
 	 */
 	public int getDiff() {
 		if (LEARN.equals(type))
@@ -120,9 +157,9 @@ public class Order {
 	public String shortOrder() {
 		if (LEARN.equals(type))
 			if (ALL.equals(talent))
-				return talent + " " + value + " " + lowValue;
+				return "ALLERROR"; // talent + " " + value + " " + lowValue;
 			else
-				return talent + " " + value;
+				return talent + " " + target + " " + max;
 		else
 			return talent + " " + diff;
 	}
@@ -131,10 +168,14 @@ public class Order {
 	 * @return Something like "L Talent value"
 	 */
 	public String longOrder() {
-		return getType() + " " + shortOrder();
+		if (LEARN.equals(getType()))
+			return getType() + " " + getPrio() + " " + shortOrder();
+		else
+			return getType() + " " + shortOrder();
 	}
 
 	public String toString() {
 		return longOrder();
 	}
+
 }

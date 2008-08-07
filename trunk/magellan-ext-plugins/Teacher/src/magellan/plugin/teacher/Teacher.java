@@ -87,6 +87,27 @@ public class Teacher {
 		this.ui = ui;
 	}
 
+	@SuppressWarnings("serial")
+	public static class OrderFormatException extends Exception {
+
+		public OrderFormatException() {
+			super();
+		}
+
+		public OrderFormatException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		public OrderFormatException(String message) {
+			super(message);
+		}
+
+		public OrderFormatException(Throwable cause) {
+			super(cause);
+		}
+
+	}
+
 	private SUnit[] sUnits;
 	public static final String delim = " ";
 
@@ -102,7 +123,12 @@ public class Teacher {
 
 		private Unit unit;
 		private Map<String, Integer> teach = new HashMap<String, Integer>();
-		private Map<String, Double> learn = new HashMap<String, Double>();
+		private Map<String, Integer> targets = new HashMap<String, Integer>();
+		private Map<String, Integer> maxs = new HashMap<String, Integer>();
+		double prio = 1;
+
+		/** calculated priorities */
+		private Map<String, Double> weights = new HashMap<String, Double>();
 
 		private Map<String, Integer> talentLevels = new HashMap<String, Integer>();
 
@@ -111,26 +137,96 @@ public class Teacher {
 
 		SUnit(Unit unit) {
 			this.unit = unit;
+			this.prio = 1;
 		}
 
 		public void addTeach(String talent, Integer diff) {
 			teach.put(talent, diff);
 			talentLevels.put(talent, getLevel(getUnit(), talent));
+			weights.clear();
 		}
 
-		public void addLearn(String talent, Double prio) {
-			learn.put(talent, prio);
+		public void addLearn(String talent, Integer target, Integer max) {
+			if (target == 0)
+				throw new IllegalArgumentException("target must be > 0");
+			targets.put(talent, target);
+			maxs.put(talent, max);
 			talentLevels.put(talent, getLevel(getUnit(), talent));
+			weights.clear();
 		}
 
 		public Unit getUnit() {
 			return unit;
 		}
 
-		public double getPrio(String learning) {
-			if (learning == null)
+		public double calcWeight(String skill) {
+			if (skill == null)
 				return 0;
-			return (Double) (learn.get(learning) != null ? learn.get(learning) : -1);
+			Double prio = weights.get(skill);
+			if (prio == null) {
+				// calc max mult
+				double maxMult = 0;
+				for (String skill2 : getLearnTalents()) {
+					int lev = Math.max(1, getSkillLevel(skill2));
+					if (lev < getMax(skill2)) {
+						double mult = lev / (double) getTarget(skill2);
+						if (maxMult < mult)
+							maxMult = mult;
+					}
+				}
+				if (maxMult == 0) {
+					// all skills above max
+					prio = .5;
+					weights.put(skill, prio);
+				} else {
+					// calc max normalized learning weeks
+					double maxWeeks = 0;
+					for (String skill2 : getLearnTalents()) {
+						int lev = Math.max(1, getSkillLevel(skill2));
+						if (lev < getMax(skill2)) {
+							double weeks = getTarget(skill2) - lev / maxMult + 2;
+							// double weeks = getWeeks(getTarget(skill2)) - getWeeks(lev/maxMult) +2;
+							if (maxWeeks < weeks)
+								maxWeeks = weeks;
+						}
+					}
+					int level = Math.max(1, getSkillLevel(skill));
+					if (level >= getMax(skill))
+						prio = 0d;
+					else
+						prio = (getTarget(skill) - level / maxMult + 2) / maxWeeks;
+					// prio = (getWeeks(getTarget(skill)) - getWeeks(level/maxMult) + 2)/maxWeeks;
+					if (prio < 0)
+						prio = prio * 1.000001;
+					weights.put(skill, prio);
+				}
+				getUnit().addOrder("; " + skill + " " + prio, false, 0);
+			}
+			return prio;
+		}
+
+		private double getWeeks(double d) {
+			return (d) * (d + 1) / 2d;
+		}
+
+		public int getTarget(String skill) {
+			if (skill == null)
+				return 0;
+			return (targets.get(skill) != null ? targets.get(skill) : -1);
+		}
+
+		public int getMax(String skill) {
+			if (skill == null)
+				return 0;
+			return (maxs.get(skill) != null ? maxs.get(skill) : -1);
+		}
+
+		public double getPrio() {
+			return prio;
+		}
+
+		public void setPrio(double prio) {
+			this.prio = prio;
 		}
 
 		public int getMaximumDifference(String teaching) {
@@ -140,7 +236,7 @@ public class Teacher {
 		}
 
 		public Set<String> getLearnTalents() {
-			return learn.keySet();
+			return targets.keySet();
 		}
 
 		public Set<String> getTeachTalents() {
@@ -167,14 +263,14 @@ public class Teacher {
 			return index + ":" + getUnit().toString();
 		}
 
-		public void setTags() {
+		public void attachTags() {
 			Unit u = getUnit();
-			double maxPrio = Double.NEGATIVE_INFINITY;
+			double maxTarget = Double.NEGATIVE_INFINITY;
 			String maxLearning = null;
 			String maxTeaching = null;
 			for (String t : getLearnTalents()) {
-				if (getPrio(t) > maxPrio) {
-					maxPrio = getPrio(t);
+				if (getTarget(t) > maxTarget) {
+					maxTarget = getTarget(t);
 					maxLearning = t;
 				}
 
@@ -240,6 +336,7 @@ public class Teacher {
 			talentLevels.put(skill, level);
 			return level;
 		}
+
 	}
 
 	/**
@@ -247,14 +344,14 @@ public class Teacher {
 	 * 
 	 * @author steffen
 	 */
-	class Solution implements Comparable<Solution> {
+	class Solution implements Comparable<Solution>, Cloneable {
 
 		/**
 		 * Represents what a unit is doing in a solution (teaching or learning etc.)
 		 * 
 		 * @author steffen
 		 */
-		class Info {
+		class Info implements Cloneable {
 			private SUnit unit = null;
 			String learning = null;
 			private int students = 0;
@@ -331,9 +428,19 @@ public class Teacher {
 
 				return -1;
 			}
+
+			public Info clone() {
+				try {
+					return (Info) super.clone();
+				} catch (CloneNotSupportedException e) {
+					e.printStackTrace();
+					return null;
+				}
+			}
+
 		}
 
-		private static final double LEVEL_VALUE = .1;
+		// private static final double LEVEL_VALUE = .1;
 		private static final double WRONGLEVEL_VALUE = .5;
 
 		SUnit[] units;
@@ -362,6 +469,19 @@ public class Teacher {
 			result = 0;
 		}
 
+		public Solution clone() {
+			Solution result = null;
+			try {
+				result = (Solution) super.clone();
+			} catch (CloneNotSupportedException e) {
+			}
+			result.infos = new Info[infos.length];
+			for (int i = 0; i < infos.length; i++) {
+				result.infos[i] = infos[i].clone();
+			}
+			return result;
+		}
+
 		/**
 		 * The value of a solution is roughly a sum over all learning units. Each learning unit
 		 * contributes the value of the talent it is learning. This is doubled if the unit has a
@@ -378,15 +498,14 @@ public class Teacher {
 				SUnit su = info.getSUnit();
 				double value = 0;
 				if (info.learning != null) {
-					value = su.getPrio(info.learning);
+					value = su.calcWeight(info.learning);
 					value *= su.getUnit().getModifiedPersons();
-					value *= 1 + LEVEL_VALUE * (2 + su.getSkillLevel(info.learning));
+					value *= su.getPrio();
+					int sLevel = info.getSUnit().getSkillLevel(info.learning);
+					value *= Math.sqrt(sLevel) / 3.5;
 					if (info.getNumTeachers() > 0) {
 						Info teacher = infos[info.teacher];
-						int sLevel = info.getSUnit().getSkillLevel(info.learning);// getLevel(info.getUnit(),
-																																			// info.learning);
-						int tLevel = teacher.getSUnit().getSkillLevel(info.learning); //getLevel(teacher.getUnit
-																																					// (), info.learning);
+						int tLevel = teacher.getSUnit().getSkillLevel(info.learning);
 						int maxDiff = teacher.getSUnit().getMaximumDifference(info.learning);
 						if (maxDiff == 1) {
 							value = 0;
@@ -577,7 +696,6 @@ public class Teacher {
 
 		private boolean validTeacher(Info student, int t, boolean partial) {
 			Info teacher = infos[t];
-
 			if (teacher.learning != null
 					|| teacher.getSUnit().getSkillLevel(student.learning) < student.getSUnit().getSkillLevel(
 							student.learning) + 2)
@@ -648,7 +766,7 @@ public class Teacher {
 		for (String talent : student.getLearnTalents()) {
 			int diff = teacher.getMaximumDifference(talent);
 
-			if (student.getPrio(talent) > 0 && diff != 1
+			if (student.getTarget(talent) > 0 && diff != 1
 			// && getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent)
 					// <=diff
 					&& getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent) >= 2) {
@@ -669,10 +787,15 @@ public class Teacher {
 	public static SUnit parseUnit(Unit u, String namespace, boolean setTags) {
 		SUnit su = null;
 		boolean errorFlag = false;
-		for (String orderString : u.getOrders()) {
+		for (String orderLine : u.getOrders()) {
 			try {
-				List<Order> orders = parseOrder(orderString, getTeachTag(namespace), getLearnTag(namespace));
-				for (Order order : orders) {
+				OrderList orderList;
+				try {
+					orderList = parseOrder(u, orderLine, getTeachTag(namespace), getLearnTag(namespace));
+				} catch (OrderFormatException e) {
+					orderList = new OrderList(Order.LEARN);
+				}
+				for (Order order : orderList.orders) {
 					String talent = order.getTalent();
 					if (order.getType() == Order.TEACH) {
 						int diff = order.getDiff();
@@ -690,35 +813,20 @@ public class Teacher {
 							su.addTeach(talent, diff);
 						}
 					} else {
-						double prio = order.getValue();
+						int target = order.getTarget();
+						int max = order.getMax();
 						if (su == null)
 							su = new SUnit(u);
 						if (talent.equals(Order.ALL)) {
-							double prio2 = order.getLowValue();
-
-							if (u.getModifiedSkills().isEmpty())
-								continue;
-
-							// find min an max skill
-							int maxSkill = 1, minSkill = Integer.MAX_VALUE;
-							for (Skill s : u.getModifiedSkills()) {
-								int l = s.getLevel();
-								if (l > maxSkill)
-									maxSkill = l;
-								if (l < minSkill)
-									minSkill = l;
-							}
-							// add all skills weighted by their level
-							for (Skill s : u.getModifiedSkills()) {
-								su.addLearn(s.getName(), s.getLevel() / (double) maxSkill * (prio - prio2) + prio2);
-							}
+							throw new IllegalArgumentException("L ALL not supported");
 						} else {
-							su.addLearn(talent, prio);
+							su.addLearn(talent, target, max);
+							su.setPrio(orderList.getPrio());
 						}
 					}
 				}
 			} catch (Exception e) {
-				log.warn(e + " parse error, unit " + u + " line " + orderString);
+				// log.warn(e + " parse error, unit " + u + " line " + orderString);
 				errorFlag = true;
 				su = null;
 			}
@@ -737,40 +845,211 @@ public class Teacher {
 		}
 
 		if (setTags && su != null)
-			su.setTags();
+			su.attachTags();
 		return su;
 	}
 
-	protected static List<Order> parseOrder(String orderString, String teachTag, String learnTag) {
-		List<Order> result = new ArrayList<Order>(4);
+	/**
+	 * Tries to parse orderLine.
+	 * 
+	 * @param orderLine
+	 * @param teachTag
+	 * @param learnTag
+	 * @return
+	 * @throws OrderFormatException
+	 */
+	protected static OrderList parseOrder(Unit unit, String orderLine, String teachTag,
+			String learnTag) throws OrderFormatException {
+		OrderList result = new OrderList(Order.LEARN);
+		try {
+			// try to find out which kind of order we have
+			int start = orderLine.indexOf(teachTag);
+			if (start != -1) {
+				// teach order
+				result = new OrderList(Order.TEACH);
+				StringTokenizer st = new StringTokenizer(orderLine.substring(start + learnTag.length()),
+						delim, false);
 
-		int start = orderString.indexOf(teachTag);
-		if (start != -1) {
-			StringTokenizer st = new java.util.StringTokenizer(orderString.substring(start
-					+ learnTag.length()), delim, false);
-			while (st.hasMoreElements()) {
-				String talent = st.nextToken();
-				int diff = Integer.parseInt(st.nextToken());
-				result.add(new Order(talent, diff));
-			}
-		}
-		start = orderString.indexOf(learnTag);
-		if (start != -1) {
-			java.util.StringTokenizer st = new java.util.StringTokenizer(orderString.substring(start
-					+ teachTag.length()), delim, false);
-			while (st.hasMoreElements()) {
-				String talent = st.nextToken();
-				double prio = Double.parseDouble(st.nextToken());
-				if (Order.ALL.equals(talent)) {
-					double prio2 = Double.parseDouble(st.nextToken());
-					result.add(new Order(prio, prio2));
-				} else {
-					result.add(new Order(talent, prio));
+				while (st.hasMoreElements()) {
+					String talent = st.nextToken();
+					int diff = Integer.parseInt(st.nextToken());
+					result.addOrder(new Order(talent, diff, true));
+				}
+			} else {
+				start = orderLine.indexOf(learnTag);
+				if (start != -1) {
+					// learn order
+					result = new OrderList(Order.LEARN);
+					StringTokenizer st = new StringTokenizer(orderLine.substring(start + teachTag.length()),
+							delim, false);
+					// try to read priority
+					if (!st.hasMoreElements()) {
+						return result;
+					}
+					String first = st.nextToken();
+					double prio = -1;
+					try {
+						prio = Double.parseDouble(first);
+					} catch (NumberFormatException e) {
+					}
+					if (prio > 0) {
+						result.setPrio(prio);
+						// new format
+						while (st.hasMoreElements()) {
+							String talent = st.nextToken();
+							int target = Integer.parseInt(st.nextToken());
+							int max = Integer.parseInt(st.nextToken());
+							result.addOrder(new Order(talent, prio, target, max));
+						}
+					} else {
+						// no priority ==> old format
+						while (st.hasMoreElements()) {
+							String talent = first;
+							if (talent == null)
+								talent = st.nextToken();
+							first = null;
+							double talentPrio = Double.parseDouble(st.nextToken());
+							if (Order.ALL.equals(talent)) {
+								double prio2 = Double.parseDouble(st.nextToken());
+								convertOrder(unit, talent, talentPrio, prio2, result);
+							} else {
+								convertOrder(unit, talent, talentPrio, result);
+							}
+						}
+					}
 				}
 			}
+		} catch (Exception e) {
+			throw new OrderFormatException("parse error in line " + orderLine, e);
+		}
+		return result;
+	}
+
+	public static class OrderList {
+		public List<Order> orders = new ArrayList<Order>(1);
+		String type = null;
+
+		private double prio = 1;
+
+		public OrderList(String type) {
+			this.type = type;
 		}
 
-		return result;
+		public void addOrder(Order o) {
+			orders.add(o);
+			if (type.equals(Order.LEARN))
+				setPrio(Math.max(getPrio(), o.getPrio()));
+		}
+
+		/**
+		 * @return the type
+		 */
+		public String getType() {
+			return type;
+		}
+
+		public void setPrio(double prio) {
+			this.prio = prio;
+
+		}
+
+		public String toString() {
+			return getName("");
+		}
+
+		/**
+		 * @return the prio
+		 */
+		public double getPrio() {
+			return prio;
+		}
+
+		public String getName(String namespace) {
+			StringBuffer sb = new StringBuffer();
+			sb.append("// ");
+			if (type.equals(Order.TEACH))
+				sb.append(getTeachTag(namespace));
+			else {
+				sb.append(getLearnTag(namespace));
+				sb.append(" ");
+				sb.append(getPrio());
+			}
+			for (Order o : orders) {
+				sb.append(" ");
+				sb.append(o.shortOrder());
+			}
+			return sb.toString();
+		}
+	}
+
+	/**
+	 * Tries to emulate an old style line <code>// $$L Hiebwaffen 100.0</code> into a new one
+	 * <code>// $$L 100.0 Hiebwaffen 10 999</code>·
+	 * 
+	 * @param unit
+	 * @param talent
+	 * @param talentPrio
+	 * @param result
+	 */
+	private static void convertOrder(Unit unit, String talent, double talentPrio, OrderList result) {
+		if (result.getPrio() < talentPrio)
+			result.setPrio(talentPrio);
+
+		result.addOrder(new Order(talent, talentPrio, Math.max(1, getLevel(unit, talent)), 999));
+	}
+
+	/**
+	 * Tries to emulate an old style line <code>// $$L ALLES 100.0 50.0</code> into a new one
+	 * <code>// $$L 100.0 Hiebwaffen 10 999 Ausdauer 6 999</code>·
+	 * 
+	 * @param unit
+	 * @param talent
+	 * @param talentPrio
+	 * @param result
+	 */
+	private static void convertOrder(Unit unit, String talent, double talentPrio, double prio2,
+			OrderList result) {
+		if (unit.getModifiedSkills().isEmpty())
+			return;
+
+		// find min an max skill
+		int maxSkill = 1, minSkill = Integer.MAX_VALUE;
+		for (Skill s : unit.getModifiedSkills()) {
+			int l = s.getLevel();
+			if (l > maxSkill)
+				maxSkill = l;
+			if (l < minSkill)
+				minSkill = l;
+		}
+		// add all skills weighted by their level
+		for (Skill s : unit.getModifiedSkills()) {
+			result.addOrder(new Order(s.getName(), talentPrio, Math.max(1, s.getLevel()), 999));
+		}
+	}
+
+	public static void convert(Collection<Unit> values, String namespace) {
+		for (Unit u : values) {
+			Collection<String> newOrders = new ArrayList<String>(u.getOrders().size());
+			boolean changed = false;
+			for (String orderLine : u.getOrders()) {
+				OrderList orderList;
+				try {
+					orderList = parseOrder(u, orderLine, getTeachTag(namespace), getLearnTag(namespace));
+				} catch (OrderFormatException e) {
+					orderList = new OrderList(Order.TEACH);
+				}
+				if (orderList.orders.isEmpty()) {
+					newOrders.add(orderLine);
+				} else {
+					changed = true;
+					StringBuffer sb = new StringBuffer();
+					newOrders.add(orderList.getName(namespace));
+				}
+			}
+			if (changed) {
+				u.setOrders(newOrders);
+			}
+		}
 	}
 
 	/**
@@ -807,7 +1086,7 @@ public class Teacher {
 			return 0;
 
 		final int minRounds = Math.max(40, (int) (sUnits.length));
-		final int maxRounds = Math.max(120, (int) (sUnits.length) * 8);
+		final int maxRounds = Math.max(120, (int) (sUnits.length) * 6);
 		final int popSize = minRounds * 3 / 2;
 		final int numMetaRounds = 3;
 		final int select = 5;
@@ -816,63 +1095,73 @@ public class Teacher {
 		ui.setMaximum(numMetaRounds * maxRounds + maxRounds);
 		ui.show();
 
-		Solution[] best = new Solution[numMetaRounds * select * 3 / 2];
-		init(best, sUnits);
+		Solution[] veryBest = new Solution[numMetaRounds * select * 3 / 2];
+		init(veryBest, sUnits);
 
 		for (int metaRound = 0; metaRound < numMetaRounds; ++metaRound) {
+			Solution[] best = new Solution[numMetaRounds * select * 3 / 2];
+			init(best, sUnits);
 			Solution[] population = new Solution[popSize];
 			init(population, sUnits);
 			select(population);
 
 			double oldBest = Double.NEGATIVE_INFINITY;
 			int improved = 0;
-			for (int round = 0; round < minRounds || (round < maxRounds && improved <= minRounds / 10); ++round) {
+			for (int round = 0; round < minRounds || (round < maxRounds && improved <= minRounds / 5); ++round) {
 				if (population[0].evaluate() > oldBest)
 					improved = 0;
 				else
 					improved++;
-				oldBest = population[0].evaluate();
-				recombine(population);
+				if (best[0] != null)
+					oldBest = best[0].evaluate();
 				if (round % Math.ceil(minRounds / 10) == 0) {
-					log.info(round + " 0: " + population[0].evaluate() + " " + population.length / 10 + ": "
-							+ population[population.length / 10].evaluate() + " " + (population.length / 10 * 9)
-							+ " " + population[population.length / 10 * 9].evaluate() + " "
-							+ (population.length - 1) + ": " + population[population.length - 1].evaluate());
-					ui.setProgress((metaRound > 0 ? best[metaRound - 1].evaluate() : "0") + " - "
-							+ population[0].evaluate(), metaRound * maxRounds + round);
-					mutate(population, Math.min(1 / Math.log(round + 1), .2));
+					mutate(population, Math.min(1 / Math.log(round + 1), .2), 0);
 				} else
-					mutate(population, Math.min(.3 / Math.log(round + 1), .2));
+					mutate(population, Math.min(.3 / Math.log(round + 1), .2), 0);
+
+				recombine(population);
 
 				select(population);
+				best[best.length - 1] = population[0].clone();
+				select(best);
+				if (round % Math.ceil(minRounds / 10) == 0) {
+					log.info(round + " 0: " + best[0].evaluate() + " " + population[0].evaluate() + " "
+							+ population.length / 10 + ": " + population[population.length / 10].evaluate() + " "
+							+ (population.length / 10 * 9) + " "
+							+ population[population.length / 10 * 9].evaluate() + " " + (population.length - 1)
+							+ ": " + population[population.length - 1].evaluate());
+					ui.setProgress((metaRound > 0 ? best[metaRound - 1].evaluate() : "0") + " - "
+							+ population[0].evaluate(), metaRound * maxRounds + round);
+				}
 			}
 			log.info("***" + minRounds + " 0: " + population[0].evaluate() + " " + population.length / 10
 					+ ": " + population[population.length / 10].evaluate() + " "
 					+ (population.length / 10 * 9) + " " + population[population.length / 10 * 9].evaluate()
 					+ " " + (population.length - 1) + ": " + population[population.length - 1].evaluate());
 			for (int i = 0; i < select; ++i) {
-				best[metaRound * select + i] = population[i];
+				veryBest[veryBest.length - 1 - metaRound * select - i] = population[i];
 			}
 		}
 
-		select(best);
-		log.info(" 0: " + best[0].evaluate() + " l/3: " + best[best.length / 3].evaluate() + " "
-				+ (best.length - 1) + ": " + best[best.length - 1].evaluate());
+		select(veryBest);
+		log.info(" 0: " + veryBest[0].evaluate() + " l/3: " + veryBest[veryBest.length / 3].evaluate()
+				+ " " + (veryBest.length - 1) + ": " + veryBest[veryBest.length - 1].evaluate());
 		for (int round = 0; round < minRounds * 2; ++round) {
-			ui.setProgress("" + best[0].evaluate(), numMetaRounds * maxRounds + round);
-			select(best);
-			recombine(best);
-			mutate(best, .1);
+			ui.setProgress("" + veryBest[0].evaluate(), numMetaRounds * maxRounds + round);
+			mutate(veryBest, .1, 1);
+			recombine(veryBest);
+			select(veryBest);
 		}
-		select(best);
-		best[0].assignTeachers();
-		log.info("***** 0: " + best[0].evaluate() + " l/3: " + best[best.length / 3].evaluate() + " "
-				+ (best.length - 1) + ": " + best[best.length - 1].evaluate());
+		select(veryBest);
+		veryBest[0].assignTeachers();
+		log.info("***** 0: " + veryBest[0].evaluate() + " l/3: "
+				+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
+				+ veryBest[veryBest.length - 1].evaluate());
 		ui.ready();
 
-		if (best.length == 0)
+		if (veryBest.length == 0)
 			return -1;
-		return setResult(best[0]);
+		return setResult(veryBest[0]);
 	}
 
 	/**
@@ -902,17 +1191,18 @@ public class Teacher {
 		Arrays.sort(population);
 	}
 
-	private void mutate(Solution[] population, double d) {
+	private void mutate(Solution[] population, double d, int keepFirst) {
 		// keep first individual?
-		for (int i = 1; i < population.length / 2; ++i) {
+		for (int i = keepFirst; i < population.length / 2; ++i) {
 			population[i].mutate(d);
 		}
 
 	}
 
 	private void recombine(Solution[] population) {
-		int n = population.length / 2;
+		int n = population.length * 2 / 3;
 		int m = population.length - n;
+
 		for (int i = 0; i < n; ++i) {
 			int rand1 = random.nextInt(m);
 			if (random.nextBoolean()) {
@@ -926,6 +1216,15 @@ public class Teacher {
 		}
 	}
 
+	/**
+	 * Returns the type of order of the unit.
+	 * 
+	 * If there is an error, <code>null</code> is returned. If the unit has no LEHRE/LERNE order, an
+	 * "teach all" order is returned.
+	 * 
+	 * @param u
+	 * @return
+	 */
 	public static Order getCurrentOrder(Unit u) {
 		List<String> orders = new ArrayList<String>(u.getOrders());
 		Order value = null;
@@ -935,17 +1234,17 @@ public class Teacher {
 				if (value != null) {
 					return null;
 				}
-				value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 0);
+				value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 0, true);
 			}
 			if (o.toUpperCase().startsWith("LERNE")) {
 				if (value != null) {
 					return null;
 				}
-				value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 0.0);
+				value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 1, 1, 0);
 			}
 		}
 		if (value == null)
-			return new Order(0, 0);
+			return new Order(0);
 
 		return value;
 	}
@@ -1045,55 +1344,40 @@ public class Teacher {
 
 	public static void addOrder(Collection<Unit> units, String namespace, Order newOrder) {
 		delOrder(units, namespace, newOrder);
-		// add new L order to all units
+		// add new meta order to all units
 		for (Unit u : units) {
 			Collection<String> oldOrders = u.getOrders();
-			List<List<Order>> relevantOrders = new ArrayList<List<Order>>();
+			List<OrderList> relevantOrders = new ArrayList<OrderList>();
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
 			boolean foundSame = false;
 
-			// look for L order
+			// look for matching meta order
 			for (String line : oldOrders) {
 				boolean isRelevant = false;
-				List<Order> orderList = parseOrder(line, getTeachTag(namespace), getLearnTag(namespace));
-				for (Order order : orderList) {
-					if (order.getType().equals(newOrder.getType())) {
-						if (!isRelevant)
-							relevantOrders.add(orderList);
-						isRelevant = true;
-						if (order.getTalent().equals(newOrder.getTalent()))
-							foundSame = true;
-					}
+				OrderList orderList;
+				try {
+					orderList = parseOrder(u, line, getTeachTag(namespace), getLearnTag(namespace));
+				} catch (OrderFormatException e) {
+					orderList = new OrderList(Order.TEACH);
+				}
+				if (!orderList.orders.isEmpty() && orderList.getType().equals(newOrder.getType())) {
+					isRelevant = true;
+					relevantOrders.add(orderList);
 				}
 				if (!isRelevant) {
 					newOrders.add(line);
 				}
 			}
+
+			// add all meta orders
 			boolean added = false;
 			if (relevantOrders.isEmpty()) {
-				newOrders.add("// "
-						+ (newOrder.getType().equals(Order.LEARN) ? getLearnTag(namespace)
-								: getTeachTag(namespace)) + " " + newOrder.shortOrder());
-			} else {
-				for (List<Order> orderList : relevantOrders) {
-					StringBuffer line = new StringBuffer("// ");
-					line.append((newOrder.getType().equals(Order.LEARN) ? getLearnTag(namespace)
-							: getTeachTag(namespace)));
-					for (Order order : orderList) {
-						line.append(" ");
-						if (order.getTalent().equals(newOrder.getTalent())) {
-							line.append(newOrder.shortOrder());
-						} else {
-							line.append(order.shortOrder());
-						}
-					}
-					if (!added && !foundSame) {
-						line.append(" ");
-						line.append(newOrder.shortOrder());
-						added = true;
-					}
-					newOrders.add(line.toString());
-				}
+				relevantOrders.add(new OrderList(newOrder.getType()));
+			}
+			relevantOrders.get(0).addOrder(newOrder);
+
+			for (OrderList orderList : relevantOrders) {
+				newOrders.add(orderList.getName(namespace));
 			}
 			u.setOrders(newOrders);
 		}
@@ -1107,6 +1391,16 @@ public class Teacher {
 		delOrder(units, namespace, null, true);
 	}
 
+	/**
+	 * Delete orders matching newOrder from units orders. If <code>newOrder == null && safety</code>
+	 * then delete <em>all</em> meta orders of all units.
+	 * 
+	 * 
+	 * @param units
+	 * @param namespace
+	 * @param newOrder
+	 * @param safety
+	 */
 	protected static void delOrder(Collection<Unit> units, String namespace, Order newOrder,
 			boolean safety) {
 		if (namespace == null)
@@ -1119,8 +1413,13 @@ public class Teacher {
 			// look for L order
 			for (String line : oldOrders) {
 
-				List<Order> orderList = parseOrder(line, getTeachTag(namespace), getLearnTag(namespace));
-				if (orderList.isEmpty()) {
+				OrderList orderList;
+				try {
+					orderList = parseOrder(u, line, getTeachTag(namespace), getLearnTag(namespace));
+				} catch (OrderFormatException e) {
+					orderList = new OrderList(Order.LEARN);
+				}
+				if (orderList.orders.isEmpty()) {
 					newOrders.add(line);
 				} else if (newOrder == null) {
 					if (!safety) {
@@ -1130,26 +1429,15 @@ public class Teacher {
 						// delete this line
 					}
 				} else {
-					List<Order> newOrderList = new ArrayList<Order>(orderList.size());
-					for (Order order : orderList) {
+					OrderList newOrderList = new OrderList(orderList.getType());
+					for (Order order : orderList.orders) {
 						if (!order.getType().equals(newOrder.getType())
 								|| !order.getTalent().equals(newOrder.getTalent())) {
-							newOrderList.add(order);
+							newOrderList.addOrder(order);
 						}
 					}
-					StringBuffer newLine = new StringBuffer("// ");
-					boolean first = true;
-					for (Order order : newOrderList) {
-						if (first) {
-							newLine.append((order.getType().equals(Order.LEARN) ? getLearnTag(namespace)
-									: getTeachTag(namespace)));
-							first = false;
-						}
-						newLine.append(" ");
-						newLine.append(order.shortOrder());
-					}
-					if (!newOrderList.isEmpty()) {
-						newOrders.add(newLine.toString());
+					if (!newOrderList.orders.isEmpty()) {
+						newOrders.add(newOrderList.getName(namespace));
 					}
 				}
 			}

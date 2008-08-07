@@ -43,6 +43,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextArea;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import magellan.client.Client;
 import magellan.client.event.EventDispatcher;
@@ -66,17 +68,10 @@ import magellan.plugin.teacher.Teacher.SUnit;
  * a meta order of the following type:
  * 
  * <pre>
- * // $$L Talent1 value1 Talent2 value2
+ * // $$L prio Talent1 target1 max1 Talent2 target2 max2
  * </pre>
  * 
  * denotes a student learning two skills of different values.
- * 
- * <pre>
- * // $$L ALLES maxVal minVal
- * </pre>
- * 
- * means that the student will learn any talent it already knows. The highest skill will have
- * maxVal; skills with lower ranks will have values down to minVal.
  * 
  * <pre>
  * // $$T Talent1 maxDiff1 Talent2 maxDiff2
@@ -113,6 +108,18 @@ import magellan.plugin.teacher.Teacher.SUnit;
  */
 public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
 		UnitContextMenuProvider, ActionListener {
+	public static final String NAMESPACE_PROPERTY = "plugins.teacher.namespace";
+
+	public static final String CONFIRMFULLTEACHERS_PROPERTY = "plugins.teacher.confirmfullteachers";
+
+	public static final String CONFIRMEMPTYTEACHERS_PROPERTY = "plugins.teacher.confirmemptyteachers";
+
+	public static final String CONFIRMTAUGHTSTUDENTS_PROPERTY = "plugins.teacher.confirmtaughtstudents";
+
+	public static final String CONFIRMUNTAUGHTSTUDENTS_PROPERTY = "plugins.teacher.confirmuntaughtstudents";
+
+	public static final String PERCENTFULL_PROPERTY = "plugins.teacher.percentfull";
+
 	private static Logger log = null;
 
 	private Client client = null;
@@ -120,7 +127,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	private Properties properties = null;
 	private GameData gd = null;
 
-	private String namespace = null;
+	private String namespace = "";
 
 	public boolean confirmFullTeachers = true;
 
@@ -135,12 +142,12 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	/**
 	 * An enum for all action types in this plugin.
 	 * 
-	 * @author Thoralf Rickert
+	 * @author Thoralf Rickert, stm
 	 */
 	public enum PlugInAction {
 		EXECUTE("mainmenu.execute"), EXECUTE_ALL("mainmenu.executeall"), TAG_ALL("mainmenu.tagall"), UNTAG_ALL(
-				"mainmenu.untagall"), CLEAR("mainmenu.clear"), CLEAR_ALL("mainmenu.clearall"), PANEL(
-				"mainmenu.panel"), UNKNOWN("");
+				"mainmenu.untagall"), CLEAR("mainmenu.clear"), CLEAR_ALL("mainmenu.clearall"), CONVERT_ALL(
+				"mainmenu.convertall"), PANEL("mainmenu.panel"), UNKNOWN("");
 
 		private String id;
 
@@ -171,11 +178,26 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		// init the plugin
 		this.client = _client;
 		this.properties = _properties;
-		// Fiete 20080805: first load Resources, then call getName()!
 		Resources.getInstance().initialize(Client.getSettingsDirectory(), "teachplugin_");
+
+		initProperties();
+
 		log = Logger.getInstance(TeachPlugin.class);
 		log.info(getName() + " initialized...");
-		// Resources.getInstance().initialize(Client.getSettingsDirectory(), "teachplugin_");
+	}
+
+	private void initProperties() {
+		namespace = properties.getProperty(NAMESPACE_PROPERTY, namespace);
+		confirmEmptyTeachers = properties.getProperty(CONFIRMEMPTYTEACHERS_PROPERTY,
+				confirmEmptyTeachers ? "true" : "false").equals("true");
+		confirmFullTeachers = properties.getProperty(CONFIRMFULLTEACHERS_PROPERTY,
+				confirmFullTeachers ? "true" : "false").equals("true");
+		confirmTaughtStudents = properties.getProperty(CONFIRMTAUGHTSTUDENTS_PROPERTY,
+				confirmTaughtStudents ? "true" : "false").equals("true");
+		confirmUntaughtStudents = properties.getProperty(CONFIRMUNTAUGHTSTUDENTS_PROPERTY,
+				confirmUntaughtStudents ? "true" : "false").equals("true");
+		percentFull = Integer.parseInt(properties.getProperty(PERCENTFULL_PROPERTY, String
+				.valueOf(percentFull)));
 	}
 
 	/**
@@ -215,10 +237,16 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		untagAllMenu.addActionListener(this);
 		menu.add(untagAllMenu);
 
-		JMenuItem clearAllMenu = new JMenuItem(getString("plugin.teacher.mainmenu.clearall.title"));
-		clearAllMenu.setActionCommand(PlugInAction.CLEAR_ALL.getID());
-		clearAllMenu.addActionListener(this);
-		menu.add(clearAllMenu);
+		JMenuItem clearAllCommentsMenu = new JMenuItem(
+				getString("plugin.teacher.mainmenu.clearall.title"));
+		clearAllCommentsMenu.setActionCommand(PlugInAction.CLEAR_ALL.getID());
+		clearAllCommentsMenu.addActionListener(this);
+		menu.add(clearAllCommentsMenu);
+
+		JMenuItem convertAllMenu = new JMenuItem(getString("plugin.teacher.mainmenu.convertall.title"));
+		convertAllMenu.setActionCommand(PlugInAction.CONVERT_ALL.getID());
+		convertAllMenu.addActionListener(this);
+		menu.add(convertAllMenu);
 
 		JMenuItem panelMenu = new JMenuItem(getString("plugin.teacher.mainmenu.panel.title"));
 		panelMenu.setActionCommand(PlugInAction.PANEL.getID());
@@ -312,19 +340,20 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		addLearnMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String userInput = JOptionPane.showInputDialog(client,
-						getString("plugin.teacher.addlearn.askTalent.message"), "ALLES 100 51");
+						getString("plugin.teacher.addlearn.askTalent.message"), "Hiebwaffen 20 20");
 				if (userInput != null) {
 					try {
 						StringTokenizer st = new StringTokenizer(userInput, " ", false);
 						String talent = st.nextToken();
-						double value = Double.parseDouble(st.nextToken());
+						int target = Integer.parseInt(st.nextToken());
+						int max = Integer.parseInt(st.nextToken());
 						Order newOrder;
-						if (talent.equals(Order.ALL)) {
-							double value2 = Double.parseDouble(st.nextToken());
-							newOrder = new Order(value, value2);
-						} else {
-							newOrder = new Order(talent, value);
-						}
+						// if (talent.equals(Order.ALL)) {
+						// double value2 = Double.parseDouble(st.nextToken());
+						// newOrder = new Order(value, value2);
+						// } else {
+						newOrder = new Order(talent, 1d, target, max);
+						// }
 						Collection<Unit> units = null;
 						if (selectedObjects != null) {
 							units = new ArrayList<Unit>(selectedObjects.size());
@@ -355,7 +384,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 						StringTokenizer st = new StringTokenizer(userInput, " ", false);
 						String talent = st.nextToken();
 						int diff = Integer.parseInt(st.nextToken());
-						Order newOrder = new Order(talent, diff);
+						Order newOrder = new Order(talent, diff, true);
 						Collection<Unit> units = null;
 						if (selectedObjects != null) {
 							units = new ArrayList<Unit>(selectedObjects.size());
@@ -384,10 +413,10 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 				if (talent != null) {
 					try {
 						Order newOrder;
-						if (talent.equals(Order.ALL))
-							newOrder = new Order(1d, 1d);
-						else
-							newOrder = new Order(talent, 1d);
+						// if (talent.equals(Order.ALL))
+						// newOrder = new Order(1d, 1d);
+						// else
+						newOrder = new Order(talent, 1d, 1, 1);
 						Collection<Unit> units = null;
 						if (selectedObjects != null) {
 							units = new ArrayList<Unit>(selectedObjects.size());
@@ -433,7 +462,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 						if (talent.equals(Order.ALL))
 							newOrder = new Order(0);
 						else
-							newOrder = new Order(talent, 0);
+							newOrder = new Order(talent, 0, true);
 						Collection<Unit> units = null;
 						if (selectedObjects != null) {
 							units = new ArrayList<Unit>(selectedObjects.size());
@@ -518,17 +547,37 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		}
 		case CLEAR_ALL: {
 			doClear(gd.units().values());
+			break;
+		}
+		case CONVERT_ALL: {
+			doConvert(gd.units().values());
+			break;
 		}
 		case PANEL: {
 			showPanel();
+			break;
 		}
 		}
 
 	}
 
 	private void showPanel() {
-		new TeachPanel(client, client.getDispatcher(), gd, properties, null);
+		new TeachPanel(client, client.getDispatcher(), gd, properties, namespace, null);
 
+	}
+
+	/**
+	 * Convert all "old format" orders to "new format" orders
+	 * 
+	 * @param values
+	 */
+	private void doConvert(final Collection<Unit> values) {
+		new Thread(new Runnable() {
+			public void run() {
+				Teacher.convert(values, namespace);
+				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+			}
+		}).start();
 	}
 
 	private void doClear(final Collection<Unit> values) {
@@ -628,15 +677,25 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 					getString("plugin.teacher.preferences.label.confirmfullteachers"));
 			chkConfirmEmptyTeachers = new JCheckBox(
 					getString("plugin.teacher.preferences.label.confirmemptyteachers"));
-			JLabel lblPercentTeacher = new JLabel(
+			final JLabel lblPercentTeacher = new JLabel(
 					getString("plugin.teacher.preferences.label.percentTeacher"));
-			sldPercentTeacher = new JSlider();
-			sldPercentTeacher.setMajorTickSpacing(20);
-			sldPercentTeacher.setMinorTickSpacing(5);
+			sldPercentTeacher = new JSlider(0, 99);
+			sldPercentTeacher.setMajorTickSpacing(33);
+			sldPercentTeacher.setMinorTickSpacing(3);
 			sldPercentTeacher.setPaintTicks(true);
 			sldPercentTeacher.setPaintLabels(true);
 			sldPercentTeacher.setPaintTrack(true);
 			lblPercentTeacher.setLabelFor(sldPercentTeacher);
+
+			sldPercentTeacher.addChangeListener(new ChangeListener() {
+
+				public void stateChanged(ChangeEvent e) {
+					int val = ((JSlider) e.getSource()).getValue();
+
+					lblPercentTeacher.setText(getString("plugin.teacher.preferences.label.percentTeacher",
+							new Object[] { String.format("%02d", val) }));
+				}
+			});
 			chkConfirmTaughtStudents = new JCheckBox(
 					getString("plugin.teacher.preferences.label.confirmtaughtstudents"));
 			chkConfirmUntaughtStudents = new JCheckBox(
@@ -694,11 +753,20 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 		public void applyPreferences() {
 			namespace = txtNamespace.getText();
+			properties.setProperty(NAMESPACE_PROPERTY, namespace);
 			confirmFullTeachers = chkConfirmFullTeachers.isSelected();
+			properties.setProperty(CONFIRMFULLTEACHERS_PROPERTY, confirmFullTeachers ? "true" : "false");
 			confirmEmptyTeachers = chkConfirmEmptyTeachers.isSelected();
+			properties
+					.setProperty(CONFIRMEMPTYTEACHERS_PROPERTY, confirmEmptyTeachers ? "true" : "false");
 			confirmTaughtStudents = chkConfirmTaughtStudents.isSelected();
+			properties.setProperty(CONFIRMTAUGHTSTUDENTS_PROPERTY, confirmTaughtStudents ? "true"
+					: "false");
 			confirmUntaughtStudents = chkConfirmUntaughtStudents.isSelected();
+			properties.setProperty(CONFIRMUNTAUGHTSTUDENTS_PROPERTY, confirmUntaughtStudents ? "true"
+					: "false");
 			percentFull = sldPercentTeacher.getValue();
+			properties.setProperty(PERCENTFULL_PROPERTY, String.valueOf(percentFull));
 		}
 
 		public Component getComponent() {
