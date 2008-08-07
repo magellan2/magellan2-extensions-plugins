@@ -1,3 +1,18 @@
+2008-08-07  - stm (stm_@users.sourceforge.net)
+  * major rework: new meta order syntax, improved evaluation
+
+2008-08-05  - Fiete  <Fiete@users.sourceforge.net>
+  * first load resources, then call getName in Init
+
+2008-08-04  - stm (stm_@users.sourceforge.net)
+  * added TeachPanel
+  * tweaked evaluate
+  * efficiency upgrade
+  * added "del all" context menu
+  
+2008-03-26  - stm (stm_@users.sourceforge.net)
+  * moved resource files to etc
+  
 2008-03-07  - stm (stm_@users.sourceforge.net)
   * added "untag"
 
@@ -7,4 +22,4 @@
 
 2008-02-17 - stm (stm_@users.sourceforge.net)
 	* initial release
-	
+  
