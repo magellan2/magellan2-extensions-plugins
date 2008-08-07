@@ -1,4 +1,4 @@
-2008-08-07  - stm (stm_@users.sourceforge.net)
+2008-08-07 (Build 7)  - stm (stm_@users.sourceforge.net)
   * major rework: new meta order syntax, improved evaluation
 
 2008-08-05  - Fiete  <Fiete@users.sourceforge.net>
