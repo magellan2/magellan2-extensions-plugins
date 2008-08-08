@@ -14,6 +14,7 @@
   <property name="installer"    location="${magellan2}/installer"/>
 
   <property name="plugin.name"  value="teacher-plugin.jar"/>
+  <property name="installer.name"  value="teacher-installer.jar"/>
 
   <!-- Compile Settings -->
   <property name="debug"             value="on" />
@@ -91,7 +92,7 @@
       <arg value="-b"/>
       <arg value="."/>
       <arg value="-o"/>
-      <arg value="${release}/${plugin.name}"/>
+      <arg value="${release}/${installer.name}"/>
       <arg value="-k"/>
       <arg value="standard"/>
  
