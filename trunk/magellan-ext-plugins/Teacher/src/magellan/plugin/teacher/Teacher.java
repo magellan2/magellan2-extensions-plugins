@@ -200,7 +200,7 @@ public class Teacher {
 						prio = prio * 1.000001;
 					weights.put(skill, prio);
 				}
-				getUnit().addOrder("; " + skill + " " + prio, false, 0);
+				getUnit().addOrder("; $$$" + skill + " " + prio, false, 0);
 			}
 			return prio;
 		}
