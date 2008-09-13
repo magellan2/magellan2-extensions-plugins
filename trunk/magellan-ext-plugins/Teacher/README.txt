@@ -49,6 +49,9 @@ Namensraum eingrenzen.
 
 Eine Einheit, die Lehrer ist muss auch mindestens ein Talent lernen.
 
+Über das Menü Plugins--Lehrer--Alle lehren wird die Lehre für alle Einheiten angestoßen. Alternativ
+kann man über das Kontextmenü einer Region im Regionsbaum die Lehre nur für eine Region asntoßen.
+
 
 ++++++++++++ english instructions ++++++++++
 The Teacher Plugin allows automatic assignment of teachers to students. You
@@ -99,3 +102,5 @@ units with certain namespace
 It is feasible (in fact, desirable) for a unit to be teacher and student at the
 same time. In other words, if a unit has a teaching order it must also have a learning order.
 
+You can initiate teaching via the menu Pluings--Teacher--Teach all for all units. Or via the context
+menu of a region in the region tree for just one region. 
