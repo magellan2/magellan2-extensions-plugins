@@ -25,6 +25,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -187,7 +188,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	}
 
 	private void initProperties() {
-		namespace = properties.getProperty(NAMESPACE_PROPERTY, namespace);
+		setNamespace(properties.getProperty(NAMESPACE_PROPERTY, getNamespace()));
 		confirmEmptyTeachers = properties.getProperty(CONFIRMEMPTYTEACHERS_PROPERTY,
 				confirmEmptyTeachers ? "true" : "false").equals("true");
 		confirmFullTeachers = properties.getProperty(CONFIRMFULLTEACHERS_PROPERTY,
@@ -222,6 +223,11 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		// executeMenu.addActionListener(this);
 		// menu.add(executeMenu);
 		//
+		JMenuItem namespaceMenu = new JMenuItem(getString("plugin.teacher.mainmenu.namespace.title",
+				new Object[] { getNamespace() }));
+		namespaceMenu.setEnabled(false);
+		menu.add(namespaceMenu);
+
 		JMenuItem executeAllMenu = new JMenuItem(getString("plugin.teacher.mainmenu.executeall.title"));
 		executeAllMenu.setActionCommand(PlugInAction.EXECUTE_ALL.getID());
 		executeAllMenu.addActionListener(this);
@@ -314,7 +320,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 				if (JOptionPane.showConfirmDialog(client, Resources
 						.get("plugin.teacher.delall.confirm.message"), Resources
 						.get("plugin.teacher.delall.confirm.title"), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-					Teacher.delAllOrders(container.units(), namespace);
+					Teacher.delAllOrders(container.units(), getNamespace());
 					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 				}
 			}
@@ -503,24 +509,24 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	}
 
 	private boolean hasLearnOrder(Unit unit) {
-		SUnit su = Teacher.parseUnit(unit, namespace, false);
+		SUnit su = Teacher.parseUnit(unit, getNamespace(), false);
 		return su != null && !su.getLearnTalents().isEmpty();
 	}
 
 	private boolean hasTeachOrder(Unit unit) {
-		SUnit su = Teacher.parseUnit(unit, namespace, false);
+		SUnit su = Teacher.parseUnit(unit, getNamespace(), false);
 		return su != null && !su.getTeachTalents().isEmpty();
 	}
 
 	protected void delOrder(Unit unit, Collection<Unit> selectedObjects, Order newOrder) {
 		Teacher.delOrder(selectedObjects != null ? selectedObjects : Collections.singletonList(unit),
-				namespace, newOrder);
+				getNamespace(), newOrder);
 		client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 	}
 
 	protected void addOrder(Unit unit, Collection<Unit> selectedObjects, Order newOrder) {
 		Teacher.addOrder(selectedObjects != null ? selectedObjects : Collections.singletonList(unit),
-				namespace, newOrder);
+				getNamespace(), newOrder);
 		client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 	}
 
@@ -562,7 +568,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	}
 
 	private void showPanel() {
-		new TeachPanel(client, client.getDispatcher(), gd, properties, namespace, null);
+		new TeachPanel(client, client.getDispatcher(), gd, properties, getNamespace(), null);
 
 	}
 
@@ -574,7 +580,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	private void doConvert(final Collection<Unit> values) {
 		new Thread(new Runnable() {
 			public void run() {
-				Teacher.convert(values, namespace);
+				Teacher.convert(values, getNamespace());
 				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 			}
 		}).start();
@@ -583,7 +589,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	private void doClear(final Collection<Unit> values) {
 		new Thread(new Runnable() {
 			public void run() {
-				Teacher.clear(values, namespace);
+				Teacher.clear(values, getNamespace());
 				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 			}
 		}).start();
@@ -593,19 +599,47 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		new Thread(new Runnable() {
 
 			public void run() {
-				Teacher.teach(values, namespace, new ProgressBarUI(client), confirmFullTeachers,
-						confirmEmptyTeachers, percentFull, confirmTaughtStudents, confirmUntaughtStudents);
+				TeachClosingListener listener = new TeachClosingListener();
+				final Teacher t = new Teacher(values, namespace, new ProgressBarUI(client, true, 50, listener));
+				listener.setTeacher(t);
+				t.setConfirmFullTeachers(confirmFullTeachers);
+				t.setConfirmEmptyTeachers(confirmEmptyTeachers);
+				t.setPercentFull(percentFull);
+				t.setConfirmTaughtStudents(confirmTaughtStudents);
+				t.setConfirmUntaughtStudents(confirmUntaughtStudents);
+
+				t.mainrun();
+
 				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 			}
 		}).start();
 
 	}
 
+	private class TeachClosingListener implements ProgressBarUI.ClosingListener {
+		Teacher teacher = null;
+		
+		public void setTeacher(Teacher t){
+			teacher = t;
+		}
+		
+		public boolean proceed(WindowEvent e) {
+			if (JOptionPane.showConfirmDialog(client, Resources
+					.get("progressbarui.abort.message"), Resources.get("progressbarui.abort.title"),
+					JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
+				if (teacher!=null)
+					teacher.stop();
+				return false;
+			}else
+				return false;
+		}
+	}
+	
 	private void doParse(final Collection<Unit> values) {
 		new Thread(new Runnable() {
 
 			public void run() {
-				Teacher.parse(values, namespace, new ProgressBarUI(client));
+				Teacher.parse(values, getNamespace(), new ProgressBarUI(client));
 				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 			}
 		}).start();
@@ -616,11 +650,26 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		new Thread(new Runnable() {
 
 			public void run() {
-				Teacher.untag(values, namespace, new ProgressBarUI(client));
+				Teacher.untag(values, getNamespace(), new ProgressBarUI(client));
 				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 			}
 		}).start();
 
+	}
+
+	/**
+	 * @param namespace
+	 *          the namespace to set
+	 */
+	private void setNamespace(String namespace) {
+		this.namespace = namespace;
+	}
+
+	/**
+	 * @return the namespace
+	 */
+	private String getNamespace() {
+		return namespace;
 	}
 
 	/**
@@ -667,7 +716,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		private void initGUI() {
 			JPanel panel = new JPanel(new GridBagLayout());
 
-			txtNamespace = new JTextArea(namespace);
+			txtNamespace = new JTextArea(getNamespace());
 			txtNamespace.setMinimumSize(new Dimension(100, 20));
 			txtNamespace.setPreferredSize(new java.awt.Dimension(100, 20));
 			JLabel lblNamespace = new JLabel(getString("plugin.teacher.preferences.label.namespace"));
@@ -752,8 +801,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		}
 
 		public void applyPreferences() {
-			namespace = txtNamespace.getText();
-			properties.setProperty(NAMESPACE_PROPERTY, namespace);
+			setNamespace(txtNamespace.getText());
+			properties.setProperty(NAMESPACE_PROPERTY, getNamespace());
 			confirmFullTeachers = chkConfirmFullTeachers.isSelected();
 			properties.setProperty(CONFIRMFULLTEACHERS_PROPERTY, confirmFullTeachers ? "true" : "false");
 			confirmEmptyTeachers = chkConfirmEmptyTeachers.isSelected();

@@ -113,6 +113,8 @@ public class Teacher {
 
 	Random random = new Random();
 
+	private boolean stopFlag = false;
+
 	/**
 	 * Represents a unit with teaching and learning preferences.
 	 * 
@@ -578,6 +580,28 @@ public class Teacher {
 
 			assignTeachers();
 			changed = true;
+		}
+		
+		/**
+		 * Set this unit to learn its most valuable talent.
+		 */
+		public void fix(){
+			for (int i = 0; i < infos.length; ++i) {
+				Info info = infos[i];
+				SUnit u = info.unit;
+				if (info.learning==null && info.students==0){
+					String maxT = null;
+					double max = -1;
+					for (String t : u.getLearnTalents()){
+						if (u.calcWeight(t) > max){
+							max=u.calcWeight(t);
+							maxT = t;
+						}
+					}
+					log.info("fixing "+u+": "+maxT);
+					info.learning = maxT;
+				}
+			}
 		}
 
 		/**
@@ -1092,13 +1116,15 @@ public class Teacher {
 		final int select = 5;
 
 		ui.setTitle("");
-		ui.setMaximum(numMetaRounds * maxRounds + maxRounds);
+		ui.setMaximum(numMetaRounds * maxRounds + minRounds + minRounds/10+1);
 		ui.show();
 
+		// the best solution of all runs are collected here
 		Solution[] veryBest = new Solution[numMetaRounds * select * 3 / 2];
 		init(veryBest, sUnits);
 
-		for (int metaRound = 0; metaRound < numMetaRounds; ++metaRound) {
+		// do numMetaRounds runs of the evolutionary algorithm
+		for (int metaRound = 0; metaRound < numMetaRounds && !stopFlag; ++metaRound) {
 			Solution[] best = new Solution[numMetaRounds * select * 3 / 2];
 			init(best, sUnits);
 			Solution[] population = new Solution[popSize];
@@ -1107,7 +1133,9 @@ public class Teacher {
 
 			double oldBest = Double.NEGATIVE_INFINITY;
 			int improved = 0;
-			for (int round = 0; round < minRounds || (round < maxRounds && improved <= minRounds / 5); ++round) {
+			// do one run of the evol. algo. terminate if max number of rounds is reached or if minimum
+			// number of rounds is reached and the solution quality does not increase any more
+			for (int round = 0; (round < minRounds || (round < maxRounds && improved <= minRounds / 5)) && !stopFlag; ++round) {
 				if (population[0].evaluate() > oldBest)
 					improved = 0;
 				else
@@ -1138,11 +1166,13 @@ public class Teacher {
 					+ ": " + population[population.length / 10].evaluate() + " "
 					+ (population.length / 10 * 9) + " " + population[population.length / 10 * 9].evaluate()
 					+ " " + (population.length - 1) + ": " + population[population.length - 1].evaluate());
+			// collect best solutions
 			for (int i = 0; i < select; ++i) {
 				veryBest[veryBest.length - 1 - metaRound * select - i] = population[i];
 			}
 		}
 
+		// optimize popualation of best solutions
 		select(veryBest);
 		log.info(" 0: " + veryBest[0].evaluate() + " l/3: " + veryBest[veryBest.length / 3].evaluate()
 				+ " " + (veryBest.length - 1) + ": " + veryBest[veryBest.length - 1].evaluate());
@@ -1161,6 +1191,9 @@ public class Teacher {
 
 		if (veryBest.length == 0)
 			return -1;
+		// fix solution
+		fix(veryBest[0]);
+		// output
 		return setResult(veryBest[0]);
 	}
 
@@ -1214,6 +1247,10 @@ public class Teacher {
 			// log.info(rand1+" + "+rand2+" = "+(population.length - 1 - i));
 			population[population.length - 1 - i].mate(population[rand1], population[rand2]);
 		}
+	}
+
+	private void fix(Solution population) {
+		population.fix();
 	}
 
 	/**
@@ -1313,20 +1350,6 @@ public class Teacher {
 		}
 
 		return best.evaluate();
-	}
-
-	public static void teach(final Collection<Unit> units, String namespace, final UserInterface ui,
-			boolean confirmFullTeachers, boolean confirmEmptyTeachers, int percentFull,
-			boolean confirmTaughtStudents, boolean confirmUntaughtStudents) {
-		Teacher t = new Teacher(units, namespace, ui);
-		t.setConfirmFullTeachers(confirmFullTeachers);
-		t.setConfirmEmptyTeachers(confirmEmptyTeachers);
-		t.setPercentFull(percentFull);
-		t.setConfirmTaughtStudents(confirmTaughtStudents);
-		t.setConfirmUntaughtStudents(confirmUntaughtStudents);
-
-		t.mainrun();
-
 	}
 
 	public static void clear(Collection<Unit> units, String namespace) {
@@ -1491,6 +1514,10 @@ public class Teacher {
 
 	public void setPercentFull(int percentFull) {
 		this.percentFull = percentFull;
+	}
+
+	public void stop() {
+		stopFlag  = true;
 	}
 
 }
