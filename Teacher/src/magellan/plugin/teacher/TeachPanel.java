@@ -64,7 +64,6 @@ import magellan.library.event.GameDataEvent;
 import magellan.library.utils.NullUserInterface;
 import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
-import magellan.plugin.teacher.Teacher.SUnit;
 
 /**
  * DOCUMENT ME!
@@ -195,7 +194,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		if (teacher == null)
 			tTable.setUnits(Collections.<SUnit> emptyList());
 		else {
-			Collection<SUnit> units = teacher.getUnits(getNamespace(), false);
+			Collection<SUnit> units = teacher.getUnits(false);
 			tTable.setUnits(units);
 		}
 	}
@@ -232,6 +231,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 	 * 
 	 * @see magellan.client.event.SelectionListener#selectionChanged(magellan.client.event.SelectionEvent)
 	 */
+	@SuppressWarnings("unchecked")
 	public void selectionChanged(SelectionEvent se) {
 	}
 
@@ -330,7 +330,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 				if (su != null)
 					model.addUnit(su);
 				else if (model.findRow(unit) >= 0)
-					model.addUnit(new Teacher.SUnit(unit));
+					model.addUnit(new SUnit(teacher, unit));
 			}
 		}
 
@@ -355,7 +355,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 
 			if (mouseEvent.getButton() == MouseEvent.BUTTON3) {
 				JPopupMenu menu = new JPopupMenu();
-				int row = rowAtPoint(mouseEvent.getPoint());
+//				int row = rowAtPoint(mouseEvent.getPoint());
 				int col = columnAtPoint(mouseEvent.getPoint());
 				JMenuItem setValueMenu;
 				JMenuItem delValueMenu;
@@ -615,14 +615,14 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			int teachCount = 0;
 			int talentCount = 0;
 			for (SUnit unit : tableUnits) {
-				for (String lTalent : unit.getLearnTalents()) {
+				for (String lTalent : unit.getLearnTalentsAsString()) {
 					if (!talentIndices.containsKey(lTalent)) {
 						talentIndices.put(lTalent, talentCount++);
 						learnCount++;
 						talents.add(lTalent);
 					}
 				}
-				for (String tTalent : unit.getTeachTalents()) {
+				for (String tTalent : unit.getTeachTalentsAsString()) {
 					if (!talentIndices.containsKey(tTalent)) {
 						talentIndices.put(tTalent, talentCount++);
 						teachCount++;
@@ -673,14 +673,14 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			for (int col = numFixedColumns; col < row.length; ++col) {
 				row[col] = null;
 			}
-			for (String lTalent : unit.getLearnTalents()) {
+			for (String lTalent : unit.getLearnTalentsAsString()) {
 				row[numFixedColumns + talentIndices.get(lTalent) * 4] = unit.getTarget(lTalent);
 				row[numFixedColumns + talentIndices.get(lTalent) * 4 + 1] = unit.getMax(lTalent);
 				row[numFixedColumns + talentIndices.get(lTalent) * 4 + 3] = Teacher.getLevel(
 						unit.getUnit(), lTalent);
 			}
 
-			for (String tTalent : unit.getTeachTalents()) {
+			for (String tTalent : unit.getTeachTalentsAsString()) {
 				row[numFixedColumns + talentIndices.get(tTalent) * 4 + 2] = unit
 						.getMaximumDifference(tTalent);
 				row[numFixedColumns + talentIndices.get(tTalent) * 4 + 3] = Teacher.getLevel(
@@ -829,14 +829,14 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		public void addUnit(SUnit unit) {
 			// see if we have to add columns
 			boolean structureChanged = false;
-			for (String lTalent : unit.getLearnTalents()) {
+			for (String lTalent : unit.getLearnTalentsAsString()) {
 				if (!talentIndices.containsKey(lTalent)) {
 					structureChanged = true;
 					break;
 				}
 			}
 			if (!structureChanged)
-				for (String tTalent : unit.getTeachTalents()) {
+				for (String tTalent : unit.getTeachTalentsAsString()) {
 					if (!talentIndices.containsKey(tTalent)) {
 						structureChanged = true;
 						break;
