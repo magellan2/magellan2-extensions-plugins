@@ -62,7 +62,6 @@ import magellan.library.UnitContainer;
 import magellan.library.event.GameDataEvent;
 import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
-import magellan.plugin.teacher.Teacher.SUnit;
 
 /**
  * This plug in facilitates making teaching orders. To be included in the process, a unit must have

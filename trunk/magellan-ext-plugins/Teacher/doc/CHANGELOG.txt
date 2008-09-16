@@ -1,3 +1,7 @@
+2008-09-13 (Build 11)  - stm (stm_@users.sourceforge.net)
+  * major refactoring: extracted SUnit, converted static methods into non-static
+  * various optimizations
+
 2008-09-13 (Build 8)  - stm (stm_@users.sourceforge.net)
   * added option to abort teaching via ProgressBar
   * units that are not learning or teaching now get fixed

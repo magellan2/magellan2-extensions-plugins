@@ -72,7 +72,7 @@
     <buildnumber file=".build.number"/>
     <jar jarfile="${plugin.name}" basedir="${classes}">
       <manifest>
-        <attribute name="Built-By" value="${user.name}" />
+        <attribute name="Built-By" value="stm" />
         <attribute name="Specification-Title" value="Magellan Teacher Plugin [build ${build.number}]" />
         <attribute name="Specification-Vendor" value="Steffen Mecke"/>
       </manifest>

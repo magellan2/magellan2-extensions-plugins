@@ -32,12 +32,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import magellan.client.swing.ProgressBarUI;
-import magellan.library.ID;
-import magellan.library.Named;
 import magellan.library.Skill;
 import magellan.library.Unit;
 import magellan.library.utils.NullUserInterface;
@@ -58,29 +55,34 @@ public class Teacher {
 	// private static final String TEACH_TAG = "Teaching";
 	// private static final String LEARN_TAG = "Learning";
 
-	Collection<Unit> units = Collections.emptyList();
-	String namespace = null;
+	private Collection<Unit> units = Collections.emptyList();
+	private String namespace = null;
 
-	public boolean confirmFullTeachers = true;
+	private boolean confirmFullTeachers = true;
 
-	public boolean confirmEmptyTeachers = false;
+	private boolean confirmEmptyTeachers = false;
 
-	public boolean confirmTaughtStudents = true;
+	private boolean confirmTaughtStudents = true;
 
-	public boolean confirmUntaughtStudents = false;
+	private boolean confirmUntaughtStudents = false;
 
-	public int percentFull;
+	private int percentFull;
 
 	private UserInterface ui = new NullUserInterface();
 
-	public boolean isConfirmUntaughtStudents() {
-		return confirmUntaughtStudents;
-	}
+	private SUnit[] sUnits;
 
-	public void setConfirmUntaughtStudents(boolean confirmUntaughtStudents) {
-		this.confirmUntaughtStudents = confirmUntaughtStudents;
-	}
+	public static final String delim = " ";
 
+	Random random = new Random();
+
+	private boolean stopFlag = false;
+
+  // maps for efficient lookup	
+	Map<String, Integer> skillIndices = new HashMap<String, Integer>();
+	ArrayList<String> skillNames = new ArrayList<String>();
+	Map<Unit, Map<Integer, Integer>> skillMaps = new HashMap<Unit, Map<Integer,Integer>>();
+	
 	Teacher(Collection<Unit> units, String namespace, UserInterface ui) {
 		this.units = units;
 		this.namespace = namespace;
@@ -108,239 +110,6 @@ public class Teacher {
 
 	}
 
-	private SUnit[] sUnits;
-	public static final String delim = " ";
-
-	Random random = new Random();
-
-	private boolean stopFlag = false;
-
-	/**
-	 * Represents a unit with teaching and learning preferences.
-	 * 
-	 * @author stm
-	 * 
-	 */
-	public static class SUnit implements Named {
-
-		private Unit unit;
-		private Map<String, Integer> teach = new HashMap<String, Integer>();
-		private Map<String, Integer> targets = new HashMap<String, Integer>();
-		private Map<String, Integer> maxs = new HashMap<String, Integer>();
-		double prio = 1;
-
-		/** calculated priorities */
-		private Map<String, Double> weights = new HashMap<String, Double>();
-
-		private Map<String, Integer> talentLevels = new HashMap<String, Integer>();
-
-		private int index;
-		private ArrayList<Integer> teachers = new ArrayList<Integer>();
-
-		SUnit(Unit unit) {
-			this.unit = unit;
-			this.prio = 1;
-		}
-
-		public void addTeach(String talent, Integer diff) {
-			teach.put(talent, diff);
-			talentLevels.put(talent, getLevel(getUnit(), talent));
-			weights.clear();
-		}
-
-		public void addLearn(String talent, Integer target, Integer max) {
-			if (target == 0)
-				throw new IllegalArgumentException("target must be > 0");
-			targets.put(talent, target);
-			maxs.put(talent, max);
-			talentLevels.put(talent, getLevel(getUnit(), talent));
-			weights.clear();
-		}
-
-		public Unit getUnit() {
-			return unit;
-		}
-
-		public double calcWeight(String skill) {
-			if (skill == null)
-				return 0;
-			Double prio = weights.get(skill);
-			if (prio == null) {
-				// calc max mult
-				double maxMult = 0;
-				for (String skill2 : getLearnTalents()) {
-					int lev = Math.max(1, getSkillLevel(skill2));
-					if (lev < getMax(skill2)) {
-						double mult = lev / (double) getTarget(skill2);
-						if (maxMult < mult)
-							maxMult = mult;
-					}
-				}
-				if (maxMult == 0) {
-					// all skills above max
-					prio = .5;
-					weights.put(skill, prio);
-				} else {
-					// calc max normalized learning weeks
-					double maxWeeks = 0;
-					for (String skill2 : getLearnTalents()) {
-						int lev = Math.max(1, getSkillLevel(skill2));
-						if (lev < getMax(skill2)) {
-							double weeks = getTarget(skill2) - lev / maxMult + 2;
-							// double weeks = getWeeks(getTarget(skill2)) - getWeeks(lev/maxMult) +2;
-							if (maxWeeks < weeks)
-								maxWeeks = weeks;
-						}
-					}
-					int level = Math.max(1, getSkillLevel(skill));
-					if (level >= getMax(skill))
-						prio = 0d;
-					else
-						prio = (getTarget(skill) - level / maxMult + 2) / maxWeeks;
-					// prio = (getWeeks(getTarget(skill)) - getWeeks(level/maxMult) + 2)/maxWeeks;
-					if (prio < 0)
-						prio = prio * 1.000001;
-					weights.put(skill, prio);
-				}
-				getUnit().addOrder("; $$$" + skill + " " + prio, false, 0);
-			}
-			return prio;
-		}
-
-		private double getWeeks(double d) {
-			return (d) * (d + 1) / 2d;
-		}
-
-		public int getTarget(String skill) {
-			if (skill == null)
-				return 0;
-			return (targets.get(skill) != null ? targets.get(skill) : -1);
-		}
-
-		public int getMax(String skill) {
-			if (skill == null)
-				return 0;
-			return (maxs.get(skill) != null ? maxs.get(skill) : -1);
-		}
-
-		public double getPrio() {
-			return prio;
-		}
-
-		public void setPrio(double prio) {
-			this.prio = prio;
-		}
-
-		public int getMaximumDifference(String teaching) {
-			if (teaching == null)
-				return 1;
-			return (teach.get(teaching) != null ? teach.get(teaching) : 1);
-		}
-
-		public Set<String> getLearnTalents() {
-			return targets.keySet();
-		}
-
-		public Set<String> getTeachTalents() {
-			return teach.keySet();
-		}
-
-		void setIndex(int index) {
-			this.index = index;
-		}
-
-		public int getIndex() {
-			return index;
-		}
-
-		void addTeacher(int index) {
-			teachers.add(index);
-		}
-
-		List<Integer> getTeachers() {
-			return teachers;
-		}
-
-		public String toString() {
-			return index + ":" + getUnit().toString();
-		}
-
-		public void attachTags() {
-			Unit u = getUnit();
-			double maxTarget = Double.NEGATIVE_INFINITY;
-			String maxLearning = null;
-			String maxTeaching = null;
-			for (String t : getLearnTalents()) {
-				if (getTarget(t) > maxTarget) {
-					maxTarget = getTarget(t);
-					maxLearning = t;
-				}
-
-			}
-			int maxTalent = 0;
-			for (String t : getTeachTalents()) {
-				if (getLevel(u, t) > maxTalent) {
-					maxTalent = getLevel(u, t);
-					maxTeaching = t;
-				}
-
-			}
-			if (maxLearning != null) {
-				u.putTag(LEARN_TAG, maxLearning);
-			}
-			if (maxTeaching != null) {
-				u.putTag(TEACH_TAG, maxTeaching);
-			}
-
-		}
-
-		public String getModifiedName() {
-			return getUnit().getModifiedName();
-		}
-
-		public String getName() {
-			return getUnit().getName();
-		}
-
-		public void setName(String name) {
-
-		}
-
-		public int compareTo(Object o) {
-			if (o instanceof SUnit) {
-				return getUnit().compareTo(((SUnit) o).getUnit());
-			}
-			return 0;
-		}
-
-		public ID getID() {
-			return getUnit().getID();
-		}
-
-		public Object clone() throws CloneNotSupportedException {
-			throw new CloneNotSupportedException();
-		}
-
-		/**
-		 * More efficient variant of getLevel(SUnig, String).
-		 * 
-		 * @param skill
-		 * @return
-		 */
-		public int getSkillLevel(String skill) {
-			if (talentLevels != null) {
-				Integer result = talentLevels.get(skill);
-				if (result != null) {
-					return result;
-				}
-			}
-			int level = getLevel(getUnit(), skill);
-			talentLevels.put(skill, level);
-			return level;
-		}
-
-	}
-
 	/**
 	 * Represents a solution to the teaching problem.
 	 * 
@@ -355,7 +124,7 @@ public class Teacher {
 		 */
 		class Info implements Cloneable {
 			private SUnit unit = null;
-			String learning = null;
+			private Integer learning = null;
 			private int students = 0;
 			private int teacher = -1;
 
@@ -365,12 +134,19 @@ public class Teacher {
 			}
 
 			public void assignLearn() {
-				learning = (String) unit.getLearnTalents().toArray()[random.nextInt(unit.getLearnTalents()
-						.size())];
+				int index = random.nextInt(unit.getLearnTalents()
+						.size());
+				int count = 0;
+				for (Integer talent : unit.getLearnTalents()){
+					if (count++==index){
+						setLearning(talent);
+						return;
+					}
+				}
 			}
 
 			public String toString() {
-				return unit.toString() + " " + learning + " " + students + " " + teacher;
+				return unit.toString() + " " + getSkillName(getLearning()) + " " + students + " " + teacher;
 			}
 
 			public SUnit getSUnit() {
@@ -440,6 +216,20 @@ public class Teacher {
 				}
 			}
 
+			/**
+			 * @param learning the learning to set
+			 */
+			void setLearning(Integer learning) {
+				this.learning = learning;
+			}
+
+			/**
+			 * @return the learning
+			 */
+			Integer getLearning() {
+				return learning;
+			}
+
 		}
 
 		// private static final double LEVEL_VALUE = .1;
@@ -499,16 +289,16 @@ public class Teacher {
 				Info info = infos[i];
 				SUnit su = info.getSUnit();
 				double value = 0;
-				if (info.learning != null) {
-					value = su.calcWeight(info.learning);
+				if (info.getLearning() != null) {
+					value = su.calcWeight(info.getLearning());
 					value *= su.getUnit().getModifiedPersons();
 					value *= su.getPrio();
-					int sLevel = info.getSUnit().getSkillLevel(info.learning);
+					int sLevel = su.getSkillLevel(info.getLearning()); 
 					value *= Math.sqrt(sLevel) / 3.5;
 					if (info.getNumTeachers() > 0) {
 						Info teacher = infos[info.teacher];
-						int tLevel = teacher.getSUnit().getSkillLevel(info.learning);
-						int maxDiff = teacher.getSUnit().getMaximumDifference(info.learning);
+						int tLevel = teacher.getSUnit().getSkillLevel(info.getLearning());
+						int maxDiff = teacher.getSUnit().getMaximumDifference(info.getLearning());
 						if (maxDiff == 1) {
 							value = 0;
 						} else if (tLevel - sLevel < 2) {
@@ -522,6 +312,7 @@ public class Teacher {
 				}
 				result += value;
 			}
+			changed=false;
 			return result;
 		}
 
@@ -534,7 +325,7 @@ public class Teacher {
 			double e2 = ((Solution) o).evaluate();
 			double e1 = evaluate();
 
-			return (int) (e2 > e1 ? Math.ceil(e2 - e1) : Math.floor(e2 - e1));
+			return (int) (e2 > e1 ? (int) (e2 - e1 +1) : e2 == e1 ? 0 : (int) (e2 - e1 -1));
 		}
 
 		/**
@@ -554,14 +345,14 @@ public class Teacher {
 
 					// change teacher status
 					if (random.nextDouble() < teachingProb) {
-						if (info.learning == null) {
+						if (info.getLearning() == null) {
 							// learn new talent
 							info.assignLearn();
 							info.clearTeachers();
 							info.students = 0;
 						} else {
 							// become teacher
-							info.learning = null;
+							info.setLearning(null);
 							info.students = 0;
 							if (info.getTeacher() != -1)
 								infos[info.getTeacher()].students -= info.getUnit().getModifiedPersons();
@@ -570,7 +361,7 @@ public class Teacher {
 					}
 
 					// assign new teacher
-					if (info.learning != null && random.nextDouble() < teacherProb) {
+					if (info.getLearning() != null && random.nextDouble() < teacherProb) {
 						if (info.getTeacher() != -1)
 							infos[info.getTeacher()].students -= info.getUnit().getModifiedPersons();
 						info.clearTeachers();
@@ -589,19 +380,20 @@ public class Teacher {
 			for (int i = 0; i < infos.length; ++i) {
 				Info info = infos[i];
 				SUnit u = info.unit;
-				if (info.learning==null && info.students==0){
-					String maxT = null;
+				if (info.getLearning()==null && info.students==0){
+					Integer maxT = null;
 					double max = -1;
-					for (String t : u.getLearnTalents()){
+					for (Integer t : u.getLearnTalents()){
 						if (u.calcWeight(t) > max){
 							max=u.calcWeight(t);
 							maxT = t;
 						}
 					}
-					log.info("fixing "+u+": "+maxT);
-					info.learning = maxT;
+					log.debug("fixing "+u+": "+maxT);
+					info.setLearning(maxT);
 				}
 			}
+			changed = true;
 		}
 
 		/**
@@ -613,10 +405,10 @@ public class Teacher {
 			// reset teachers
 			for (int i = 0; i < infos.length; ++i) {
 				Info info = infos[i];
-				if (info.learning == null) {
+				if (info.getLearning() == null) {
 					teacherSet.add(new Integer(i));
 				}
-				if (info.getTeacher() != -1 && infos[info.getTeacher()].learning != null)
+				if (info.getTeacher() != -1 && infos[info.getTeacher()].getLearning() != null)
 					info.clearTeachers();
 
 			}
@@ -629,7 +421,7 @@ public class Teacher {
 			// assign teachers
 			for (int i = 0; i < infos.length; ++i) {
 				Info student = infos[i];
-				if (student.learning != null) {
+				if (student.getLearning() != null) {
 					if (student.getTeacher() == -1) {
 						// find new teacher
 						// int teacher = student.getRandomTeacher();
@@ -648,6 +440,7 @@ public class Teacher {
 						// }
 					}
 				}
+				changed=true;
 			}
 			// // assign teachers, 2nd try
 			// for (int i = 0; i < infos.length; ++i) {
@@ -671,7 +464,7 @@ public class Teacher {
 		}
 
 		/**
-		 * Combines to solutions resulting in a new solution similar to the two old ones.
+		 * Combines two solutions resulting in a new solution similar to the two old ones.
 		 * 
 		 * @param solution
 		 * @param solution2
@@ -681,6 +474,8 @@ public class Teacher {
 				throw new IllegalArgumentException("incompatible solutions");
 			init();
 
+//			int crossoverPoint1 = random.nextInt(infos.length-1);
+			// this seemed to work better than a one point crossover 
 			byte[] parents = new byte[infos.length];
 			random.nextBytes(parents);
 
@@ -689,10 +484,11 @@ public class Teacher {
 				Info info = infos[i];
 				Info parent;
 				if (parents[i] % 2 == 0)
+//				if (i<=crossoverPoint1)// || (i>crossoverPoint2 && i<=crossoverPoint3) || (i>crossoverPoint4))
 					parent = solution.infos[i];
 				else
 					parent = solution2.infos[i];
-				info.learning = parent.learning;
+				info.setLearning(parent.getLearning());
 				info.students = 0;
 				info.clearTeachers();
 			}
@@ -702,10 +498,11 @@ public class Teacher {
 				Info student = infos[i];
 				Info parent;
 				if (parents[i] % 2 == 0)
+//				if (i<=crossoverPoint1)// || (i>crossoverPoint2 && i<=crossoverPoint3) || (i>crossoverPoint4))
 					parent = solution.infos[i];
 				else
 					parent = solution2.infos[i];
-				if (student.learning != null && parent.getTeacher() != -1) {
+				if (student.getLearning() != null && parent.getTeacher() != -1) {
 					if (validTeacher(student, parent.getTeacher()))
 						assignTeacher(student, parent.getTeacher());
 				}
@@ -720,9 +517,9 @@ public class Teacher {
 
 		private boolean validTeacher(Info student, int t, boolean partial) {
 			Info teacher = infos[t];
-			if (teacher.learning != null
-					|| teacher.getSUnit().getSkillLevel(student.learning) < student.getSUnit().getSkillLevel(
-							student.learning) + 2)
+			if (teacher.getLearning() != null
+					|| teacher.getSUnit().getSkillLevel(student.getLearning()) < student.getSUnit().getSkillLevel(
+							student.getLearning()) + 2)
 				return false;
 			else
 				return partial
@@ -753,6 +550,40 @@ public class Teacher {
 		return 0;
 	}
 
+	public Integer getSkillIndex(String talent) {
+		Integer index = skillIndices.get(talent);
+		if (index == null){
+			index = skillNames.size();
+			skillNames.add(talent);
+			skillIndices.put(talent, index);
+		}
+		return index;
+	}
+
+
+	public String getSkillName(Integer skill) {
+		if (skill>=skillNames.size())
+			throw new IllegalArgumentException();
+		return skillNames.get(skill);
+	}
+
+	/**
+	 * Returns the skill level of a unit. For example getLevel(unit,"Unterhaltung")
+	 */
+	public int getLevel(Unit unit, Integer skill) {
+		Map<Integer, Integer> skills = skillMaps.get(unit); 
+		if (skills==null){
+			skills = new HashMap<Integer, Integer>();
+			skillMaps.put(unit, skills);
+		}
+		Integer level = skills.get(skill);
+		if (level==null){
+			level = getLevel(unit, getSkillName(skill));
+			skills.put(skill, level);
+		}
+		return level;
+	}
+
 	/**
 	 * Extracts the teaching units from the orders.
 	 * 
@@ -761,11 +592,11 @@ public class Teacher {
 	 * 
 	 * @return A List of units who are teachers or students
 	 */
-	public Collection<SUnit> getUnits(String namespace, boolean setTags) {
+	public Collection<SUnit> getUnits(boolean setTags) {
 
 		Collection<SUnit> result = new ArrayList<SUnit>(units.size());
 		for (Unit u : units) {
-			SUnit su = parseUnit(u, namespace, setTags);
+			SUnit su = parseUnit(u, setTags);
 			if (su != null) {
 				result.add(su);
 				su.setIndex(result.size() - 1);
@@ -787,7 +618,7 @@ public class Teacher {
 	 */
 	private boolean valid(SUnit student, SUnit teacher) {
 		boolean result = false;
-		for (String talent : student.getLearnTalents()) {
+		for (Integer talent : student.getLearnTalents()) {
 			int diff = teacher.getMaximumDifference(talent);
 
 			if (student.getTarget(talent) > 0 && diff != 1
@@ -801,6 +632,9 @@ public class Teacher {
 		return result;
 	}
 
+	public static SUnit parseUnit(Unit unit, String namespace, boolean setTags) {
+		return (new Teacher(Collections.singletonList(unit), namespace, NullUserInterface.getInstance())).parseUnit(unit, setTags);
+	}
 	/**
 	 * Parse the orders of <code>u</code>.
 	 * 
@@ -808,7 +642,7 @@ public class Teacher {
 	 * @return A {@link SUnit} according to <code>u</code>'s orders, <code>null</code> if this unit
 	 *         has no teaching or learning orders
 	 */
-	public static SUnit parseUnit(Unit u, String namespace, boolean setTags) {
+	public SUnit parseUnit(Unit u, boolean setTags) {
 		SUnit su = null;
 		boolean errorFlag = false;
 		for (String orderLine : u.getOrders()) {
@@ -824,27 +658,27 @@ public class Teacher {
 					if (order.getType() == Order.TEACH) {
 						int diff = order.getDiff();
 						if (su == null)
-							su = new SUnit(u);
+							su = new SUnit(this, u);
 						if (talent.equals(Order.ALL)) {
 							if (u.getModifiedSkills().isEmpty())
 								continue;
 
 							// add all skills weighted by their level
 							for (Skill s : u.getModifiedSkills()) {
-								su.addTeach(s.getName(), diff);
+								su.addTeach(getSkillIndex(s.getName()), diff);
 							}
 						} else {
-							su.addTeach(talent, diff);
+							su.addTeach(getSkillIndex(talent), diff);
 						}
 					} else {
 						int target = order.getTarget();
 						int max = order.getMax();
 						if (su == null)
-							su = new SUnit(u);
+							su = new SUnit(this, u);
 						if (talent.equals(Order.ALL)) {
 							throw new IllegalArgumentException("L ALL not supported");
 						} else {
-							su.addLearn(talent, target, max);
+							su.addLearn(getSkillIndex(talent), target, max);
 							su.setPrio(orderList.getPrio());
 						}
 					}
@@ -1082,7 +916,7 @@ public class Teacher {
 	 */
 	public void parse() {
 		for (Unit u : units) {
-			parseUnit(u, namespace, true);
+			parseUnit(u, true);
 		}
 	}
 
@@ -1103,7 +937,7 @@ public class Teacher {
 	 * @return The value of the best solution
 	 */
 	public double mainrun() {
-		sUnits = (SUnit[]) getUnits(namespace, false).toArray(new SUnit[0]);
+		sUnits = (SUnit[]) getUnits(false).toArray(new SUnit[0]);
 		log.info("teaching " + sUnits.length + " units in namespace \"" + namespace + "\"");
 
 		if (sUnits.length == 0)
@@ -1162,17 +996,18 @@ public class Teacher {
 							+ population[0].evaluate(), metaRound * maxRounds + round);
 				}
 			}
-			log.info("***" + minRounds + " 0: " + population[0].evaluate() + " " + population.length / 10
+			// collect best solutions
+			for (int i = 0; i < select-1; ++i) {
+				veryBest[veryBest.length - 1 - metaRound * select - i] = population[i];
+			}
+			veryBest[veryBest.length - 1 - metaRound * select - (select-1)] = best[0];
+			log.info("***" + minRounds + "/"+ maxRounds + " 0: " + best[0].evaluate() + " " + population[0].evaluate() + " " + population.length / 10
 					+ ": " + population[population.length / 10].evaluate() + " "
 					+ (population.length / 10 * 9) + " " + population[population.length / 10 * 9].evaluate()
 					+ " " + (population.length - 1) + ": " + population[population.length - 1].evaluate());
-			// collect best solutions
-			for (int i = 0; i < select; ++i) {
-				veryBest[veryBest.length - 1 - metaRound * select - i] = population[i];
-			}
 		}
 
-		// optimize popualation of best solutions
+		// optimize population of best solutions
 		select(veryBest);
 		log.info(" 0: " + veryBest[0].evaluate() + " l/3: " + veryBest[veryBest.length / 3].evaluate()
 				+ " " + (veryBest.length - 1) + ": " + veryBest[veryBest.length - 1].evaluate());
@@ -1240,7 +1075,7 @@ public class Teacher {
 			int rand1 = random.nextInt(m);
 			if (random.nextBoolean()) {
 				int rand = random.nextInt(m * (m - 1) / 2);
-				rand1 = m - (int) Math.floor(.5 + Math.sqrt(2 * rand));
+				rand1 = m - (int) (.5 + Math.sqrt(2 * rand));
 				rand1 = Math.max(0, Math.min(population.length - 1, rand1));
 			}
 			int rand2 = random.nextInt(m);
@@ -1307,8 +1142,8 @@ public class Teacher {
 		StringBuffer[] orders = new StringBuffer[best.units.length];
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
-			if (info.learning != null)
-				orders[i] = new StringBuffer("LERNEN " + info.learning);
+			if (info.getLearning() != null)
+				orders[i] = new StringBuffer("LERNEN " + info.getLearning());
 			if (info.getTeacher() != -1)
 				if (orders[info.getTeacher()] == null)
 					orders[info.getTeacher()] = new StringBuffer("LEHRE " + info.getUnit().getID());
@@ -1317,7 +1152,7 @@ public class Teacher {
 		}
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
-			if (info.learning == null)
+			if (info.getLearning() == null)
 				info.getUnit().addOrder("; $$$ T " + info.students, false, 0);
 			else
 				info.getUnit().addOrder("; $$$ L " + info.getTeacherSet().size(), false, 0);
@@ -1325,7 +1160,7 @@ public class Teacher {
 				info.getUnit().addOrder("; $$$ teaching error", false, 0);
 			else {
 				info.getUnit().addOrder(orders[i].toString(), false, 0);
-				if (info.learning == null) {
+				if (info.getLearning() == null) {
 					// Lehrer
 					if (info.students == info.getUnit().getModifiedPersons() * 10)
 						if (isConfirmFullTeachers())
@@ -1506,6 +1341,14 @@ public class Teacher {
 
 	public void setConfirmTaughtStudents(boolean confirmTaughtStudents) {
 		this.confirmTaughtStudents = confirmTaughtStudents;
+	}
+
+	public boolean isConfirmUntaughtStudents() {
+		return confirmUntaughtStudents;
+	}
+
+	public void setConfirmUntaughtStudents(boolean confirmUntaughtStudents) {
+		this.confirmUntaughtStudents = confirmUntaughtStudents;
 	}
 
 	public int getPercentFull() {
