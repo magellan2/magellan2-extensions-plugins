@@ -389,7 +389,7 @@ public class Teacher {
 							maxT = t;
 						}
 					}
-					log.debug("fixing "+u+": "+maxT);
+					log.debug("fixing "+u+": "+getSkillName(maxT));
 					info.setLearning(maxT);
 				}
 			}
@@ -1106,6 +1106,7 @@ public class Teacher {
 				if (value != null) {
 					return null;
 				}
+				// FIXME syntax error gets OutOfBoundsException if Befehl.equals("LEHRE")
 				value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 0, true);
 			}
 			if (o.toUpperCase().startsWith("LERNE")) {
@@ -1143,7 +1144,7 @@ public class Teacher {
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
 			if (info.getLearning() != null)
-				orders[i] = new StringBuffer("LERNEN " + info.getLearning());
+				orders[i] = new StringBuffer("LERNEN " + getSkillName(info.getLearning()));
 			if (info.getTeacher() != -1)
 				if (orders[info.getTeacher()] == null)
 					orders[info.getTeacher()] = new StringBuffer("LEHRE " + info.getUnit().getID());
