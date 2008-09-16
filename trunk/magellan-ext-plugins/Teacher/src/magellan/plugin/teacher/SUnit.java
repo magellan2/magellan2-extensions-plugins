@@ -110,7 +110,7 @@ public class SUnit implements Named {
 					prio = prio * 1.000001;
 				weights.put(skill, prio);
 			}
-			getUnit().addOrder("; $$$" + skill + " " + prio, false, 0);
+			getUnit().addOrder("; $$$" + teacher.getSkillName(skill) + " " + prio, false, 0);
 		}
 		return prio;
 	}
