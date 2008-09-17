@@ -83,10 +83,23 @@ public class Teacher {
 	ArrayList<String> skillNames = new ArrayList<String>();
 	Map<Unit, Map<Integer, Integer>> skillMaps = new HashMap<Unit, Map<Integer,Integer>>();
 	
+	/**
+   * Create a new Teacher object.
+   *
+	 * @param units The collection of units this Teacher manages.
+	 * @param namespace The namespace for orders
+	 * @param ui A user interface for feedback. May be <code>null</code>.
+	 */
 	Teacher(Collection<Unit> units, String namespace, UserInterface ui) {
 		this.units = units;
 		this.namespace = namespace;
-		this.ui = ui;
+		if (ui!=null)
+			this.ui = ui;
+		else {
+			// FIXME: use this
+//			this.ui = NullUserInterface.getInstance();
+			this.ui = new NullUserInterface();
+		}
 	}
 
 	@SuppressWarnings("serial")
@@ -633,7 +646,7 @@ public class Teacher {
 	}
 
 	public static SUnit parseUnit(Unit unit, String namespace, boolean setTags) {
-		return (new Teacher(Collections.singletonList(unit), namespace, NullUserInterface.getInstance())).parseUnit(unit, setTags);
+		return (new Teacher(Collections.singletonList(unit), namespace, null)).parseUnit(unit, setTags);
 	}
 	/**
 	 * Parse the orders of <code>u</code>.
