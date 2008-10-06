@@ -178,4 +178,12 @@ public class Order {
 		return longOrder();
 	}
 
+	public boolean isTeachOrder() {
+		return getType().equals(TEACH);
+	}
+
+	public boolean isLearnOrder() {
+		return getType().equals(LEARN);
+	}
+
 }

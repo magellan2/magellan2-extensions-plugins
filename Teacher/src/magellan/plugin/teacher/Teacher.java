@@ -264,6 +264,45 @@ public class Teacher {
 			init();
 		}
 
+		public Solution(SUnit[] units, boolean b) {
+			this.units = units;
+			init();
+			adjustToCurrentOrders();
+		}
+
+		private void adjustToCurrentOrders() {
+			Map<String, Info> lookup = new HashMap<String, Info>();
+			for (Info i : infos){
+				lookup.put(i.getUnit().getID().toString(), i);
+			}
+			for (Info info : infos){
+				Order o = getCurrentOrder(info.getUnit());
+				if (o.isLearnOrder()){
+					info.setLearning(getSkillIndex(o.getTalent()));
+					info.students=0;
+				}
+			}
+			for (Info info : infos){
+				Order o = getCurrentOrder(info.getUnit());
+				if (o.isTeachOrder()){
+					info.setLearning(null);
+					String s = getCurrentOrder(info.getUnit(), true);
+					if (s!=null){
+						StringTokenizer tokenizer = new StringTokenizer(s);
+						tokenizer.nextElement(); // skip LEHRE
+						while (tokenizer.hasMoreTokens()){
+							 String id = tokenizer.nextToken();
+							 Info student =lookup.get(id);
+							 if (student!=null && student.getLearning()!=null && validTeacher(student, info.getSUnit().getIndex())){
+								 student.addTeacher(info.getSUnit().getIndex());
+								 info.students+=student.getUnit().getModifiedPersons();
+							 }
+						}
+					}
+				}
+			}
+		}
+
 		void init() {
 			this.infos = new Info[this.units.length];
 			for (int i = 0; i < infos.length; ++i) {
@@ -307,7 +346,7 @@ public class Teacher {
 					value *= su.getUnit().getModifiedPersons();
 					value *= su.getPrio();
 					int sLevel = su.getSkillLevel(info.getLearning()); 
-					value *= Math.sqrt(sLevel) / 3.5;
+					value *= Math.sqrt(1+sLevel) / 3.5;
 					if (info.getNumTeachers() > 0) {
 						Info teacher = infos[info.teacher];
 						int tLevel = teacher.getSUnit().getSkillLevel(info.getLearning());
@@ -530,15 +569,16 @@ public class Teacher {
 
 		private boolean validTeacher(Info student, int t, boolean partial) {
 			Info teacher = infos[t];
+			boolean result = false;
 			if (teacher.getLearning() != null
-					|| teacher.getSUnit().getSkillLevel(student.getLearning()) < student.getSUnit().getSkillLevel(
-							student.getLearning()) + 2)
-				return false;
+					|| teacher.getSUnit().getSkillLevel(student.getLearning()) < student.getSUnit()
+							.getSkillLevel(student.getLearning()) + 2)
+				result = false;
 			else
-				return partial
+				result = partial
 						|| teacher.getUnit().getModifiedPersons() * 10 >= teacher.students
 								+ student.getUnit().getModifiedPersons();
-
+			return result;
 		}
 
 		public void assignTeacher(Info student, int t) {
@@ -564,6 +604,7 @@ public class Teacher {
 	}
 
 	public Integer getSkillIndex(String talent) {
+		talent = talent.toLowerCase();
 		Integer index = skillIndices.get(talent);
 		if (index == null){
 			index = skillNames.size();
@@ -668,7 +709,7 @@ public class Teacher {
 				}
 				for (Order order : orderList.orders) {
 					String talent = order.getTalent();
-					if (order.getType() == Order.TEACH) {
+					if (order.isTeachOrder()) {
 						int diff = order.getDiff();
 						if (su == null)
 							su = new SUnit(this, u);
@@ -958,8 +999,9 @@ public class Teacher {
 
 		final int minRounds = Math.max(40, (int) (sUnits.length));
 		final int maxRounds = Math.max(120, (int) (sUnits.length) * 6);
-		final int popSize = minRounds * 3 / 2;
+		final int popSize = minRounds * 5 / 4;
 		final int numMetaRounds = 3;
+		final int numPreSolvedRounds = 3;
 		final int select = 5;
 
 		ui.setTitle("");
@@ -968,38 +1010,39 @@ public class Teacher {
 
 		// the best solution of all runs are collected here
 		Solution[] veryBest = new Solution[numMetaRounds * select * 3 / 2];
-		init(veryBest, sUnits);
+		init(veryBest, sUnits, true);
 
 		// do numMetaRounds runs of the evolutionary algorithm
 		for (int metaRound = 0; metaRound < numMetaRounds && !stopFlag; ++metaRound) {
 			Solution[] best = new Solution[numMetaRounds * select * 3 / 2];
-			init(best, sUnits);
-			Solution[] population = new Solution[popSize];
-			init(population, sUnits);
+			init(best, sUnits, false);
+			Solution[] population = new Solution[popSize]; // * (metaRound<numPreSolvedRounds?30:60)/60];
+			init(population, sUnits, metaRound < numPreSolvedRounds);
 			select(population);
 
 			double oldBest = Double.NEGATIVE_INFINITY;
-			int improved = 0;
+			int notImproved = 0;
 			// do one run of the evol. algo. terminate if max number of rounds is reached or if minimum
 			// number of rounds is reached and the solution quality does not increase any more
-			for (int round = 0; (round < minRounds || (round < maxRounds && improved <= minRounds / 5)) && !stopFlag; ++round) {
+			int round = 0;
+			for (; (round < minRounds || (round < maxRounds && notImproved <= minRounds / 5)) && !stopFlag; ++round) {
 				if (population[0].evaluate() > oldBest)
-					improved = 0;
+					notImproved = 0;
 				else
-					improved++;
+					notImproved++;
 				if (best[0] != null)
 					oldBest = best[0].evaluate();
 				if (round % Math.ceil(minRounds / 10) == 0) {
-					mutate(population, Math.min(1 / Math.log(round + 1), .2), 0);
+					mutate(population, Math.min(1 / Math.log(round + 1), .2), numMetaRounds-metaRound-1);
 				} else
-					mutate(population, Math.min(.3 / Math.log(round + 1), .2), 0);
+					mutate(population, Math.min(.3 / Math.log(round + 1), .2), numMetaRounds-metaRound-1);
 
 				recombine(population);
 
 				select(population);
 				best[best.length - 1] = population[0].clone();
 				select(best);
-				if (round % Math.ceil(minRounds / 10) == 0) {
+				if (round == 1 || round % Math.ceil(minRounds / 10) == 0) {
 					log.info(round + " 0: " + best[0].evaluate() + " " + population[0].evaluate() + " "
 							+ population.length / 10 + ": " + population[population.length / 10].evaluate() + " "
 							+ (population.length / 10 * 9) + " "
@@ -1014,7 +1057,7 @@ public class Teacher {
 				veryBest[veryBest.length - 1 - metaRound * select - i] = population[i];
 			}
 			veryBest[veryBest.length - 1 - metaRound * select - (select-1)] = best[0];
-			log.info("***" + minRounds + "/"+ maxRounds + " 0: " + best[0].evaluate() + " " + population[0].evaluate() + " " + population.length / 10
+			log.info("***" + minRounds + "/"+ round + "/"+ maxRounds + " 0: " + best[0].evaluate() + " " + population[0].evaluate() + " " + population.length / 10
 					+ ": " + population[population.length / 10].evaluate() + " "
 					+ (population.length / 10 * 9) + " " + population[population.length / 10 * 9].evaluate()
 					+ " " + (population.length - 1) + ": " + population[population.length - 1].evaluate());
@@ -1024,14 +1067,15 @@ public class Teacher {
 		select(veryBest);
 		log.info(" 0: " + veryBest[0].evaluate() + " l/3: " + veryBest[veryBest.length / 3].evaluate()
 				+ " " + (veryBest.length - 1) + ": " + veryBest[veryBest.length - 1].evaluate());
-		for (int round = 0; round < minRounds * 2; ++round) {
+		stopFlag=false;
+		for (int round = 0; round < minRounds * 4  && !stopFlag; ++round) {
 			ui.setProgress("" + veryBest[0].evaluate(), numMetaRounds * maxRounds + round);
 			mutate(veryBest, .1, 1);
 			recombine(veryBest);
 			select(veryBest);
 		}
 		select(veryBest);
-		veryBest[0].assignTeachers();
+//		veryBest[0].assignTeachers();
 		log.info("***** 0: " + veryBest[0].evaluate() + " l/3: "
 				+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
 				+ veryBest[veryBest.length - 1].evaluate());
@@ -1062,9 +1106,25 @@ public class Teacher {
 		}
 	}
 
-	private void init(Solution[] population, SUnit[] units) {
+	/**
+	 * Initialize the population with random solutions. If <code>current == true</code> one solution
+	 * will be the solution implied by the current orders of the units.
+	 * 
+	 * @param population
+	 * @param units
+	 * @param current
+	 */
+	private void init(Solution[] population, SUnit[] units, boolean current) {
 		for (int i = 0; i < population.length; ++i) {
 			population[i] = new Solution(units);
+		}
+		try {
+			if (current)
+				for (int i=0; i<population.length && i < Math.max(1, Math.log(population.length)-3); ++i)
+					population[i] = new Solution(units, true);
+		} catch (Exception e){
+			log.error("orders foul: "+e);
+			e.printStackTrace();
 		}
 	}
 
@@ -1081,7 +1141,9 @@ public class Teacher {
 	}
 
 	private void recombine(Solution[] population) {
+		// n new individuals
 		int n = population.length * 2 / 3;
+		// m individuals have higher chances of reproduction
 		int m = population.length - n;
 
 		for (int i = 0; i < n; ++i) {
@@ -1136,6 +1198,38 @@ public class Teacher {
 	}
 
 	/**
+	 * Returns the type of order of the unit.
+	 * 
+	 * If there is an error, <code>null</code> is returned. If the unit has no LEHRE/LERNE order,
+	 * <code>null</code> is returned.
+	 * 
+	 * @param u
+	 * @return
+	 */
+	public static String getCurrentOrder(Unit u, boolean flag) {
+		List<String> orders = new ArrayList<String>(u.getOrders());
+		String value = null;
+		for (Iterator<String> it = orders.iterator(); it.hasNext();) {
+			String o = (String) it.next().trim();
+			if (o.toUpperCase().startsWith("LEHRE")) {
+				if (value != null) {
+					return null;
+				}
+				// FIXME syntax error gets OutOfBoundsException if Befehl.equals("LEHRE")
+				value = o;
+			}
+			if (o.toUpperCase().startsWith("LERNE")) {
+				if (value != null) {
+					return null;
+				}
+				value = o;
+			}
+		}
+
+		return value;
+	}
+
+	/**
 	 * Sets the orders according to the solution
 	 * 
 	 * @param best
@@ -1145,12 +1239,16 @@ public class Teacher {
 		// boolean first = false;
 		for (Solution.Info info : best.infos) {
 			List<String> orders = new ArrayList<String>(info.getUnit().getOrders());
+			List<String> toAdd= new ArrayList<String>();
 			for (Iterator<String> it = orders.iterator(); it.hasNext();) {
 				String o = (String) it.next().trim();
 				if (o.startsWith("LEHRE") || o.startsWith("LERNE")) {
+					toAdd.add("; $$$ " + o);
 					it.remove();
 				}
 			}
+			for (String newOrder : toAdd)
+				orders.add(newOrder);
 			info.getUnit().setOrders(orders);
 		}
 		StringBuffer[] orders = new StringBuffer[best.units.length];

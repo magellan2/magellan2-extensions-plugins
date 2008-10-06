@@ -1,3 +1,8 @@
+2008-10-06 (Build 20)  - stm (stm_@users.sourceforge.net)
+  * run only one region at a time
+  * some improvements to skill weights
+  * use current orders as initial solution
+  
 2008-09-13 (Build 11)  - stm (stm_@users.sourceforge.net)
   * major refactoring: extracted SUnit, converted static methods into non-static
   * various optimizations

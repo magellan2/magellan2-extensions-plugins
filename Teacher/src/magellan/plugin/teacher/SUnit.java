@@ -104,7 +104,8 @@ public class SUnit implements Named {
 				if (level >= getMax(skill))
 					prio = 0d;
 				else
-					prio = (getTarget(skill) - level / maxMult + 2) / maxWeeks;
+					// prio should be between .4 and 1
+					prio = .4 + .6 * (getTarget(skill) - level / maxMult + 2) / maxWeeks;
 				// prio = (getWeeks(getTarget(skill)) - getWeeks(level/maxMult) + 2)/maxWeeks;
 				if (prio < 0)
 					prio = prio * 1.000001;

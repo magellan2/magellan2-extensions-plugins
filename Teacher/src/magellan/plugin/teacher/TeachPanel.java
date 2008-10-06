@@ -660,10 +660,10 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			} else if (o.getTalent().equals(Order.ALL)) {
 				row[3] = otherChar;
 				row[4] = "--";
-			} else if (o.getType() == Order.LEARN) {
+			} else if (o.isLearnOrder()) {
 				row[3] = currentLearnChar;
 				row[4] = o.getTalent();
-			} else if (o.getType() == Order.TEACH) {
+			} else if (o.isTeachOrder()) {
 				row[3] = currentTeachChar;
 				row[4] = "";// o.getTalent();
 			}
