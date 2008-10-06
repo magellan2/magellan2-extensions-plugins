@@ -139,6 +139,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	public int percentFull;
 
+	protected Boolean running = false;
+
 	/**
 	 * An enum for all action types in this plugin.
 	 * 
@@ -598,18 +600,34 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		new Thread(new Runnable() {
 
 			public void run() {
-				TeachClosingListener listener = new TeachClosingListener();
-				final Teacher t = new Teacher(values, namespace, new ProgressBarUI(client, true, 50, listener));
-				listener.setTeacher(t);
-				t.setConfirmFullTeachers(confirmFullTeachers);
-				t.setConfirmEmptyTeachers(confirmEmptyTeachers);
-				t.setPercentFull(percentFull);
-				t.setConfirmTaughtStudents(confirmTaughtStudents);
-				t.setConfirmUntaughtStudents(confirmUntaughtStudents);
+				// wait for other background processes to finish
+				synchronized (running) {
+					while (running) {
+						try {
+							Thread.sleep(500);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					running = true;
+				}
+				try {
+					TeachClosingListener listener = new TeachClosingListener();
+					final Teacher t = new Teacher(values, namespace, new ProgressBarUI(client, true, 50,
+							listener));
+					listener.setTeacher(t);
+					t.setConfirmFullTeachers(confirmFullTeachers);
+					t.setConfirmEmptyTeachers(confirmEmptyTeachers);
+					t.setPercentFull(percentFull);
+					t.setConfirmTaughtStudents(confirmTaughtStudents);
+					t.setConfirmUntaughtStudents(confirmUntaughtStudents);
 
-				t.mainrun();
+					t.mainrun();
 
-				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+				} finally {
+					running = false;
+				}
 			}
 		}).start();
 
@@ -617,23 +635,22 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	private class TeachClosingListener implements ProgressBarUI.ClosingListener {
 		Teacher teacher = null;
-		
-		public void setTeacher(Teacher t){
+
+		public void setTeacher(Teacher t) {
 			teacher = t;
 		}
-		
+
 		public boolean proceed(WindowEvent e) {
-			if (JOptionPane.showConfirmDialog(client, Resources
-					.get("progressbarui.abort.message"), Resources.get("progressbarui.abort.title"),
-					JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
-				if (teacher!=null)
+			if (JOptionPane.showConfirmDialog(client, Resources.get("progressbarui.abort.message"),
+					Resources.get("progressbarui.abort.title"), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+				if (teacher != null)
 					teacher.stop();
 				return false;
-			}else
+			} else
 				return false;
 		}
 	}
-	
+
 	private void doParse(final Collection<Unit> values) {
 		new Thread(new Runnable() {
 
