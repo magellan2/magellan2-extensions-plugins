@@ -29,6 +29,8 @@ public class StatisticsPlugIn implements MagellanPlugIn {
   private Properties settings = null;
   private Statistics statistics = null;
   private StatisticDock dock = null;
+  private LoadThread thread = null;
+  protected GameData world = null;
 
   /**
    * @see magellan.client.extern.MagellanPlugIn#init(magellan.client.Client, java.util.Properties)
@@ -50,8 +52,18 @@ public class StatisticsPlugIn implements MagellanPlugIn {
    * @see magellan.client.extern.MagellanPlugIn#init(magellan.library.GameData)
    */
   public void init(GameData data) {
+    world = data;
+    
     // init the report
-    LoadThread thread = new LoadThread();
+    if (thread != null) {
+      // there is already a thread that analyse data
+      // we have to shut it down
+      // we use a soft shutdown to prevent the database
+      // to be corrupt.
+      thread.shutdown();
+    }
+    
+    thread = new LoadThread();
     thread.data = data;
     thread.start();
   }
@@ -134,9 +146,55 @@ public class StatisticsPlugIn implements MagellanPlugIn {
         return;
       }
     }
+    
+    public void shutdown() {
+      if (statistics != null) statistics.setShutdown(true);
+    }
   }
   
   public Statistics getStatistics() {
     return statistics;
   }
+
+
+  /**
+   * Returns the value of thread.
+   * 
+   * @return Returns thread.
+   */
+  public LoadThread getThread() {
+    return thread;
+  }
+
+
+  /**
+   * Sets the value of thread.
+   *
+   * @param thread The value for thread.
+   */
+  public void setThread(LoadThread thread) {
+    this.thread = thread;
+  }
+
+
+  /**
+   * Returns the value of world.
+   * 
+   * @return Returns world.
+   */
+  public GameData getWorld() {
+    return world;
+  }
+
+
+  /**
+   * Sets the value of world.
+   *
+   * @param world The value for world.
+   */
+  public void setWorld(GameData world) {
+    this.world = world;
+  }
+  
+  
 }

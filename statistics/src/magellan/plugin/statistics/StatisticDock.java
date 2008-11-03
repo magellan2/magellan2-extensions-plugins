@@ -81,9 +81,10 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
   protected JComponent pointsTab = null;
   protected JComponent unitsTab = null;
   protected JScrollPane itemsTab = null;
+  protected StateTab stateTab = null;
   protected Object activeObject = null;
   protected JLabel waitLabel = null;
-  protected JLabel notImplementedLavel = null;
+  protected JLabel notImplementedLabel = null;
   
   protected boolean isShown = false;
   
@@ -103,8 +104,8 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
     
     waitLabel = new JLabel(Resources.get("statisticsplugin.dock.wait"),wait,JLabel.HORIZONTAL);
     
-    notImplementedLavel = new JLabel(Resources.get("statisticsplugin.dock.notimplemented"));
-    notImplementedLavel.setHorizontalAlignment(JLabel.HORIZONTAL);
+    notImplementedLabel = new JLabel(Resources.get("statisticsplugin.dock.notimplemented"));
+    notImplementedLabel.setHorizontalAlignment(JLabel.HORIZONTAL);
     
     
     add(waitLabel,BorderLayout.CENTER);
@@ -220,6 +221,10 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       
       itemsTab = new JScrollPane();
       
+      if (stateTab == null) {
+        stateTab = new StateTab(plugin);
+      }
+      
       // save last tab position
       if (tabbedPane != null) {
         if (currentStatistic != null) {
@@ -231,6 +236,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.table"), tableTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.skills"), skillsTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.items"), itemsTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.state"), stateTab);
       
       // reload last tab position
       currentStatistic = VisibleStatisticType.UNIT;
@@ -261,6 +267,10 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       resourcesTab = StatisticCharts.createResourcesChart(plugin,region);
       tradesTab = StatisticCharts.createTradeChart(plugin,region);
       
+      if (stateTab == null) {
+        stateTab = new StateTab(plugin);
+      }
+      
       // save last tab position
       if (tabbedPane != null) {
         if (currentStatistic != null) {
@@ -272,6 +282,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       tabbedPane.addTab(Resources.get("statisticsplugin.region.table"), tableTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.region.resources"), resourcesTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.region.trades"), tradesTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.state"), stateTab);
 
       // reload last tab position
       currentStatistic = VisibleStatisticType.REGION;
@@ -302,6 +313,11 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       pointsTab = StatisticCharts.createPointsChart(plugin,faction);
       unitsTab = StatisticCharts.createUnitsChart(plugin,faction);
       
+      if (stateTab == null) {
+        stateTab = new StateTab(plugin);
+      }
+      
+      
       // save last tab position
       if (tabbedPane != null) {
         if (currentStatistic != null) {
@@ -313,6 +329,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.table"), tableTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.points"), pointsTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.units"), unitsTab);
+      tabbedPane.addTab(Resources.get("statisticsplugin.state"), stateTab);
       
       // reload last tab position
       currentStatistic = VisibleStatisticType.FACTION;
@@ -332,7 +349,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
    */
   protected JComponent showStatistics(Building building) {
     log.info("Showing statistics for building "+building.getID().toString()+".");
-    return notImplementedLavel;
+    return notImplementedLabel;
   }
   
   /**
@@ -340,7 +357,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
    */
   protected JComponent showStatistics(Ship ship) {
     log.info("Showing statistics for ship "+ship.getID().toString()+".");
-    return notImplementedLavel;
+    return notImplementedLabel;
   }
 
 
