@@ -23,9 +23,12 @@
 // 
 package magellan.plugin.statistics;
 
+import java.util.Collection;
+
 import magellan.library.Building;
 import magellan.library.Faction;
 import magellan.library.GameData;
+import magellan.library.Named;
 import magellan.library.Region;
 import magellan.library.Ship;
 import magellan.library.Unit;
@@ -52,6 +55,11 @@ import magellan.plugin.statistics.torque.UnitStatisticsPeer;
 public class Statistics {
   private static Logger log = Logger.getInstance(Statistics.class);
   protected Report report = null;
+  protected boolean shutdown = false;
+  protected int percentage = 0;
+  protected AnalyzeState state = AnalyzeState.INITIALIZED;
+  protected Named currentObject = null;
+  protected long runtime = 0;
   
   public Statistics(String reportFile) {
     report = ReportPeer.getReport(reportFile,true);
@@ -72,35 +80,93 @@ public class Statistics {
       return;
     }
     
-    for (Faction faction : world.factions().values()) {
+    long startTime = System.currentTimeMillis();
+    
+    runtime = System.currentTimeMillis() - startTime; 
+    
+    Collection<Faction> factions = world.factions().values(); 
+    Collection<Region> regions = world.regions().values(); 
+    Collection<Unit> units = world.units().values(); 
+    Collection<Building> buildings = world.buildings().values(); 
+    Collection<Ship> ships = world.ships().values(); 
+    
+    
+    percentage = 0;
+    state = AnalyzeState.INITIALIZED;
+    int counter = 0;
+    int max = 0;
+    max += factions.size();
+    max += regions.size();
+    max += units.size();
+    max += buildings.size();
+    max += ships.size();
+    
+    state = AnalyzeState.FACTION;
+    for (Faction faction : factions) {
+      if (shutdown) break;
+      currentObject = faction;
       String factionId = faction.getID().toString();
       FactionStatistics statistics = FactionStatisticsPeer.get(report,factionId,true);
       if (statistics != null) statistics.add(turn,faction);
+      runtime = System.currentTimeMillis() - startTime; 
+      percentage = counter * 100 / max;
+      counter++;
     }
+    if (shutdown) return;
     
-    for (Region region : world.regions().values()) {
+    state = AnalyzeState.REGION;
+    for (Region region : regions) {
+      if (shutdown) break;
+      currentObject = region;
       String regionId = region.getID().toString();
       RegionStatistics statistics = RegionStatisticsPeer.get(report,regionId,true);
       if (statistics != null) statistics.add(turn,region);
+      runtime = System.currentTimeMillis() - startTime; 
+      percentage = counter * 100 / max;
+      counter++;
     }
+    if (shutdown) return;
     
-    for (Unit unit : world.units().values()) {
+    state = AnalyzeState.UNIT;
+    for (Unit unit : units) {
+      if (shutdown) break;
+      currentObject = unit;
       String unitId = unit.getID().toString();
       UnitStatistics statistics = UnitStatisticsPeer.get(report,unitId,true);
       if (statistics != null) statistics.add(turn,unit);
+      runtime = System.currentTimeMillis() - startTime; 
+      percentage = counter * 100 / max;
+      counter++;
     }
+    if (shutdown) return;
     
-    for (Building building : world.buildings().values()) {
+    state = AnalyzeState.BUILDING;
+    for (Building building : buildings) {
+      if (shutdown) break;
+      currentObject = building;
       String buildingId = building.getID().toString();
       BuildingStatistics statistics = BuildingStatisticsPeer.get(report,buildingId,building.getType().getName(),true);
       if (statistics != null) statistics.add(turn,building);
+      runtime = System.currentTimeMillis() - startTime; 
+      percentage = counter * 100 / max;
+      counter++;
     }
+    if (shutdown) return;
 
-    for (Ship ship : world.ships().values()) {
+    state = AnalyzeState.SHIP;
+    for (Ship ship : ships) {
+      if (shutdown) break;
+      currentObject = ship;
       String shipId = ship.getID().toString();
       ShipStatistics statistics = ShipStatisticsPeer.get(report,shipId,ship.getType().getName(),true);
       if (statistics != null) statistics.add(turn,ship);
+      runtime = System.currentTimeMillis() - startTime; 
+      percentage = counter * 100 / max;
+      counter++;
     }
+    if (shutdown) return;
+    
+    state = AnalyzeState.SAVE;
 
     try {
       if (report.getLastSave() == 0) {
@@ -110,6 +176,10 @@ public class Statistics {
     } catch (Exception exception) {
       log.error(exception);
     }
+    
+    runtime = System.currentTimeMillis() - startTime; 
+    state = AnalyzeState.FINISHED;
+    percentage = 100;
   }
   
   /**
@@ -138,4 +208,101 @@ public class Statistics {
     String factionId = faction.getID().toString();
     return FactionStatisticsPeer.get(report, factionId, false);
   }
+
+  /**
+   * Returns the value of shutdown.
+   * 
+   * @return Returns shutdown.
+   */
+  public boolean isShutdown() {
+    return shutdown;
+  }
+
+  /**
+   * Sets the value of shutdown.
+   * 
+   * Setting this value to true prevents the thread
+   * from iterating thru all objects in the GameData
+   * and returns the add() method as fast as possible
+   * without killing the process.
+   *
+   * @param shutdown The value for shutdown.
+   */
+  public void setShutdown(boolean shutdown) {
+    this.shutdown = shutdown;
+  }
+
+  /**
+   * Returns the value of percentage.
+   * 
+   * @return Returns percentage.
+   */
+  public int getPercentage() {
+    return percentage;
+  }
+
+  /**
+   * Sets the value of percentage.
+   *
+   * @param percentage The value for percentage.
+   */
+  public void setPercentage(int percentage) {
+    this.percentage = percentage;
+  }
+
+  /**
+   * Returns the value of state.
+   * 
+   * @return Returns state.
+   */
+  public AnalyzeState getState() {
+    return state;
+  }
+
+  /**
+   * Sets the value of state.
+   *
+   * @param state The value for state.
+   */
+  public void setState(AnalyzeState state) {
+    this.state = state;
+  }
+
+  /**
+   * Returns the value of currentObject.
+   * 
+   * @return Returns currentObject.
+   */
+  public Named getCurrentObject() {
+    return currentObject;
+  }
+
+  /**
+   * Sets the value of currentObject.
+   *
+   * @param currentObject The value for currentObject.
+   */
+  public void setCurrentObject(Named currentObject) {
+    this.currentObject = currentObject;
+  }
+
+  /**
+   * Returns the value of runtime.
+   * 
+   * @return Returns runtime.
+   */
+  public long getRuntime() {
+    return runtime;
+  }
+
+  /**
+   * Sets the value of runtime.
+   *
+   * @param runtime The value for runtime.
+   */
+  public void setRuntime(long runtime) {
+    this.runtime = runtime;
+  }
+  
+  
 }
