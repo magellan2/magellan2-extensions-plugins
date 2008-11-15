@@ -56,7 +56,8 @@ public class Statistics {
   private static Logger log = Logger.getInstance(Statistics.class);
   protected Report report = null;
   protected boolean shutdown = false;
-  protected int percentage = 0;
+  protected int completeProgress = 0;
+  protected int partProgress = 0;
   protected AnalyzeState state = AnalyzeState.INITIALIZED;
   protected Named currentObject = null;
   protected long runtime = 0;
@@ -91,10 +92,12 @@ public class Statistics {
     Collection<Ship> ships = world.ships().values(); 
     
     
-    percentage = 0;
+    completeProgress = 0;
     state = AnalyzeState.INITIALIZED;
     int counter = 0;
     int max = 0;
+    int partmax = 0;
+    int partcounter = 0;
     max += factions.size();
     max += regions.size();
     max += units.size();
@@ -102,6 +105,8 @@ public class Statistics {
     max += ships.size();
     
     state = AnalyzeState.FACTION;
+    partcounter = 0;
+    partmax = factions.size();
     for (Faction faction : factions) {
       if (shutdown) break;
       currentObject = faction;
@@ -109,25 +114,35 @@ public class Statistics {
       FactionStatistics statistics = FactionStatisticsPeer.get(report,factionId,true);
       if (statistics != null) statistics.add(turn,faction);
       runtime = System.currentTimeMillis() - startTime; 
-      percentage = counter * 100 / max;
+      completeProgress = counter * 100 / max;
+      partProgress = partcounter * 100 / partmax;
       counter++;
+      partcounter++;
     }
     if (shutdown) return;
     
     state = AnalyzeState.REGION;
+    partcounter = 0;
+    partmax = regions.size();
     for (Region region : regions) {
       if (shutdown) break;
       currentObject = region;
       String regionId = region.getID().toString();
-      RegionStatistics statistics = RegionStatisticsPeer.get(report,regionId,true);
-      if (statistics != null) statistics.add(turn,region);
+      if (region.getVisibilityInteger()>0) {
+        RegionStatistics statistics = RegionStatisticsPeer.get(report,regionId,true);
+        if (statistics != null) statistics.add(turn,region);
+      }
       runtime = System.currentTimeMillis() - startTime; 
-      percentage = counter * 100 / max;
+      completeProgress = counter * 100 / max;
+      partProgress = partcounter * 100 / partmax;
       counter++;
+      partcounter++;
     }
     if (shutdown) return;
     
     state = AnalyzeState.UNIT;
+    partcounter = 0;
+    partmax = units.size();
     for (Unit unit : units) {
       if (shutdown) break;
       currentObject = unit;
@@ -135,12 +150,16 @@ public class Statistics {
       UnitStatistics statistics = UnitStatisticsPeer.get(report,unitId,true);
       if (statistics != null) statistics.add(turn,unit);
       runtime = System.currentTimeMillis() - startTime; 
-      percentage = counter * 100 / max;
+      completeProgress = counter * 100 / max;
+      partProgress = partcounter * 100 / partmax;
       counter++;
+      partcounter++;
     }
     if (shutdown) return;
     
     state = AnalyzeState.BUILDING;
+    partcounter = 0;
+    partmax = buildings.size();
     for (Building building : buildings) {
       if (shutdown) break;
       currentObject = building;
@@ -148,12 +167,16 @@ public class Statistics {
       BuildingStatistics statistics = BuildingStatisticsPeer.get(report,buildingId,building.getType().getName(),true);
       if (statistics != null) statistics.add(turn,building);
       runtime = System.currentTimeMillis() - startTime; 
-      percentage = counter * 100 / max;
+      completeProgress = counter * 100 / max;
+      partProgress = partcounter * 100 / partmax;
       counter++;
+      partcounter++;
     }
     if (shutdown) return;
 
     state = AnalyzeState.SHIP;
+    partcounter = 0;
+    partmax = ships.size();
     for (Ship ship : ships) {
       if (shutdown) break;
       currentObject = ship;
@@ -161,8 +184,10 @@ public class Statistics {
       ShipStatistics statistics = ShipStatisticsPeer.get(report,shipId,ship.getType().getName(),true);
       if (statistics != null) statistics.add(turn,ship);
       runtime = System.currentTimeMillis() - startTime; 
-      percentage = counter * 100 / max;
+      completeProgress = counter * 100 / max;
+      partProgress = partcounter * 100 / partmax;
       counter++;
+      partcounter++;
     }
     if (shutdown) return;
     
@@ -179,7 +204,8 @@ public class Statistics {
     
     runtime = System.currentTimeMillis() - startTime; 
     state = AnalyzeState.FINISHED;
-    percentage = 100;
+    completeProgress = 100;
+    partProgress = 100;
   }
   
   /**
@@ -237,8 +263,8 @@ public class Statistics {
    * 
    * @return Returns percentage.
    */
-  public int getPercentage() {
-    return percentage;
+  public int getCompleteProgress() {
+    return completeProgress;
   }
 
   /**
@@ -246,8 +272,26 @@ public class Statistics {
    *
    * @param percentage The value for percentage.
    */
-  public void setPercentage(int percentage) {
-    this.percentage = percentage;
+  public void setCompleteProgress(int percentage) {
+    this.completeProgress = percentage;
+  }
+
+  /**
+   * Returns the value of percentage.
+   * 
+   * @return Returns percentage.
+   */
+  public int getPartProgress() {
+    return partProgress;
+  }
+
+  /**
+   * Sets the value of percentage.
+   *
+   * @param percentage The value for percentage.
+   */
+  public void setPartProgress(int percentage) {
+    this.partProgress = percentage;
   }
 
   /**

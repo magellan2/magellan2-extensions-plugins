@@ -86,6 +86,8 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
   protected JLabel waitLabel = null;
   protected JLabel notImplementedLabel = null;
   
+  protected JComponent component = null;
+  
   protected boolean isShown = false;
   
   protected HashMap<VisibleStatisticType, Integer> activeTab = new HashMap<VisibleStatisticType, Integer>();
@@ -107,8 +109,13 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
     notImplementedLabel = new JLabel(Resources.get("statisticsplugin.dock.notimplemented"));
     notImplementedLabel.setHorizontalAlignment(JLabel.HORIZONTAL);
     
+    component = new JPanel(new BorderLayout());
     
-    add(waitLabel,BorderLayout.CENTER);
+    stateTab = new StateTab(plugin);
+    component.add(stateTab,BorderLayout.CENTER);
+    
+    
+    add(component,BorderLayout.CENTER);
     repaint();
   }
 
@@ -173,12 +180,10 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
     /**
      * @see java.lang.Thread#run()
      */
-    public void run() {
+    public synchronized void run() {
       if (activeObject == null) return;
 
-      removeAll();
-      
-      JComponent component = null;
+      log.info("Selection Changed. "+activeObject);
       
       if (activeObject instanceof Unit) {
         component = showStatistics((Unit)activeObject);
@@ -198,6 +203,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       }
       
       if (component != null) {
+        removeAll();
         add(component,BorderLayout.CENTER);
         repaint();
       }
@@ -208,9 +214,8 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
    * 
    */
   protected JComponent showStatistics(Unit unit) {
-    log.info("Showing statistics for unit "+unit.getID().toString()+".");
-    
     if (plugin.getStatistics() != null) {
+      log.info("Showing statistics for unit "+unit.getID().toString()+".");
       UnitTableModel model = new UnitTableModel(plugin.getStatistics(),unit);
       
       table = new JTable(model);
@@ -233,10 +238,10 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       }
       
       tabbedPane = new JTabbedPane();
+      tabbedPane.addTab(Resources.get("statisticsplugin.state.title"), stateTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.table"), tableTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.skills"), skillsTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.unit.items"), itemsTab);
-      tabbedPane.addTab(Resources.get("statisticsplugin.state"), stateTab);
       
       // reload last tab position
       currentStatistic = VisibleStatisticType.UNIT;
@@ -255,9 +260,8 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
    * 
    */
   protected JComponent showStatistics(Region region) {
-    log.info("Showing statistics for region "+region.getID().toString()+".");
-    
     if (plugin.getStatistics() != null) {
+      log.info("Showing statistics for region "+region.getID().toString()+".");
       RegionTableModel model = new RegionTableModel(plugin.getStatistics(),region);
       
       table = new JTable(model);
@@ -279,10 +283,10 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       }
       
       tabbedPane = new JTabbedPane();
+      tabbedPane.addTab(Resources.get("statisticsplugin.state.title"), stateTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.region.table"), tableTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.region.resources"), resourcesTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.region.trades"), tradesTab);
-      tabbedPane.addTab(Resources.get("statisticsplugin.state"), stateTab);
 
       // reload last tab position
       currentStatistic = VisibleStatisticType.REGION;
@@ -301,9 +305,8 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
    * 
    */
   protected JComponent showStatistics(Faction faction) {
-    log.info("Showing statistics for faction "+faction.getID().toString()+".");
-
     if (plugin.getStatistics() != null) {
+      log.info("Showing statistics for faction "+faction.getID().toString()+".");
       FactionTableModel model = new FactionTableModel(plugin.getStatistics(),faction);
       
       table = new JTable(model);
@@ -326,10 +329,10 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
       }
 
       tabbedPane = new JTabbedPane();
+      tabbedPane.addTab(Resources.get("statisticsplugin.state.title"), stateTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.table"), tableTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.points"), pointsTab);
       tabbedPane.addTab(Resources.get("statisticsplugin.faction.units"), unitsTab);
-      tabbedPane.addTab(Resources.get("statisticsplugin.state"), stateTab);
       
       // reload last tab position
       currentStatistic = VisibleStatisticType.FACTION;
