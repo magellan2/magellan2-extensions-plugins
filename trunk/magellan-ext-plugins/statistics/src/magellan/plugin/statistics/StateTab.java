@@ -30,6 +30,9 @@ import java.awt.Insets;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+
+import magellan.library.utils.Resources;
 
 /**
  * This tab shows some informations about the current process
@@ -42,7 +45,8 @@ public class StateTab extends JPanel {
   protected StatisticsPlugIn plugin = null;
   
   protected JLabel gameDataFileLabel = null;
-  protected JLabel percentageLabel = null;
+  protected JProgressBar completeProgressBar = null;
+  protected JProgressBar partProgressBar = null;
   protected JLabel currentStateLabel = null;
   protected JLabel currentObjectLabel = null;
   protected JLabel runTimeLabel = null;
@@ -66,7 +70,7 @@ public class StateTab extends JPanel {
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.EAST;
     c.weightx = 0.0;
-    panel.add(new JLabel("Game data:"),c);
+    panel.add(new JLabel(Resources.get("statisticsplugin.state.file")),c);
     c.gridx = 1;
     c.gridy = line;
     c.fill = GridBagConstraints.NONE;
@@ -82,23 +86,39 @@ public class StateTab extends JPanel {
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.EAST;
     c.weightx = 0.0;
-    panel.add(new JLabel("Percentage:"),c);
+    panel.add(new JLabel(Resources.get("statisticsplugin.state.complete_percentage")),c);
     c.gridx = 1;
     c.gridy = line;
     c.fill = GridBagConstraints.NONE;
     c.anchor = GridBagConstraints.WEST;
     c.weightx = 0.1;
-    percentageLabel = new JLabel("-");
-    panel.add(percentageLabel, c);
+    completeProgressBar = new JProgressBar(0,100);
+    panel.add(completeProgressBar, c);
     line++;
 
+    // Percentage
+    c.gridx = 0;
+    c.gridy = line;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.anchor = GridBagConstraints.EAST;
+    c.weightx = 0.0;
+    panel.add(new JLabel(Resources.get("statisticsplugin.state.part_percentage")),c);
+    c.gridx = 1;
+    c.gridy = line;
+    c.fill = GridBagConstraints.NONE;
+    c.anchor = GridBagConstraints.WEST;
+    c.weightx = 0.1;
+    partProgressBar = new JProgressBar(0,100);
+    panel.add(partProgressBar, c);
+    line++;
+    
     // CurrentState
     c.gridx = 0;
     c.gridy = line;
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.EAST;
     c.weightx = 0.0;
-    panel.add(new JLabel("State:"),c);
+    panel.add(new JLabel(Resources.get("statisticsplugin.state.state")),c);
     c.gridx = 1;
     c.gridy = line;
     c.fill = GridBagConstraints.NONE;
@@ -114,7 +134,7 @@ public class StateTab extends JPanel {
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.EAST;
     c.weightx = 0.0;
-    panel.add(new JLabel("Object:"),c);
+    panel.add(new JLabel(Resources.get("statisticsplugin.state.current_object")),c);
     c.gridx = 1;
     c.gridy = line;
     c.fill = GridBagConstraints.NONE;
@@ -130,7 +150,7 @@ public class StateTab extends JPanel {
     c.fill = GridBagConstraints.HORIZONTAL;
     c.anchor = GridBagConstraints.EAST;
     c.weightx = 0.0;
-    panel.add(new JLabel("Runtime:"),c);
+    panel.add(new JLabel(Resources.get("statisticsplugin.state.runtime")),c);
     c.gridx = 1;
     c.gridy = line;
     c.fill = GridBagConstraints.NONE;
@@ -153,24 +173,35 @@ public class StateTab extends JPanel {
           sleep(1000);
           if (plugin != null) {
             if (plugin.getStatistics() != null) {
+              
               Statistics statistics = plugin.getStatistics();
-              if (plugin.getWorld().getFileType() != null) {
-                gameDataFileLabel.setText(plugin.getWorld().getFileType().getFile().getAbsolutePath());
-              } else {
-                gameDataFileLabel.setText("-");
-              }
               
-              percentageLabel.setText(statistics.getPercentage()+"%");
-              currentStateLabel.setText(statistics.getState().toString().toLowerCase());
-              
-              if (statistics.getCurrentObject() != null) {
-                currentObjectLabel.setText(statistics.getCurrentObject().getName());
-              } else {
+              if (statistics.getState().equals(AnalyzeState.FINISHED)) {
+                // reset all values
+                currentStateLabel.setText(Resources.get("statisticsplugin.AnalyzeState."+AnalyzeState.FINISHED.toString()));
+                completeProgressBar.setValue(100);
+                partProgressBar.setValue(100);
                 currentObjectLabel.setText("-");
+              } else {
+                if (plugin.getWorld().getFileType() != null) {
+                  gameDataFileLabel.setText(plugin.getWorld().getFileType().getFile().getAbsolutePath());
+                } else {
+                  gameDataFileLabel.setText("-");
+                }
+                
+                completeProgressBar.setValue(statistics.getCompleteProgress());
+                partProgressBar.setValue(statistics.getPartProgress());
+                currentStateLabel.setText(Resources.get("statisticsplugin.AnalyzeState."+statistics.getState().toString()));
+                
+                if (statistics.getCurrentObject() != null) {
+                  currentObjectLabel.setText(statistics.getCurrentObject().getName() + " (" + statistics.getCurrentObject().getID()+")");
+                } else {
+                  currentObjectLabel.setText("-");
+                }
+                
+                int runtime = (int)(statistics.getRuntime() / 1000);
+                runTimeLabel.setText(runtime+" sec");
               }
-              
-              int runtime = (int)(statistics.getRuntime() / 1000);
-              runTimeLabel.setText(runtime+" sec");
             }
           }
         }
