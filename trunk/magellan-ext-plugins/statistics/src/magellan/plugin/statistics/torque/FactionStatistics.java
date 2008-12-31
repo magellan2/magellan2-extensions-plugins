@@ -1,6 +1,7 @@
 package magellan.plugin.statistics.torque;
 
 
+import java.io.PrintWriter;
 import java.util.List;
 
 import magellan.library.Faction;
@@ -54,5 +55,13 @@ public class FactionStatistics extends BaseFactionStatistics implements Persiste
    */
   public List<FactionStatisticsData> getData() {
     return FactionStatisticsDataPeer.get(this);
+  }
+  
+  public void save(PrintWriter pw) throws Exception {
+    pw.println("<faction id=\""+getFactionNumber()+"\">");
+    for (FactionStatisticsData data : getFactionStatisticsDatas()) {
+      data.save(pw);
+    }
+    pw.println("</faction>");
   }
 }

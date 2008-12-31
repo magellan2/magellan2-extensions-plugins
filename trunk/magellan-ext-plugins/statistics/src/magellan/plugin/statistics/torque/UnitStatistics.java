@@ -1,6 +1,7 @@
 package magellan.plugin.statistics.torque;
 
 
+import java.io.PrintWriter;
 import java.util.List;
 
 import magellan.library.Item;
@@ -89,4 +90,13 @@ public class UnitStatistics extends BaseUnitStatistics implements Persistent {
   public List<UnitStatisticsData> getData() {
     return UnitStatisticsDataPeer.get(this);
   }
+  
+  public void save(PrintWriter pw) throws Exception {
+    pw.println("<unit id=\""+getUnitNumber()+"\">");
+    for (UnitStatisticsData data : getUnitStatisticsDatas()) {
+      data.save(pw);
+    }
+    pw.println("</unit>");
+  }
+
 }

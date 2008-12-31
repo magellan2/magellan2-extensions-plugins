@@ -1,6 +1,8 @@
 package magellan.plugin.statistics.torque;
 
 
+import java.io.PrintWriter;
+
 import org.apache.torque.om.Persistent;
 
 /**
@@ -14,11 +16,8 @@ import org.apache.torque.om.Persistent;
  * application requirements.  This class will only be generated as
  * long as it does not already exist in the output directory.
  */
-public  class UnitStatisticsItemData
-    extends magellan.plugin.statistics.torque.BaseUnitStatisticsItemData
-    implements Persistent
-{
-    /** Serial version */
-    private static final long serialVersionUID = 1211386799035L;
-
+public class UnitStatisticsItemData extends BaseUnitStatisticsItemData implements Persistent {
+  public void save(PrintWriter pw) throws Exception {
+    pw.println("<item type=\""+getItemType()+"\" amount=\""+getAmount()+"\"/>");
+  }
 }

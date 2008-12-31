@@ -23,8 +23,21 @@
 // 
 package magellan.plugin.statistics;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.Collection;
 
+import org.apache.tools.bzip2.CBZip2InputStream;
+import org.apache.tools.bzip2.CBZip2OutputStream;
+
+import magellan.client.Client;
+import magellan.client.swing.ProgressBarUI;
 import magellan.library.Building;
 import magellan.library.Faction;
 import magellan.library.GameData;
@@ -32,6 +45,7 @@ import magellan.library.Named;
 import magellan.library.Region;
 import magellan.library.Ship;
 import magellan.library.Unit;
+import magellan.library.utils.UserInterface;
 import magellan.library.utils.logging.Logger;
 import magellan.plugin.statistics.torque.BuildingStatistics;
 import magellan.plugin.statistics.torque.BuildingStatisticsPeer;
@@ -348,5 +362,54 @@ public class Statistics {
     this.runtime = runtime;
   }
   
+  /**
+   * This method saves all database informations into a single
+   * file
+   */
+  public void save(File file, Client client) {
+    if (report == null) return;
+    try {
+      FileOutputStream fos = new FileOutputStream(file);
+      BufferedOutputStream bos = new BufferedOutputStream(fos);
+      bos.write('B');
+      bos.write('Z');
+      CBZip2OutputStream bzstream = new CBZip2OutputStream(bos); 
+      PrintWriter pw = new PrintWriter(bzstream);
+      pw.println("<?xml version=\"1.0\"?>");
+      UserInterface ui = new ProgressBarUI(client);
+      report.save(pw,ui);
+      pw.flush();
+      pw.close();
+      bzstream.close();
+      bos.close();
+      fos.close();
+    } catch (Exception exception) {
+      log.fatal(exception);
+    }
+  }
   
+  public void load(File file) {
+    try {
+
+      // auslesen und in aktuellen Report speichern....
+      InputStream fis = new FileInputStream(file);
+      int magic3 = fis.read();
+      int magic4 = fis.read();
+
+      if((magic3 != 'B') || (magic4 != 'Z')) {
+        throw new IOException("File " + file + " is missing bzip2 header BZ.");
+      }
+      
+      BufferedInputStream bis = new BufferedInputStream(fis);
+      CBZip2InputStream bzstream = new CBZip2InputStream(bis);
+      
+      bzstream.close();
+      bis.close();
+      fis.close();
+
+      
+    } catch (Exception exception) {
+      log.fatal(exception);
+    }
+  }
 }

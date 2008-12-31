@@ -1,6 +1,7 @@
 package magellan.plugin.statistics.torque;
 
 
+import java.io.PrintWriter;
 import java.util.List;
 
 import magellan.library.Ship;
@@ -60,4 +61,13 @@ public class ShipStatistics extends BaseShipStatistics implements Persistent {
   public List<ShipStatisticsData> getData() {
     return ShipStatisticsDataPeer.get(this);
   }
+  
+  public void save(PrintWriter pw) throws Exception {
+    pw.println("<ship id=\""+getShipNumber()+"\" type=\""+getType()+"\">");
+    for (ShipStatisticsData data : getShipStatisticsDatas()) {
+      data.save(pw);
+    }
+    pw.println("</ship>");
+  }
+
 }

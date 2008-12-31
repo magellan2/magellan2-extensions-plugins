@@ -1,6 +1,8 @@
 package magellan.plugin.statistics.torque;
 
 
+import java.io.PrintWriter;
+
 import org.apache.torque.om.Persistent;
 
 /**
@@ -14,11 +16,22 @@ import org.apache.torque.om.Persistent;
  * application requirements.  This class will only be generated as
  * long as it does not already exist in the output directory.
  */
-public  class ShipStatisticsData
-    extends magellan.plugin.statistics.torque.BaseShipStatisticsData
-    implements Persistent
-{
-    /** Serial version */
-    private static final long serialVersionUID = 1211386799035L;
-
+public class ShipStatisticsData extends BaseShipStatisticsData implements Persistent {
+  /**
+   * Saves the data of this object into a XML file.
+   */
+  public void save(PrintWriter pw) throws Exception {
+    pw.println("<data shipId=\""+getShipId()+"\" turn=\""+getTurn()+"\">");
+    pw.println("<name>"+getName()+"</name>");
+    pw.println("<description>"+getDescription()+"</description>");
+    pw.println("<size>"+getSize()+"</size>");
+    pw.println("<owner>"+getOwner()+"</owner>");
+    pw.println("<region>"+getRegion()+"</region>");
+    pw.println("<passengers>"+getPassengers()+"</passengers>");
+    pw.println("<maxCargo>"+getMaxCargo()+"</maxCargo>");
+    pw.println("<cargo>"+getCargo()+"</cargo>");
+    pw.println("<capacity>"+getCapacity()+"</capacity>");
+    pw.println("<damageRatio>"+getDamageRatio()+"</damageRatio>");
+    pw.println("</data>");
+  }
 }
