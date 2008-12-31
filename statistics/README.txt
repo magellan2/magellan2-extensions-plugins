@@ -6,6 +6,11 @@ This plugin tracks the positions and skill levels of all known
 units at all known times in a special file. Also it tracks the
 region details.
 
+Build 79
+ - a new function to export the database data to a XML file for
+   backup purpose and for distribute your own data
+   (import function is not implemented yet)
+
 Build 73
  - only analyze region which are visible to a unit.
  - added a more useful state tab which shows the analyze progress

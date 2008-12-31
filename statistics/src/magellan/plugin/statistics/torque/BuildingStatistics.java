@@ -1,6 +1,7 @@
 package magellan.plugin.statistics.torque;
 
 
+import java.io.PrintWriter;
 import java.util.List;
 
 import magellan.library.Building;
@@ -50,4 +51,13 @@ public class BuildingStatistics extends BaseBuildingStatistics implements Persis
   public List<BuildingStatisticsData> getData() {
     return BuildingStatisticsDataPeer.get(this);
   }
+  
+  public void save(PrintWriter pw) throws Exception {
+    pw.println("<building id=\""+getBuildingNumber()+"\" type=\""+getType()+"\">");
+    for (BuildingStatisticsData data : getBuildingStatisticsDatas()) {
+      data.save(pw);
+    }
+    pw.println("</building>");
+  }
+
 }

@@ -1,6 +1,7 @@
 package magellan.plugin.statistics.torque;
 
 
+import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.List;
 
@@ -115,4 +116,16 @@ public class RegionStatistics extends BaseRegionStatistics implements Persistent
     for (Unit unit : units) counter += unit.getPersons();
     return counter;
   }
+  
+  /**
+   * Saves the data of this object into a XML file.
+   */
+  public void save(PrintWriter pw) throws Exception {
+    pw.println("<region id=\""+getRegionNumber()+"\">");
+    for (RegionStatisticsData data : getRegionStatisticsDatas()) {
+      data.save(pw);
+    }
+    pw.println("</region>");
+  }
+
 }

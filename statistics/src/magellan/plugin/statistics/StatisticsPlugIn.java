@@ -1,12 +1,17 @@
 package magellan.plugin.statistics;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.swing.JFileChooser;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import magellan.client.Client;
@@ -23,7 +28,7 @@ import magellan.plugin.statistics.db.DerbyConnector;
  * @author Thoralf Rickert
  * @version 1.0, 03.05.2008
  */
-public class StatisticsPlugIn implements MagellanPlugIn {
+public class StatisticsPlugIn implements MagellanPlugIn,ActionListener {
   private static Logger log = null;
   private Client client = null;
   private Properties settings = null;
@@ -83,7 +88,22 @@ public class StatisticsPlugIn implements MagellanPlugIn {
    * @see magellan.client.extern.MagellanPlugIn#getMenuItems()
    */
   public List<JMenuItem> getMenuItems() {
-    return null;
+    List<JMenuItem> items = new ArrayList<JMenuItem>();
+    
+    JMenu menu = new JMenu(Resources.get("statisticsplugin.menu.title"));
+    items.add(menu);
+
+    JMenuItem exportMenu = new JMenuItem(Resources.get("statisticsplugin.menu.export.title"));
+    exportMenu.setActionCommand("statistic.export");
+    exportMenu.addActionListener(this);
+    menu.add(exportMenu);    
+
+    JMenuItem importMenu = new JMenuItem(Resources.get("statisticsplugin.menu.import.title"));
+    importMenu.setActionCommand("statistic.import");
+    importMenu.addActionListener(this);
+    menu.add(importMenu);    
+    
+    return items;
   }
 
   /**
@@ -194,6 +214,27 @@ public class StatisticsPlugIn implements MagellanPlugIn {
    */
   public void setWorld(GameData world) {
     this.world = world;
+  }
+
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    String action = e.getActionCommand();
+    if (action == null || action.equals("")) return;
+    if (action.equalsIgnoreCase("statistic.export")) {
+      JFileChooser fc = new JFileChooser();
+      if(fc.showSaveDialog(client) == JFileChooser.APPROVE_OPTION) {
+        File dataFile = fc.getSelectedFile();
+        statistics.save(dataFile,client);
+      }
+    } else if (action.equalsIgnoreCase("statistic.import")) {
+      JFileChooser fc = new JFileChooser();
+      if(fc.showOpenDialog(client) == JFileChooser.APPROVE_OPTION) {
+        File dataFile = fc.getSelectedFile();
+        statistics.load(dataFile);
+      }
+    }
+    
   }
   
   
