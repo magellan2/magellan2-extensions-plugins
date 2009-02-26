@@ -225,7 +225,7 @@ public class StatisticsPlugIn implements MagellanPlugIn,ActionListener {
       JFileChooser fc = new JFileChooser();
       if(fc.showSaveDialog(client) == JFileChooser.APPROVE_OPTION) {
         File dataFile = fc.getSelectedFile();
-        statistics.save(dataFile,client);
+        statistics.save(dataFile);
       }
     } else if (action.equalsIgnoreCase("statistic.import")) {
       JFileChooser fc = new JFileChooser();
