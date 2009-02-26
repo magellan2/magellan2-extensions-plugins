@@ -93,6 +93,7 @@ public class DerbyConnector {
       log.info("Load Derby drivers");
       ClassPathHack.addFile(new File(MAGELLAN_HOME+"/plugins/statisticsplugin/lib/derby.jar"));
       ClassPathHack.addFile(new File(MAGELLAN_HOME+"/plugins/statisticsplugin/lib/derbytools.jar"));
+      ClassPathHack.addFile(new File(MAGELLAN_HOME+"/lib/derbytools.jar"));
       Class.forName(DATABASE_DRIVER).newInstance();
     } catch (Exception exception) {
       log.error(exception);
@@ -104,6 +105,8 @@ public class DerbyConnector {
         log.error("Could not create database");
         return false;
       }
+    } else {
+      log.info("Database exists");
     }
 
     try {

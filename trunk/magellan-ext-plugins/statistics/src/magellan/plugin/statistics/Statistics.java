@@ -142,7 +142,7 @@ public class Statistics {
       if (shutdown) break;
       currentObject = region;
       String regionId = region.getID().toString();
-      if (region.getVisibilityInteger()>0) {
+      if (region.getVisibility().greaterThan(Region.Visibility.NULL)) {
         RegionStatistics statistics = RegionStatisticsPeer.get(report,regionId,true);
         if (statistics != null) statistics.add(turn,region);
       }
@@ -366,7 +366,7 @@ public class Statistics {
    * This method saves all database informations into a single
    * file
    */
-  public void save(File file, Client client) {
+  public void save(File file) {
     if (report == null) return;
     try {
       FileOutputStream fos = new FileOutputStream(file);
@@ -374,9 +374,9 @@ public class Statistics {
       bos.write('B');
       bos.write('Z');
       CBZip2OutputStream bzstream = new CBZip2OutputStream(bos); 
-      PrintWriter pw = new PrintWriter(bzstream);
+      PrintWriter pw = new PrintWriter(bzstream,true);
       pw.println("<?xml version=\"1.0\"?>");
-      UserInterface ui = new ProgressBarUI(client);
+      UserInterface ui = new ProgressBarUI(Client.INSTANCE,true,0,null);
       report.save(pw,ui);
       pw.flush();
       pw.close();
