@@ -346,7 +346,7 @@ public class Teacher {
 					value *= su.getUnit().getModifiedPersons();
 					value *= su.getPrio();
 					int sLevel = su.getSkillLevel(info.getLearning()); 
-					value *= Math.sqrt(1+sLevel) / 3.5;
+					value *= 1 + Math.sqrt(sLevel) / 5.5;
 					if (info.getNumTeachers() > 0) {
 						Info teacher = infos[info.teacher];
 						int tLevel = teacher.getSUnit().getSkillLevel(info.getLearning());
@@ -992,10 +992,10 @@ public class Teacher {
 	 */
 	public double mainrun() {
 		sUnits = (SUnit[]) getUnits(false).toArray(new SUnit[0]);
-		log.info("teaching " + sUnits.length + " units in namespace \"" + namespace + "\"");
-
 		if (sUnits.length == 0)
 			return 0;
+
+		log.info("teaching " + sUnits.length + " units in namespace \"" + namespace + "\"");
 
 		final int minRounds = Math.max(40, (int) (sUnits.length));
 		final int maxRounds = Math.max(120, (int) (sUnits.length) * 6);
@@ -1004,9 +1004,8 @@ public class Teacher {
 		final int numPreSolvedRounds = 3;
 		final int select = 5;
 
-		ui.setTitle("");
 		ui.setMaximum(numMetaRounds * maxRounds + minRounds + minRounds/10+1);
-		ui.show();
+//		ui.show();
 
 		// the best solution of all runs are collected here
 		Solution[] veryBest = new Solution[numMetaRounds * select * 3 / 2];
@@ -1079,7 +1078,7 @@ public class Teacher {
 		log.info("***** 0: " + veryBest[0].evaluate() + " l/3: "
 				+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
 				+ veryBest[veryBest.length - 1].evaluate());
-		ui.ready();
+//		ui.ready();
 
 		if (veryBest.length == 0)
 			return -1;

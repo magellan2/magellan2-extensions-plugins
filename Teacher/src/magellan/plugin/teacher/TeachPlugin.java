@@ -282,7 +282,14 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		JMenuItem editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.execute.title"));
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				doTeach(container.units());
+				new Thread(new Runnable() {
+					public void run() {
+						TeachClosingListener listener = new TeachClosingListener();
+						ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
+						doTeachUnits(container.units(), listener, ui);
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}).run();
 			}
 		});
 		menu.add(editMenu);
@@ -291,7 +298,14 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.tag.title"));
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				doParse(container.units());
+				new Thread(new Runnable() {
+					public void run() {
+						TeachClosingListener listener = new TeachClosingListener();
+						ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
+						doParse(container.units(), listener, ui);
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}).run();
 			}
 		});
 		menu.add(editMenu);
@@ -300,7 +314,14 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.untag.title"));
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				doUnTag(container.units());
+				new Thread(new Runnable() {
+					public void run() {
+						TeachClosingListener listener = new TeachClosingListener();
+						ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
+						doUnTag(container.units(), listener, ui);
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}).run();
 			}
 		});
 		menu.add(editMenu);
@@ -309,7 +330,14 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.clear.title"));
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				doClear(container.units());
+				new Thread(new Runnable() {
+					public void run() {
+						TeachClosingListener listener = new TeachClosingListener();
+						ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
+						doClear(container.units(), listener, ui);
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}).run();
 			}
 		});
 		menu.add(editMenu);
@@ -535,29 +563,93 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		log.info(e.getActionCommand());
 		switch (PlugInAction.getAction(e)) {
 		case EXECUTE_ALL: {
-			for (Region r : gd.regions().values()) {
-				doTeach(r.units());
-			}
+			new Thread(new Runnable() {
+				public void run() {
+					TeachClosingListener listener = new TeachClosingListener();
+					ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
+					ui.setTitle("");
+					ui.show();
+					for (Region r : gd.regions().values()) {
+						ui.setTitle(r.getName());
+						doTeachUnits(r.units(), listener, ui);
+					}
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					ui.ready();
+				}
+			}).start();
+
 			break;
 		}
 		case TAG_ALL: {
-			for (Region r : gd.regions().values()) {
-				doParse(r.units());
-			}
+			new Thread(new Runnable() {
+				public void run() {
+					TeachClosingListener listener = new TeachClosingListener();
+					ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
+					ui.setTitle("");
+					ui.show();
+					for (Region r : gd.regions().values()) {
+						ui.setTitle(r.getName());
+						doParse(r.units(), listener, ui);
+					}
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					ui.ready();
+				}
+			}).start();
+
 			break;
 		}
 		case UNTAG_ALL: {
-			for (Region r : gd.regions().values()) {
-				doUnTag(r.units());
-			}
+			new Thread(new Runnable() {
+				public void run() {
+					TeachClosingListener listener = new TeachClosingListener();
+					ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
+					ui.setTitle("");
+					ui.show();
+					for (Region r : gd.regions().values()) {
+						ui.setTitle(r.getName());
+						doUnTag(r.units(), listener, ui);
+					}
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					ui.ready();
+				}
+			}).start();
+
 			break;
 		}
 		case CLEAR_ALL: {
-			doClear(gd.units().values());
+			new Thread(new Runnable() {
+				public void run() {
+					TeachClosingListener listener = new TeachClosingListener();
+					ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
+					ui.setTitle("");
+					ui.show();
+					for (Region r : gd.regions().values()) {
+						ui.setTitle(r.getName());
+						doClear(r.units(), listener, ui);
+					}
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					ui.ready();
+				}
+			}).start();
+
 			break;
 		}
 		case CONVERT_ALL: {
-			doConvert(gd.units().values());
+			new Thread(new Runnable() {
+				public void run() {
+					TeachClosingListener listener = new TeachClosingListener();
+					ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
+					ui.setTitle("");
+					ui.show();
+					for (Region r : gd.regions().values()) {
+						ui.setTitle(r.getName());
+						doConvert(r.units(), listener, ui);
+					}
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					ui.ready();
+				}
+			}).start();
+
 			break;
 		}
 		case PANEL: {
@@ -577,60 +669,33 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 * Convert all "old format" orders to "new format" orders
 	 * 
 	 * @param values
+	 * @param ui
+	 * @param listener
 	 */
-	private void doConvert(final Collection<Unit> values) {
-		new Thread(new Runnable() {
-			public void run() {
-				Teacher.convert(values, getNamespace());
-				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
-			}
-		}).start();
+	private void doConvert(final Collection<Unit> values, TeachClosingListener listener,
+			ProgressBarUI ui) {
+		Teacher.convert(values, getNamespace());
 	}
 
-	private void doClear(final Collection<Unit> values) {
-		new Thread(new Runnable() {
-			public void run() {
-				Teacher.clear(values, getNamespace());
-				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
-			}
-		}).start();
+	private void doClear(final Collection<Unit> values, TeachClosingListener listener,
+			ProgressBarUI ui) {
+		Teacher.clear(values, getNamespace());
 	}
 
-	private void doTeach(final Collection<Unit> values) {
-		new Thread(new Runnable() {
+	private void doTeachUnits(final Collection<Unit> values, TeachClosingListener listener,
+			ProgressBarUI ui) {
+		synchronized (client) {
+			final Teacher t = new Teacher(values, namespace, ui);
+			listener.setTeacher(t);
+			t.setConfirmFullTeachers(confirmFullTeachers);
+			t.setConfirmEmptyTeachers(confirmEmptyTeachers);
+			t.setPercentFull(percentFull);
+			t.setConfirmTaughtStudents(confirmTaughtStudents);
+			t.setConfirmUntaughtStudents(confirmUntaughtStudents);
 
-			public void run() {
-				// wait for other background processes to finish
-				synchronized (running) {
-					while (running) {
-						try {
-							Thread.sleep(500);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					running = true;
-				}
-				try {
-					TeachClosingListener listener = new TeachClosingListener();
-					final Teacher t = new Teacher(values, namespace, new ProgressBarUI(client, true, 50,
-							listener));
-					listener.setTeacher(t);
-					t.setConfirmFullTeachers(confirmFullTeachers);
-					t.setConfirmEmptyTeachers(confirmEmptyTeachers);
-					t.setPercentFull(percentFull);
-					t.setConfirmTaughtStudents(confirmTaughtStudents);
-					t.setConfirmUntaughtStudents(confirmUntaughtStudents);
+			t.mainrun();
 
-					t.mainrun();
-
-					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
-				} finally {
-					running = false;
-				}
-			}
-		}).start();
-
+		}
 	}
 
 	private class TeachClosingListener implements ProgressBarUI.ClosingListener {
@@ -651,26 +716,14 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		}
 	}
 
-	private void doParse(final Collection<Unit> values) {
-		new Thread(new Runnable() {
-
-			public void run() {
-				Teacher.parse(values, getNamespace(), new ProgressBarUI(client));
-				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
-			}
-		}).start();
-
+	private void doParse(final Collection<Unit> values, TeachClosingListener listener,
+			ProgressBarUI progressBarUI) {
+		Teacher.parse(values, getNamespace(), progressBarUI);
 	}
 
-	private void doUnTag(final Collection<Unit> values) {
-		new Thread(new Runnable() {
-
-			public void run() {
-				Teacher.untag(values, getNamespace(), new ProgressBarUI(client));
-				client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
-			}
-		}).start();
-
+	private void doUnTag(final Collection<Unit> values, TeachClosingListener listener,
+			ProgressBarUI ui) {
+		Teacher.untag(values, getNamespace(), ui);
 	}
 
 	/**
