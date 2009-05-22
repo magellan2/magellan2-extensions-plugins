@@ -15,14 +15,20 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import magellan.client.Client;
+import magellan.client.event.SelectionEvent;
+import magellan.client.event.SelectionListener;
 import magellan.client.event.UnitOrdersEvent;
+import magellan.library.EntityID;
 import magellan.library.GameData;
 import magellan.library.Ship;
 import magellan.library.Unit;
 import magellan.library.UnitContainer;
+import magellan.library.UnitID;
 import magellan.library.event.GameDataEvent;
 import magellan.library.event.GameDataListener;
 import magellan.library.gamebinding.EresseaConstants;
+import magellan.library.impl.MagellanShipImpl;
+import magellan.library.impl.MagellanUnitImpl;
 import magellan.library.relation.ItemTransferRelation;
 import magellan.library.relation.ReserveRelation;
 import magellan.library.relation.UnitRelation;
@@ -51,6 +57,8 @@ public class Loader implements GameDataListener {
 	private int safetyPerPerson;
 	private int errors;
 	private boolean changeShip;
+
+	private Collection<SelectionListener> listeners = new LinkedList<SelectionListener>();	
 
 	public Loader(ShipLoaderPlugin shipLoaderPlugin, Client client) {
 		this.client = client;
@@ -81,11 +89,19 @@ public class Loader implements GameDataListener {
 	public void add(UnitContainer container) {
 		if (container instanceof Ship) {
 			ships.add((Ship) container);
+			notifyListeners(container);
 		}
 		// else if (container instanceof UnitContainer) {
 		// for (Unit u : container.units())
 		// add(u);
 		// }
+	}
+
+	private void notifyListeners(UnitContainer container) {
+		SelectionEvent event = new SelectionEvent(this, ships, container);
+		for(SelectionListener listener : listeners){
+			listener.selectionChanged(event);
+		}
 	}
 
 	/**
@@ -101,6 +117,7 @@ public class Loader implements GameDataListener {
 		// for (Unit u : container.units())
 		// remove(u);
 		// }
+		notifyListeners(container);
 	}
 
 	/**
@@ -110,6 +127,14 @@ public class Loader implements GameDataListener {
 	 */
 	public void add(Unit unit) {
 		units.add(unit);
+		notifyListeners(unit);
+	}
+
+	private void notifyListeners(Unit unit) {
+		SelectionEvent event = new SelectionEvent(this, units, unit);
+		for(SelectionListener listener : listeners){
+			listener.selectionChanged(event);
+		}
 	}
 
 	/**
@@ -119,6 +144,7 @@ public class Loader implements GameDataListener {
 	 */
 	public void remove(Unit unit) {
 		units.remove(unit);
+		notifyListeners(unit);
 	}
 
 	/**
@@ -159,6 +185,8 @@ public class Loader implements GameDataListener {
 	public void clear() {
 		ships.clear();
 		units.clear();
+		notifyListeners(new MagellanUnitImpl(UnitID.createUnitID(0, 36)));
+		notifyListeners(new MagellanShipImpl(EntityID.createEntityID(0, 36), client.getData()));
 	}
 
 	/**
@@ -166,7 +194,7 @@ public class Loader implements GameDataListener {
 	 */
 	public void clearOrders() {
 		for (Unit u : units) {
-			removeOrders(u, getMarker(), true);
+			removeOrders(u, getComment(), true);
 		}
 		fireEvents();
 	}
@@ -185,6 +213,7 @@ public class Loader implements GameDataListener {
 				else {
 					ShipLoaderPlugin.log.warn("removing unit, which is on ship: " + u);
 					it.remove();
+					notifyListeners(u);
 				}
 			}
 		}
@@ -510,7 +539,7 @@ public class Loader implements GameDataListener {
 	 * @return
 	 */
 	public String getComment() {
-		return "; " + getMarker();
+		return "; $sl$" + getMarker();
 	}
 
 	/**
@@ -528,7 +557,7 @@ public class Loader implements GameDataListener {
 	 * @param name
 	 */
 	public void setMarkerName(String name) {
-		marker = "$sl$" + name;
+		marker = name;
 	}
 
 	/**
@@ -596,6 +625,14 @@ public class Loader implements GameDataListener {
 	 */
 	public void gameDataChanged(GameDataEvent e) {
 		init(e.getGameData());
+	}
+
+	public void addSelectionListener(SelectionListener listener) {
+		listeners.add(listener);
+	}
+
+	public void removeSelectionListener(SelectionListener listener) {
+		listeners.remove(listener);
 	}
 
 }
