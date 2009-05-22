@@ -272,10 +272,10 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	/**
 	 * @see magellan.client.swing.context.UnitContainerContextMenuProvider#createContextMenu(magellan.client.event.EventDispatcher,
-	 *      magellan.library.GameData, magellan.library.UnitContainer)
+	 *      magellan.library.GameData, magellan.library.UnitContainer, Collection)
 	 */
 	public JMenuItem createContextMenu(final EventDispatcher dispatcher, final GameData data,
-			final UnitContainer container) {
+			final UnitContainer container, final Collection selectedObjects) {
 		JMenu menu = new JMenu(getString("plugin.teacher.contextmenu.title"));
 
 		// do teaching for this unit container
