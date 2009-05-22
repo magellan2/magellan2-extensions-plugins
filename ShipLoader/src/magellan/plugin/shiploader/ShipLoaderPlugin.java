@@ -26,6 +26,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -315,14 +316,14 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	}
 
 	protected void show() {
-//		log.info("============ ships =============");
-//		for (Ship s : loader.ships) {
-//			log.info(s);
-//		}
-//		log.info("============ units =============");
-//		for (Unit u : loader.units) {
-//			log.info(u);
-//		}
+		// log.info("============ ships =============");
+		// for (Ship s : loader.ships) {
+		// log.info(s);
+		// }
+		// log.info("============ units =============");
+		// for (Unit u : loader.units) {
+		// log.info(u);
+		// }
 
 		ShowDialog shower = new ShowDialog(client, loader);
 		shower.setPreferredSize(new Dimension(600, 400));
@@ -416,7 +417,9 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 					regionNodes.put(u.getRegion(), regionNode);
 					unitRoot.add(regionNode);
 				}
-				regionNode.add(new DefaultMutableTreeNode(factory.createUnitNodeWrapper(u, u.toString()+": "+u.getWeight()/100.0+" ("+u.getModifiedWeight()/100.0+")")));
+				regionNode.add(new DefaultMutableTreeNode(factory.createUnitNodeWrapper(u, u.toString()
+						+ ": " + u.getWeight() / 100.0 + " (" + u.getModifiedWeight() / 100.0 + ") "
+						+ (u.isWeightWellKnown() ? "" : "???"))));
 			}
 
 			unitTree.setShowsRootHandles(true);
@@ -439,7 +442,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 					shipRegionNodes.put(s.getRegion(), regionNode);
 					shipRoot.add(regionNode);
 				}
-				
+
 				regionNode.add(new DefaultMutableTreeNode(factory.createUnitContainerNodeWrapper(s)));
 			}
 
@@ -452,43 +455,47 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 		/**
 		 * Handle right click events on the ship or unit tree.
-		 *
+		 * 
 		 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 		 */
 		public void mouseClicked(final MouseEvent mouseEvent) {
 			JTree source = null;
-			if (mouseEvent.getSource() instanceof JTree){
+			if (mouseEvent.getSource() instanceof JTree) {
 				source = (JTree) mouseEvent.getSource();
-			}else
+			} else
 				return;
-			
+
 			// check if user clicked on a ship or unit node which was in the selection
-			TreePath clickPath = source.getPathForLocation(mouseEvent.getPoint().x, mouseEvent.getPoint().y);
-			DefaultMutableTreeNode clickNode = clickPath!=null?(DefaultMutableTreeNode)clickPath.getLastPathComponent():null;
-			
-			if (source.getSelectionPaths()==null || source.getSelectionPaths().length==0 || clickNode==null)
+			TreePath clickPath = source.getPathForLocation(mouseEvent.getPoint().x,
+					mouseEvent.getPoint().y);
+			DefaultMutableTreeNode clickNode = clickPath != null ? (DefaultMutableTreeNode) clickPath
+					.getLastPathComponent() : null;
+
+			if (source.getSelectionPaths() == null || source.getSelectionPaths().length == 0
+					|| clickNode == null)
 				return;
-			
+
 			final LinkedList<DefaultMutableTreeNode> selectedNodes = new LinkedList<DefaultMutableTreeNode>();
-			for (TreePath path : source.getSelectionPaths()){
+			for (TreePath path : source.getSelectionPaths()) {
 				selectedNodes.add((DefaultMutableTreeNode) path.getLastPathComponent());
 			}
 			if (mouseEvent.getButton() == MouseEvent.BUTTON3) {
-				//create context menu depending on type of node that was clicked
-				if (selectedNodes.contains(clickNode)){
+				// create context menu depending on type of node that was clicked
+				if (selectedNodes.contains(clickNode)) {
 					JPopupMenu menu = new JPopupMenu();
 
 					JMenuItem addMenuItem = null;
 					// UNIT NODE
-					if (clickNode.getUserObject() instanceof UnitNodeWrapper){
-						addMenuItem = new JMenuItem(getString("plugin.shiploader.contextmenu.removeunits.title"));
+					if (clickNode.getUserObject() instanceof UnitNodeWrapper) {
+						addMenuItem = new JMenuItem(
+								getString("plugin.shiploader.contextmenu.removeunits.title"));
 						menu.add(addMenuItem);
 						addMenuItem.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent menuEvent) {
 								// remove units of selected nodes
-								for(DefaultMutableTreeNode node : selectedNodes){
+								for (DefaultMutableTreeNode node : selectedNodes) {
 									Object o = node.getUserObject();
-									if (o instanceof UnitNodeWrapper){
+									if (o instanceof UnitNodeWrapper) {
 										loader.remove(((UnitNodeWrapper) o).getUnit());
 									}
 								}
@@ -496,29 +503,30 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 						});
 					}
 					// SHIP NODE
-					if (clickNode.getUserObject() instanceof UnitContainerNodeWrapper){
-						addMenuItem = new JMenuItem(getString("plugin.shiploader.contextmenu.removeships.title"));
+					if (clickNode.getUserObject() instanceof UnitContainerNodeWrapper) {
+						addMenuItem = new JMenuItem(
+								getString("plugin.shiploader.contextmenu.removeships.title"));
 						menu.add(addMenuItem);
 						addMenuItem.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent menuEvent) {
 								// remove ships of selected nodes
-								for(DefaultMutableTreeNode node : selectedNodes){
+								for (DefaultMutableTreeNode node : selectedNodes) {
 									Object o = node.getUserObject();
-									if(o instanceof UnitContainerNodeWrapper){
+									if (o instanceof UnitContainerNodeWrapper) {
 										loader.remove(((UnitContainerNodeWrapper) o).getUnitContainer());
 									}
 								}
 							}
 						});
 					}
-					
-					if (addMenuItem!=null) {
+
+					if (addMenuItem != null) {
 						ContextManager.showMenu(menu, source, mouseEvent.getX(), mouseEvent.getY());
 					}
 				}
 			}
 		}
-		
+
 		public void mouseEntered(MouseEvent e) {
 		}
 
@@ -543,6 +551,10 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 	protected void execute() {
 		loader.execute();
+		if (loader.getErrors() > 0) {
+			JOptionPane.showMessageDialog(client, getString("plugin.shiploader.message.loaderrors",
+					new Integer[] { loader.getErrors() }));
+		}
 	}
 
 	/**
