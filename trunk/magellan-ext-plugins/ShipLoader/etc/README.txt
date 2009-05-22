@@ -1,0 +1,1 @@
+The ShipLoader plug in makes loading ships easy. This version is still experimental!!
