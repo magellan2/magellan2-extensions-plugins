@@ -58,7 +58,7 @@ public class Loader implements GameDataListener {
 	private int errors;
 	private boolean changeShip;
 
-	private Collection<SelectionListener> listeners = new LinkedList<SelectionListener>();	
+	private Collection<SelectionListener> listeners = new LinkedList<SelectionListener>();
 
 	public Loader(ShipLoaderPlugin shipLoaderPlugin, Client client) {
 		this.client = client;
@@ -99,7 +99,7 @@ public class Loader implements GameDataListener {
 
 	private void notifyListeners(UnitContainer container) {
 		SelectionEvent event = new SelectionEvent(this, ships, container);
-		for(SelectionListener listener : listeners){
+		for (SelectionListener listener : listeners) {
 			listener.selectionChanged(event);
 		}
 	}
@@ -132,7 +132,7 @@ public class Loader implements GameDataListener {
 
 	private void notifyListeners(Unit unit) {
 		SelectionEvent event = new SelectionEvent(this, units, unit);
-		for(SelectionListener listener : listeners){
+		for (SelectionListener listener : listeners) {
 			listener.selectionChanged(event);
 		}
 	}
@@ -422,6 +422,10 @@ public class Loader implements GameDataListener {
 	private void error(Unit u) {
 		u.addOrder(getComment() + " === error ! ===", false, 0);
 		errors += 1;
+	}
+
+	public int getErrors() {
+		return errors;
 	}
 
 	/**
