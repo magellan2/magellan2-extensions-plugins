@@ -866,7 +866,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			westPanel.add(restrictPanel, BorderLayout.CENTER);
 			restrictPanel.add(panel, BorderLayout.NORTH);
 			restrictPanel.setBorder(new javax.swing.border.TitledBorder(BorderFactory
-					.createEtchedBorder(), getString("plugin.teacher.preferences.label.namespace")));
+					.createEtchedBorder(), getString("plugin.teacher.preferences.title.options")));
 		}
 
 		public void applyPreferences() {
