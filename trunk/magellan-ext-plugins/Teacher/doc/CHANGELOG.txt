@@ -1,3 +1,6 @@
+2009-05-23 (Build 37)- stm (stm_@users.sourceforge.net)
+	* release 0.10.3
+
 2009-05-23 (Build 29)- stm (stm_@users.sourceforge.net)
 	* added unconfirm option
 

@@ -70,7 +70,7 @@ import magellan.library.utils.logging.Logger;
  * 
  * @author stm
  */
-public class TeachPanel extends InternationalizedDataDialog implements SelectionListener,
+public class TeachPanel extends InternationalizedDataDialog implements SelectionListener<Object>,
 		ActionListener, UnitOrdersListener {
 	private static Logger log = Logger.getInstance(TeachPanel.class);
 	public static final String IDENTIFIER = "TEACH";
@@ -355,7 +355,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 
 			if (mouseEvent.getButton() == MouseEvent.BUTTON3) {
 				JPopupMenu menu = new JPopupMenu();
-//				int row = rowAtPoint(mouseEvent.getPoint());
+				// int row = rowAtPoint(mouseEvent.getPoint());
 				int col = columnAtPoint(mouseEvent.getPoint());
 				JMenuItem setValueMenu;
 				JMenuItem delValueMenu;
@@ -405,6 +405,18 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 					if (menu != null) {
 						ContextManager.showMenu(menu, this, mouseEvent.getX(), mouseEvent.getY());
 					}
+				} else if (getInternalModel().getColumnType(col).equals(magellan.plugin.teacher.TeachPanel.TeachTableModel.ColumnType.PRIORITY)) {
+					setValueMenu = new JMenuItem(TeachPlugin.getString("teachpanel.contextmenu.changeprio.title"));
+					menu.add(setValueMenu);
+					setValueMenu.addActionListener(new ActionListener() {
+
+						public void actionPerformed(ActionEvent menuEvent) {
+							askForPrio(menuEvent, mouseEvent);
+						}
+					});
+          if (menu != null) {
+            ContextManager.showMenu(menu, this, mouseEvent.getX(), mouseEvent.getY());
+          }
 				}
 			}
 		}
@@ -531,6 +543,34 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			}
 
 		}
+
+		protected void askForPrio(ActionEvent a, MouseEvent m) {
+			// determine kind of cell
+			if (getSelectedRowCount() <= 0)
+				return;
+
+			String userInput = JOptionPane.showInputDialog(TeachPanel.this, TeachPlugin.getString(
+					"plugin.teacher.prio.message"), model.getValueAt(rowAtPoint(m.getPoint()), columnAtPoint(m.getPoint())));
+			if (userInput != null) {
+				try {
+					double newPrio = Double.parseDouble(userInput);
+
+					Collection<Unit> units = new ArrayList<Unit>(getSelectedRowCount());
+	        for (int row : getSelectedRows()) {
+	          units.add((Unit) getModel().getValueAt(row, 0));
+	        }
+
+					Teacher.setPrio(units, getNamespace(), newPrio);
+					
+					getDispatcher().fire(new GameDataEvent(this, getData()));
+
+				} catch (Exception ex) {
+					log.warn(ex);
+					JOptionPane.showMessageDialog(this, TeachPlugin
+							.getString("plugin.teacher.prio.error"));
+				}
+			}
+		}
 	}
 
 	/**
@@ -611,24 +651,21 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			// find all skills
 			talentIndices = new HashMap<String, Integer>();
 			talents = new ArrayList<String>();
-			int learnCount = 0;
-			int teachCount = 0;
 			int talentCount = 0;
 			for (SUnit unit : tableUnits) {
 				for (String lTalent : unit.getLearnTalentsAsString()) {
 					if (!talentIndices.containsKey(lTalent)) {
 						talentIndices.put(lTalent, talentCount++);
-						learnCount++;
 						talents.add(lTalent);
 					}
 				}
-				for (String tTalent : unit.getTeachTalentsAsString()) {
-					if (!talentIndices.containsKey(tTalent)) {
-						talentIndices.put(tTalent, talentCount++);
-						teachCount++;
-						talents.add(tTalent);
-					}
-				}
+				// for (String tTalent : unit.getTeachTalentsAsString()) {
+				// if (!talentIndices.containsKey(tTalent)) {
+				// talentIndices.put(tTalent, talentCount++);
+				// teachCount++;
+				// talents.add(tTalent);
+				// }
+				// }
 			}
 
 			// fill content
@@ -681,10 +718,12 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			}
 
 			for (String tTalent : unit.getTeachTalentsAsString()) {
-				row[numFixedColumns + talentIndices.get(tTalent) * 4 + 2] = unit
-						.getMaximumDifference(tTalent);
-				row[numFixedColumns + talentIndices.get(tTalent) * 4 + 3] = Teacher.getLevel(
-						unit.getUnit(), tTalent);
+				if (talentIndices.containsKey(tTalent)) {
+					row[numFixedColumns + talentIndices.get(tTalent) * 4 + 2] = unit
+							.getMaximumDifference(tTalent);
+					row[numFixedColumns + talentIndices.get(tTalent) * 4 + 3] = Teacher.getLevel(unit
+							.getUnit(), tTalent);
+				}
 			}
 		}
 
@@ -835,13 +874,13 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 					break;
 				}
 			}
-			if (!structureChanged)
-				for (String tTalent : unit.getTeachTalentsAsString()) {
-					if (!talentIndices.containsKey(tTalent)) {
-						structureChanged = true;
-						break;
-					}
-				}
+			// if (!structureChanged)
+			// for (String tTalent : unit.getTeachTalentsAsString()) {
+			// if (!talentIndices.containsKey(tTalent)) {
+			// structureChanged = true;
+			// break;
+			// }
+			// }
 
 			if (structureChanged) {
 				// redo everything...
