@@ -863,6 +863,8 @@ public class Teacher {
 		}
 
 		public void setPrio(double prio) {
+			for (Order o : orders)
+				o.setPrio(prio);
 			this.prio = prio;
 
 		}
@@ -1237,7 +1239,7 @@ public class Teacher {
 	 * @return The value of the solution
 	 */
 	private double setResult(Solution best) {
-		// boolean first = false;
+		// find old teach and learn orders, and replace with comment for each
 		for (Solution.Info info : best.infos) {
 			List<String> orders = new ArrayList<String>(info.getUnit().getOrders());
 			List<String> toAdd= new ArrayList<String>();
@@ -1252,6 +1254,8 @@ public class Teacher {
 				orders.add(newOrder);
 			info.getUnit().setOrders(orders);
 		}
+		
+		// add new order according to best
 		StringBuffer[] orders = new StringBuffer[best.units.length];
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
@@ -1263,6 +1267,8 @@ public class Teacher {
 				else
 					orders[info.getTeacher()].append(" " + info.getUnit().getID());
 		}
+		
+		// add debug information
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
 			if (info.getLearning() == null)
@@ -1274,8 +1280,9 @@ public class Teacher {
 			else {
 				info.getUnit().addOrder(orders[i].toString(), false, 0);
 				if (info.getLearning() == null) {
-					// Lehrer
+					// confirm according to settings
 					if (info.students == info.getUnit().getModifiedPersons() * 10)
+						// full teacher
 						if (isConfirmFullTeachers())
 							info.getUnit().setOrdersConfirmed(true);
 						else if (isUnconfirm())
@@ -1283,13 +1290,16 @@ public class Teacher {
 					else if (isConfirmEmptyTeachers()
 							&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
 									/ 100.)
+						// partially full teacher
 						info.getUnit().setOrdersConfirmed(true);
 					else if (isUnconfirm())
 						info.getUnit().setOrdersConfirmed(false);
 				} else {
 					if (info.getTeacher() != -1 && isConfirmTaughtStudents())
+						// student with teacher
 						info.getUnit().setOrdersConfirmed(true);
 					else if (info.getTeacher() == -1 && isConfirmUntaughtStudents())
+						// student without teacher
 						info.getUnit().setOrdersConfirmed(true);
 					else if (isUnconfirm())
 						info.getUnit().setOrdersConfirmed(false);
@@ -1314,6 +1324,7 @@ public class Teacher {
 	}
 
 	public static void addOrder(Collection<Unit> units, String namespace, Order newOrder) {
+		// replace order
 		delOrder(units, namespace, newOrder);
 		// add new meta order to all units
 		for (Unit u : units) {
@@ -1363,7 +1374,45 @@ public class Teacher {
 	}
 
 	/**
-	 * Delete orders matching newOrder from units orders. If <code>newOrder == null && safety</code>
+	 * Sets the priority of all learn orders of the units to newPrio.
+	 * 
+	 * @param units
+	 * @param namespace
+	 * @param newPrio
+	 */
+	public static void setPrio(Collection<Unit> units, String namespace, double newPrio){
+		if (namespace == null)
+			namespace = "";
+		for (Unit u : units) {
+			Collection<String> oldOrders = u.getOrders();
+			List<String> newOrders = new ArrayList<String>(oldOrders.size());
+
+			for (String line : oldOrders) {
+
+				OrderList orderList;
+				// try to parse the old order
+				try {
+					orderList = parseOrder(u, line, getTeachTag(namespace), getLearnTag(namespace));
+				} catch (OrderFormatException e) {
+					// this is not a teach or learn order
+					orderList = new OrderList(Order.LEARN);
+				}
+				if (orderList.orders.isEmpty()) {
+					// just keep the old line 
+					newOrders.add(line);
+				} else {
+					// change priority of order
+					if (orderList.getType().equals(Order.LEARN))
+						orderList.setPrio(newPrio);
+					newOrders.add(orderList.getName(namespace));
+				}
+			}
+			u.setOrders(newOrders);
+		}		
+	}
+	
+	/**
+	 * Deletes orders matching newOrder from units orders. If <code>newOrder == null && safety</code>
 	 * then delete <em>all</em> meta orders of all units.
 	 * 
 	 * 
@@ -1376,21 +1425,23 @@ public class Teacher {
 			boolean safety) {
 		if (namespace == null)
 			namespace = "";
-		// add new L order to all units
 		for (Unit u : units) {
 			Collection<String> oldOrders = u.getOrders();
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
 
-			// look for L order
+			// iterate through the unit's orders
 			for (String line : oldOrders) {
-
+				
+				// try to parse the order
 				OrderList orderList;
 				try {
 					orderList = parseOrder(u, line, getTeachTag(namespace), getLearnTag(namespace));
 				} catch (OrderFormatException e) {
+					// this is not a valid teach or learn order
 					orderList = new OrderList(Order.LEARN);
 				}
 				if (orderList.orders.isEmpty()) {
+					// no order: just keep the old line
 					newOrders.add(line);
 				} else if (newOrder == null) {
 					if (!safety) {
@@ -1400,13 +1451,16 @@ public class Teacher {
 						// delete this line
 					}
 				} else {
+					// iterate through the sub-orders of this line 
 					OrderList newOrderList = new OrderList(orderList.getType());
 					for (Order order : orderList.orders) {
 						if (!order.getType().equals(newOrder.getType())
 								|| !order.getTalent().equals(newOrder.getTalent())) {
+							// order does not match newOrder: keep it
 							newOrderList.addOrder(order);
-						}
+						} // else delete order
 					}
+					// add result to new unit orders
 					if (!newOrderList.orders.isEmpty()) {
 						newOrders.add(newOrderList.getName(namespace));
 					}
