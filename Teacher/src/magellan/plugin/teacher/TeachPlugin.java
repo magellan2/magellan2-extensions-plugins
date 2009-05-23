@@ -110,6 +110,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		UnitContextMenuProvider, ActionListener {
 	public static final String NAMESPACE_PROPERTY = "plugins.teacher.namespace";
 
+	public static final String UNCONFIRM_PROPERTY = "plugins.teacher.unconfirm";
+
 	public static final String CONFIRMFULLTEACHERS_PROPERTY = "plugins.teacher.confirmfullteachers";
 
 	public static final String CONFIRMEMPTYTEACHERS_PROPERTY = "plugins.teacher.confirmemptyteachers";
@@ -128,6 +130,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	private GameData gd = null;
 
 	private String namespace = "";
+
+	public boolean unconfirm = true;
 
 	public boolean confirmFullTeachers = true;
 
@@ -190,6 +194,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	private void initProperties() {
 		setNamespace(properties.getProperty(NAMESPACE_PROPERTY, getNamespace()));
+		unconfirm = properties.getProperty(UNCONFIRM_PROPERTY,
+				unconfirm ? "true" : "false").equals("true");
 		confirmEmptyTeachers = properties.getProperty(CONFIRMEMPTYTEACHERS_PROPERTY,
 				confirmEmptyTeachers ? "true" : "false").equals("true");
 		confirmFullTeachers = properties.getProperty(CONFIRMFULLTEACHERS_PROPERTY,
@@ -687,6 +693,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		synchronized (client) {
 			final Teacher t = new Teacher(values, namespace, ui);
 			listener.setTeacher(t);
+			t.setUnconfirm(unconfirm);
 			t.setConfirmFullTeachers(confirmFullTeachers);
 			t.setConfirmEmptyTeachers(confirmEmptyTeachers);
 			t.setPercentFull(percentFull);
@@ -771,6 +778,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	class TeachPreferences implements PreferencesAdapter {
 
 		JTextArea txtNamespace;
+		private JCheckBox chkUnconfirm;
 		private JCheckBox chkConfirmFullTeachers;
 		private JCheckBox chkConfirmEmptyTeachers;
 		private JCheckBox chkConfirmTaughtStudents;
@@ -791,6 +799,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			JLabel lblNamespace = new JLabel(getString("plugin.teacher.preferences.label.namespace"));
 			lblNamespace.setLabelFor(txtNamespace);
 
+			chkUnconfirm = new JCheckBox(
+					getString("plugin.teacher.preferences.label.unconfirm"));
 			chkConfirmFullTeachers = new JCheckBox(
 					getString("plugin.teacher.preferences.label.confirmfullteachers"));
 			chkConfirmEmptyTeachers = new JCheckBox(
@@ -837,6 +847,9 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 			con.gridx = 0;
 			con.gridy++;
+			panel.add(chkUnconfirm, con);
+
+			con.gridy++;
 			panel.add(chkConfirmFullTeachers, con);
 
 			con.gridy++;
@@ -872,6 +885,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		public void applyPreferences() {
 			setNamespace(txtNamespace.getText());
 			properties.setProperty(NAMESPACE_PROPERTY, getNamespace());
+			unconfirm = chkUnconfirm.isSelected();
+			properties.setProperty(UNCONFIRM_PROPERTY, unconfirm ? "true" : "false");
 			confirmFullTeachers = chkConfirmFullTeachers.isSelected();
 			properties.setProperty(CONFIRMFULLTEACHERS_PROPERTY, confirmFullTeachers ? "true" : "false");
 			confirmEmptyTeachers = chkConfirmEmptyTeachers.isSelected();
@@ -896,6 +911,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		}
 
 		public void initPreferences() {
+			chkUnconfirm.setSelected(unconfirm);
 			chkConfirmEmptyTeachers.setSelected(confirmEmptyTeachers);
 			chkConfirmFullTeachers.setSelected(confirmFullTeachers);
 			chkConfirmTaughtStudents.setSelected(confirmTaughtStudents);

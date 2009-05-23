@@ -57,6 +57,8 @@ public class Teacher {
 
 	private Collection<Unit> units = Collections.emptyList();
 	private String namespace = null;
+	
+	private boolean unconfirm = true;
 
 	private boolean confirmFullTeachers = true;
 
@@ -1276,20 +1278,20 @@ public class Teacher {
 					if (info.students == info.getUnit().getModifiedPersons() * 10)
 						if (isConfirmFullTeachers())
 							info.getUnit().setOrdersConfirmed(true);
-						else
+						else if (isUnconfirm())
 							info.getUnit().setOrdersConfirmed(false);
 					else if (isConfirmEmptyTeachers()
 							&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
 									/ 100.)
 						info.getUnit().setOrdersConfirmed(true);
-					else
+					else if (isUnconfirm())
 						info.getUnit().setOrdersConfirmed(false);
 				} else {
 					if (info.getTeacher() != -1 && isConfirmTaughtStudents())
 						info.getUnit().setOrdersConfirmed(true);
 					else if (info.getTeacher() == -1 && isConfirmUntaughtStudents())
 						info.getUnit().setOrdersConfirmed(true);
-					else
+					else if (isUnconfirm())
 						info.getUnit().setOrdersConfirmed(false);
 				}
 			}
@@ -1472,6 +1474,14 @@ public class Teacher {
 
 	public void stop() {
 		stopFlag  = true;
+	}
+
+	public boolean isUnconfirm(){
+	  return unconfirm;
+	}
+	
+	public void setUnconfirm(boolean unconfirm) {
+		this.unconfirm = unconfirm;
 	}
 
 }
