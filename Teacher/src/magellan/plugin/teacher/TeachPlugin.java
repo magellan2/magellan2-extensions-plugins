@@ -740,6 +740,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 */
 	private void setNamespace(String namespace) {
 		this.namespace = namespace;
+		
 	}
 
 	/**

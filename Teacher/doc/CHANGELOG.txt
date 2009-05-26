@@ -1,3 +1,6 @@
+2009-05-25 (Build 40)- stm (stm_@users.sourceforge.net)
+	* release 0.10.3, improvements to TeachPanel
+
 2009-05-23 (Build 37)- stm (stm_@users.sourceforge.net)
 	* release 0.10.3
 

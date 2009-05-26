@@ -32,7 +32,7 @@
 	
   <!-- *************************************************************** -->
   <!-- *                                                             * -->
-  <!-- *  This target compiles and packs the magellan library.       * -->
+  <!-- *  This target .       * -->
   <!-- *                                                             * -->
   <!-- *************************************************************** -->
   <target name="create-installer" description="Run this to create a installer jar for this plugin">
