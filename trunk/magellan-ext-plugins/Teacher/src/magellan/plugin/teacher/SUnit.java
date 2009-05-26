@@ -247,7 +247,7 @@ public class SUnit implements Named {
 		if (o instanceof SUnit) {
 			return getUnit().compareTo(((SUnit) o).getUnit());
 		}
-		return 0;
+		return 1;
 	}
 
 	public ID getID() {
@@ -258,6 +258,9 @@ public class SUnit implements Named {
 		throw new CloneNotSupportedException();
 	}
 
+	public int hashCode(){
+		return getUnit().hashCode();
+	}
 	/**
 	 * More efficient variant of getLevel(SUnig, String).
 	 * 

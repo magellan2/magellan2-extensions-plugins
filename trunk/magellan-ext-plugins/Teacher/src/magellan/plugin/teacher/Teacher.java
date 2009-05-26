@@ -1455,7 +1455,7 @@ public class Teacher {
 					OrderList newOrderList = new OrderList(orderList.getType());
 					for (Order order : orderList.orders) {
 						if (!order.getType().equals(newOrder.getType())
-								|| !order.getTalent().equals(newOrder.getTalent())) {
+								|| !order.getTalent().equalsIgnoreCase(newOrder.getTalent())) {
 							// order does not match newOrder: keep it
 							newOrderList.addOrder(order);
 						} // else delete order
