@@ -388,7 +388,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			this.loader = loader;
 			loader.addListener(this);
 
-			factory = new NodeWrapperFactory(properties, "ShipLoader", getString("title"));
+			factory = new NodeWrapperFactory(properties, "ShipLoader", null);
 
 			SpringLayout layout = new SpringLayout();
 			JPanel mainPanel = new JPanel(layout);
@@ -403,8 +403,8 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 				public void valueChanged(TreeSelectionEvent e) {
 					LinkedList<Unit> mySelectedUnits = new LinkedList<Unit>();
-          if (shipTree.getSelectionPaths()!=null){
-          	for (TreePath path : shipTree.getSelectionPaths()) {
+          if (unitTree.getSelectionPaths()!=null){
+          	for (TreePath path : unitTree.getSelectionPaths()) {
           		DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
           		Object o = actNode.getUserObject();
           		if (o instanceof UnitNodeWrapper) {
