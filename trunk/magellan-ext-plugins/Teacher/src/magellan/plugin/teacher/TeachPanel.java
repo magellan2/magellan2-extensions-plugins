@@ -75,7 +75,7 @@ import magellan.library.utils.logging.Logger;
  * 
  * @author stm
  */
-public class TeachPanel extends InternationalizedDataDialog implements SelectionListener<Object>,
+public class TeachPanel extends InternationalizedDataDialog implements SelectionListener,
 		ActionListener, UnitOrdersListener {
 	private static Logger log = Logger.getInstance(TeachPanel.class);
 	public static final String IDENTIFIER = "TEACH";
@@ -94,7 +94,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 
 	private Teacher teacher;
 
-	private String namespace = "";
+	private Collection<String> namespaces;
 	private JComboBox rBox;
 
 	/**
@@ -105,10 +105,13 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 	 * 
 	 */
 	public TeachPanel(Frame owner, EventDispatcher dispatcher, GameData data, Properties settings,
-			String namespace, Region region) {
+			Collection<String> namespaces, Region region) {
 		super(owner, false, dispatcher, data, settings);
 
-		this.namespace = namespace;
+		if (namespaces==null)
+			throw new NullPointerException();
+		
+		this.namespaces = new ArrayList<String>(namespaces);
 
 		learnTargetChar = TeachPlugin.getString("teachpanel.constants.learnTargetChar");
 		learnMaxChar = TeachPlugin.getString("teachpanel.constants.learnMaxChar");
@@ -146,7 +149,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 
 		setSize(width, height);
 		setLocation(xPos, yPos);
-		setTitle(Resources.get("teachpanel.title", new Object[] { getNamespace() }));
+		setTitle(Resources.get("teachpanel.title", new Object[] { getNamespaces().toString() }));
 
 		// build GUI
 
@@ -191,8 +194,8 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			rBox.addItem(region);
 	}
 
-	private String getNamespace() {
-		return namespace;
+	private Collection<String> getNamespaces() {
+		return namespaces;
 	}
 
 	private void setUnits() {
@@ -236,7 +239,6 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 	 * 
 	 * @see magellan.client.event.SelectionListener#selectionChanged(magellan.client.event.SelectionEvent)
 	 */
-	@SuppressWarnings("unchecked")
 	public void selectionChanged(SelectionEvent se) {
 	}
 
@@ -296,7 +298,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 						Unit u = (Unit) sorter.getValueAt(i, 0);
 
 						if (u != null) {
-							dispatcher.fire(new SelectionEvent<Unit>(this, null, u, SelectionEvent.ST_DEFAULT));
+							dispatcher.fire(new SelectionEvent(this, null, u, SelectionEvent.ST_DEFAULT));
 						}
 					}
 				}
@@ -351,7 +353,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		 */
 		private void updateUnit(Unit unit) {
 			if (teacher != null) {
-				SUnit su = Teacher.parseUnit(unit, getNamespace(), false);
+				SUnit su = Teacher.parseUnit(unit, getNamespaces(), false);
 				if (su != null)
 					model.addUnit(su);
 				else if (model.findRow(unit) >= 0)
@@ -496,7 +498,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 							units.add((Unit) getModel().getValueAt(row, 0));
 						}
 						if (mode.equals(learnTargetChar) || mode.equals(learnMaxChar)) {
-							Teacher.addOrder(units, getNamespace(), new Order(talent, 1d, target, max));
+							Teacher.addOrder(units, getNamespaces().iterator().next(), new Order(talent, 1d, target, max));
 						}
 						getDispatcher().fire(new GameDataEvent(this, getData()));
 
@@ -522,7 +524,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 							units.add((Unit) getModel().getValueAt(row, 0));
 						}
 						if (mode.equals(teachDiffChar)) {
-							Teacher.addOrder(units, getNamespace(), new Order(talent, diff, true));
+							Teacher.addOrder(units, getNamespaces().iterator().next(), new Order(talent, diff, true));
 						}
 						getDispatcher().fire(new GameDataEvent(this, getData()));
 
@@ -562,9 +564,9 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 					units.add((Unit) getModel().getValueAt(row, 0));
 				}
 				if (mode.equals(learnTargetChar) || mode.equals(learnMaxChar)) {
-					Teacher.delOrder(units, getNamespace(), new Order(talent, 1d, 1, 0));
+					Teacher.delOrder(units, getNamespaces(), new Order(talent, 1d, 1, 0));
 				} else if (mode.equals(teachDiffChar)) {
-					Teacher.delOrder(units, getNamespace(), new Order(talent, 0, true));
+					Teacher.delOrder(units, getNamespaces(), new Order(talent, 0, true));
 				}
 				getDispatcher().fire(new GameDataEvent(this, getData()));
 			}
@@ -588,7 +590,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 						units.add((Unit) getModel().getValueAt(row, 0));
 					}
 
-					Teacher.setPrio(units, getNamespace(), newPrio);
+					Teacher.setPrio(units, getNamespaces(), newPrio);
 
 					getDispatcher().fire(new GameDataEvent(this, getData()));
 
@@ -1002,7 +1004,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		if (region == null)
 			teacher = null;
 		else
-			teacher = new Teacher(region.units(), getNamespace(), new NullUserInterface());
+			teacher = new Teacher(region.units(), getNamespaces(), new NullUserInterface());
 		setUnits();
 
 	}

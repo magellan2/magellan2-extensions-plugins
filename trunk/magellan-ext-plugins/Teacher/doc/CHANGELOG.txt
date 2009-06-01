@@ -1,3 +1,7 @@
+2009-06-01 (Build 43)- stm (stm_@users.sourceforge.net)
+	* support for multiple namespaces
+	* ProgressBar deadlock fix
+
 2009-05-25 (Build 40)- stm (stm_@users.sourceforge.net)
 	* release 0.10.3, improvements to TeachPanel
 

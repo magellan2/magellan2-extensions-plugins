@@ -116,7 +116,7 @@ public class SUnit implements Named {
 		return prio;
 	}
 
-	private double getWeeks(double d) {
+	protected double getWeeks(double d) {
 		return (d) * (d + 1) / 2d;
 	}
 
