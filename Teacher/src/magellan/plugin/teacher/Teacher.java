@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -56,8 +57,8 @@ public class Teacher {
 	// private static final String LEARN_TAG = "Learning";
 
 	private Collection<Unit> units = Collections.emptyList();
-	private String namespace = null;
-	
+	private Collection<String> namespaces;
+
 	private boolean unconfirm = true;
 
 	private boolean confirmFullTeachers = true;
@@ -70,7 +71,7 @@ public class Teacher {
 
 	private int percentFull;
 
-	private UserInterface ui = new NullUserInterface();
+	private UserInterface ui;
 
 	private SUnit[] sUnits;
 
@@ -80,27 +81,31 @@ public class Teacher {
 
 	private boolean stopFlag = false;
 
-  // maps for efficient lookup	
+	// maps for efficient lookup
 	Map<String, Integer> skillIndices = new HashMap<String, Integer>();
 	ArrayList<String> skillNames = new ArrayList<String>();
-	Map<Unit, Map<Integer, Integer>> skillMaps = new HashMap<Unit, Map<Integer,Integer>>();
-	
+	Map<Unit, Map<Integer, Integer>> skillMaps = new HashMap<Unit, Map<Integer, Integer>>();
+
 	/**
-   * Create a new Teacher object.
-   *
-	 * @param units The collection of units this Teacher manages.
-	 * @param namespace The namespace for orders
-	 * @param ui A user interface for feedback. May be <code>null</code>.
+	 * Create a new Teacher object.
+	 * 
+	 * @param units
+	 *          The collection of units this Teacher manages.
+	 * @param namespace
+	 *          The namespace for orders
+	 * @param ui
+	 *          A user interface for feedback. May be <code>null</code>.
 	 */
-	Teacher(Collection<Unit> units, String namespace, UserInterface ui) {
+	Teacher(Collection<Unit> units, Collection<String> namespaces, UserInterface ui) {
 		this.units = units;
-		this.namespace = namespace;
-		if (ui!=null)
+		if (namespaces == null || namespaces.size() == 0)
+			this.namespaces = Collections.singletonList("");
+		else
+			this.namespaces = new LinkedList<String>(namespaces);
+		if (ui != null)
 			this.ui = ui;
 		else {
-			// FIXME: use this
-//			this.ui = NullUserInterface.getInstance();
-			this.ui = new NullUserInterface();
+			this.ui = NullUserInterface.getInstance();
 		}
 	}
 
@@ -149,11 +154,10 @@ public class Teacher {
 			}
 
 			public void assignLearn() {
-				int index = random.nextInt(unit.getLearnTalents()
-						.size());
+				int index = random.nextInt(unit.getLearnTalents().size());
 				int count = 0;
-				for (Integer talent : unit.getLearnTalents()){
-					if (count++==index){
+				for (Integer talent : unit.getLearnTalents()) {
+					if (count++ == index) {
 						setLearning(talent);
 						return;
 					}
@@ -232,7 +236,8 @@ public class Teacher {
 			}
 
 			/**
-			 * @param learning the learning to set
+			 * @param learning
+			 *          the learning to set
 			 */
 			void setLearning(Integer learning) {
 				this.learning = learning;
@@ -274,31 +279,32 @@ public class Teacher {
 
 		private void adjustToCurrentOrders() {
 			Map<String, Info> lookup = new HashMap<String, Info>();
-			for (Info i : infos){
+			for (Info i : infos) {
 				lookup.put(i.getUnit().getID().toString(), i);
 			}
-			for (Info info : infos){
+			for (Info info : infos) {
 				Order o = getCurrentOrder(info.getUnit());
-				if (o.isLearnOrder()){
+				if (o.isLearnOrder()) {
 					info.setLearning(getSkillIndex(o.getTalent()));
-					info.students=0;
+					info.students = 0;
 				}
 			}
-			for (Info info : infos){
+			for (Info info : infos) {
 				Order o = getCurrentOrder(info.getUnit());
-				if (o.isTeachOrder()){
+				if (o.isTeachOrder()) {
 					info.setLearning(null);
 					String s = getCurrentOrder(info.getUnit(), true);
-					if (s!=null){
+					if (s != null) {
 						StringTokenizer tokenizer = new StringTokenizer(s);
 						tokenizer.nextElement(); // skip LEHRE
-						while (tokenizer.hasMoreTokens()){
-							 String id = tokenizer.nextToken();
-							 Info student =lookup.get(id);
-							 if (student!=null && student.getLearning()!=null && validTeacher(student, info.getSUnit().getIndex())){
-								 student.addTeacher(info.getSUnit().getIndex());
-								 info.students+=student.getUnit().getModifiedPersons();
-							 }
+						while (tokenizer.hasMoreTokens()) {
+							String id = tokenizer.nextToken();
+							Info student = lookup.get(id);
+							if (student != null && student.getLearning() != null
+									&& validTeacher(student, info.getSUnit().getIndex())) {
+								student.addTeacher(info.getSUnit().getIndex());
+								info.students += student.getUnit().getModifiedPersons();
+							}
 						}
 					}
 				}
@@ -347,7 +353,7 @@ public class Teacher {
 					value = su.calcWeight(info.getLearning());
 					value *= su.getUnit().getModifiedPersons();
 					value *= su.getPrio();
-					int sLevel = su.getSkillLevel(info.getLearning()); 
+					int sLevel = su.getSkillLevel(info.getLearning());
 					value *= 1 + Math.sqrt(sLevel) / 5.5;
 					if (info.getNumTeachers() > 0) {
 						Info teacher = infos[info.teacher];
@@ -366,7 +372,7 @@ public class Teacher {
 				}
 				result += value;
 			}
-			changed=false;
+			changed = false;
 			return result;
 		}
 
@@ -379,7 +385,7 @@ public class Teacher {
 			double e2 = ((Solution) o).evaluate();
 			double e1 = evaluate();
 
-			return (int) (e2 > e1 ? (int) (e2 - e1 +1) : e2 == e1 ? 0 : (int) (e2 - e1 -1));
+			return (int) (e2 > e1 ? (int) (e2 - e1 + 1) : e2 == e1 ? 0 : (int) (e2 - e1 - 1));
 		}
 
 		/**
@@ -426,24 +432,24 @@ public class Teacher {
 			assignTeachers();
 			changed = true;
 		}
-		
+
 		/**
 		 * Set this unit to learn its most valuable talent.
 		 */
-		public void fix(){
+		public void fix() {
 			for (int i = 0; i < infos.length; ++i) {
 				Info info = infos[i];
 				SUnit u = info.unit;
-				if (info.getLearning()==null && info.students==0){
+				if (info.getLearning() == null && info.students == 0) {
 					Integer maxT = null;
 					double max = -1;
-					for (Integer t : u.getLearnTalents()){
-						if (u.calcWeight(t) > max){
-							max=u.calcWeight(t);
+					for (Integer t : u.getLearnTalents()) {
+						if (u.calcWeight(t) > max) {
+							max = u.calcWeight(t);
 							maxT = t;
 						}
 					}
-					log.debug("fixing "+u+": "+getSkillName(maxT));
+					log.debug("fixing " + u + ": " + getSkillName(maxT));
 					info.setLearning(maxT);
 				}
 			}
@@ -494,7 +500,7 @@ public class Teacher {
 						// }
 					}
 				}
-				changed=true;
+				changed = true;
 			}
 			// // assign teachers, 2nd try
 			// for (int i = 0; i < infos.length; ++i) {
@@ -528,8 +534,8 @@ public class Teacher {
 				throw new IllegalArgumentException("incompatible solutions");
 			init();
 
-//			int crossoverPoint1 = random.nextInt(infos.length-1);
-			// this seemed to work better than a one point crossover 
+			// int crossoverPoint1 = random.nextInt(infos.length-1);
+			// this seemed to work better than a one point crossover
 			byte[] parents = new byte[infos.length];
 			random.nextBytes(parents);
 
@@ -538,7 +544,8 @@ public class Teacher {
 				Info info = infos[i];
 				Info parent;
 				if (parents[i] % 2 == 0)
-//				if (i<=crossoverPoint1)// || (i>crossoverPoint2 && i<=crossoverPoint3) || (i>crossoverPoint4))
+					// if (i<=crossoverPoint1)// || (i>crossoverPoint2 && i<=crossoverPoint3) ||
+					// (i>crossoverPoint4))
 					parent = solution.infos[i];
 				else
 					parent = solution2.infos[i];
@@ -552,7 +559,8 @@ public class Teacher {
 				Info student = infos[i];
 				Info parent;
 				if (parents[i] % 2 == 0)
-//				if (i<=crossoverPoint1)// || (i>crossoverPoint2 && i<=crossoverPoint3) || (i>crossoverPoint4))
+					// if (i<=crossoverPoint1)// || (i>crossoverPoint2 && i<=crossoverPoint3) ||
+					// (i>crossoverPoint4))
 					parent = solution.infos[i];
 				else
 					parent = solution2.infos[i];
@@ -608,7 +616,7 @@ public class Teacher {
 	public Integer getSkillIndex(String talent) {
 		talent = talent.toLowerCase();
 		Integer index = skillIndices.get(talent);
-		if (index == null){
+		if (index == null) {
 			index = skillNames.size();
 			skillNames.add(talent);
 			skillIndices.put(talent, index);
@@ -616,9 +624,8 @@ public class Teacher {
 		return index;
 	}
 
-
 	public String getSkillName(Integer skill) {
-		if (skill>=skillNames.size())
+		if (skill >= skillNames.size())
 			throw new IllegalArgumentException();
 		return skillNames.get(skill);
 	}
@@ -627,13 +634,13 @@ public class Teacher {
 	 * Returns the skill level of a unit. For example getLevel(unit,"Unterhaltung")
 	 */
 	public int getLevel(Unit unit, Integer skill) {
-		Map<Integer, Integer> skills = skillMaps.get(unit); 
-		if (skills==null){
+		Map<Integer, Integer> skills = skillMaps.get(unit);
+		if (skills == null) {
 			skills = new HashMap<Integer, Integer>();
 			skillMaps.put(unit, skills);
 		}
 		Integer level = skills.get(skill);
-		if (level==null){
+		if (level == null) {
 			level = getLevel(unit, getSkillName(skill));
 			skills.put(skill, level);
 		}
@@ -643,8 +650,8 @@ public class Teacher {
 	/**
 	 * Extracts the teaching units from the orders.
 	 * 
-	 * @param namespace
-	 *          Extract only units of this namespace.
+	 * @param setTags
+	 *          if <code>true</code>, the units get tags for their highest teach and learn skills.
 	 * 
 	 * @return A List of units who are teachers or students
 	 */
@@ -688,9 +695,11 @@ public class Teacher {
 		return result;
 	}
 
-	public static SUnit parseUnit(Unit unit, String namespace, boolean setTags) {
-		return (new Teacher(Collections.singletonList(unit), namespace, null)).parseUnit(unit, setTags);
+	public static SUnit parseUnit(Unit unit, Collection<String> namespaces, boolean setTags) {
+		return (new Teacher(Collections.singletonList(unit), namespaces, null))
+				.parseUnit(unit, setTags);
 	}
+
 	/**
 	 * Parse the orders of <code>u</code>.
 	 * 
@@ -703,12 +712,8 @@ public class Teacher {
 		boolean errorFlag = false;
 		for (String orderLine : u.getOrders()) {
 			try {
-				OrderList orderList;
-				try {
-					orderList = parseOrder(u, orderLine, getTeachTag(namespace), getLearnTag(namespace));
-				} catch (OrderFormatException e) {
-					orderList = new OrderList(Order.LEARN);
-				}
+				OrderList orderList = null;
+				orderList = parseOrder(u, orderLine, namespaces);
 				for (Order order : orderList.orders) {
 					String talent = order.getTalent();
 					if (order.isTeachOrder()) {
@@ -770,83 +775,91 @@ public class Teacher {
 	 * @param teachTag
 	 * @param learnTag
 	 * @return
-	 * @throws OrderFormatException
 	 */
-	protected static OrderList parseOrder(Unit unit, String orderLine, String teachTag,
-			String learnTag) throws OrderFormatException {
-		OrderList result = new OrderList(Order.LEARN);
-		try {
-			// try to find out which kind of order we have
-			int start = orderLine.indexOf(teachTag);
-			if (start != -1) {
-				// teach order
-				result = new OrderList(Order.TEACH);
-				StringTokenizer st = new StringTokenizer(orderLine.substring(start + learnTag.length()),
-						delim, false);
-
-				while (st.hasMoreElements()) {
-					String talent = st.nextToken();
-					int diff = Integer.parseInt(st.nextToken());
-					result.addOrder(new Order(talent, diff, true));
-				}
-			} else {
-				start = orderLine.indexOf(learnTag);
+	protected static OrderList parseOrder(Unit unit, String orderLine, Collection<String> namespaces) {
+		for (String nsp : namespaces) {
+	    OrderList result = null;
+			String teachTag = getTeachTag(nsp);
+			String learnTag = getLearnTag(nsp);
+			try {
+				// try to find out which kind of order we have
+				int start = orderLine.indexOf(teachTag);
 				if (start != -1) {
-					// learn order
-					result = new OrderList(Order.LEARN);
-					StringTokenizer st = new StringTokenizer(orderLine.substring(start + teachTag.length()),
+					// teach order
+					result = new OrderList(Order.TEACH, nsp);
+					StringTokenizer st = new StringTokenizer(orderLine.substring(start + learnTag.length()),
 							delim, false);
-					// try to read priority
-					if (!st.hasMoreElements()) {
-						return result;
+
+					while (st.hasMoreElements()) {
+						String talent = st.nextToken();
+						int diff = Integer.parseInt(st.nextToken());
+						result.addOrder(new Order(talent, diff, true));
 					}
-					String first = st.nextToken();
-					double prio = -1;
-					try {
-						prio = Double.parseDouble(first);
-					} catch (NumberFormatException e) {
-					}
-					if (prio > 0) {
-						result.setPrio(prio);
-						// new format
-						while (st.hasMoreElements()) {
-							String talent = st.nextToken();
-							int target = Integer.parseInt(st.nextToken());
-							int max = Integer.parseInt(st.nextToken());
-							result.addOrder(new Order(talent, prio, target, max));
+				} else {
+					start = orderLine.indexOf(learnTag);
+					if (start != -1) {
+						// learn order
+						result = new OrderList(Order.LEARN, nsp);
+						StringTokenizer st = new StringTokenizer(
+								orderLine.substring(start + teachTag.length()), delim, false);
+						// try to read priority
+						if (!st.hasMoreElements()) {
+							return result;
 						}
-					} else {
-						// no priority ==> old format
-						while (st.hasMoreElements()) {
-							String talent = first;
-							if (talent == null)
-								talent = st.nextToken();
-							first = null;
-							double talentPrio = Double.parseDouble(st.nextToken());
-							if (Order.ALL.equals(talent)) {
-								double prio2 = Double.parseDouble(st.nextToken());
-								convertOrder(unit, talent, talentPrio, prio2, result);
-							} else {
-								convertOrder(unit, talent, talentPrio, result);
+						String first = st.nextToken();
+						double prio = -1;
+						try {
+							prio = Double.parseDouble(first);
+						} catch (NumberFormatException e) {
+						}
+						if (prio > 0) {
+							result.setPrio(prio);
+							// new format
+							while (st.hasMoreElements()) {
+								String talent = st.nextToken();
+								int target = Integer.parseInt(st.nextToken());
+								int max = Integer.parseInt(st.nextToken());
+								result.addOrder(new Order(talent, prio, target, max));
+							}
+						} else {
+							// no priority ==> old format
+							while (st.hasMoreElements()) {
+								String talent = first;
+								if (talent == null)
+									talent = st.nextToken();
+								first = null;
+								double talentPrio = Double.parseDouble(st.nextToken());
+								if (Order.ALL.equals(talent)) {
+									double prio2 = Double.parseDouble(st.nextToken());
+									convertOrder(unit, talent, talentPrio, prio2, result);
+								} else {
+									convertOrder(unit, talent, talentPrio, result);
+								}
 							}
 						}
 					}
 				}
+			} catch (Exception e) {
+				// throw new OrderFormatException("parse error in line " + orderLine, e);
 			}
-		} catch (Exception e) {
-			throw new OrderFormatException("parse error in line " + orderLine, e);
+			if (result!=null && result.orders.size()>0)
+				return result;
 		}
-		return result;
+		return new OrderList(Order.LEARN, namespaces.iterator().next());
 	}
 
 	public static class OrderList {
 		public List<Order> orders = new ArrayList<Order>(1);
 		String type = null;
+		String namespace;
 
 		private double prio = 1;
 
-		public OrderList(String type) {
+		public OrderList(String type, String namespace) {
+		  if (type==null || namespace == null)
+		    throw new NullPointerException();
 			this.type = type;
+			this.namespace = namespace;
 		}
 
 		public void addOrder(Order o) {
@@ -870,7 +883,7 @@ public class Teacher {
 		}
 
 		public String toString() {
-			return getName("");
+			return getName();
 		}
 
 		/**
@@ -880,7 +893,14 @@ public class Teacher {
 			return prio;
 		}
 
-		public String getName(String namespace) {
+		/**
+		 * Returns an order string for this order list like <code>"// $stm$L 100 Stangenwaffen 10 99 Ausdauer 5 99</code> for learn orders and <code>"// $stm$T Hiebwaffen 2</code> for teach
+		 * orders. Here, <code>stm</code> is the namespace.
+		 * 
+		 * @param namespace
+		 * @return
+		 */
+		public String getName() {
 			StringBuffer sb = new StringBuffer();
 			sb.append("// ");
 			if (type.equals(Order.TEACH))
@@ -895,6 +915,10 @@ public class Teacher {
 				sb.append(o.shortOrder());
 			}
 			return sb.toString();
+		}
+		
+		public String getNamespace(){
+		  return namespace;
 		}
 	}
 
@@ -943,23 +967,18 @@ public class Teacher {
 		}
 	}
 
-	public static void convert(Collection<Unit> values, String namespace) {
+	public static void convert(Collection<Unit> values, Collection<String> namespaces) {
 		for (Unit u : values) {
 			Collection<String> newOrders = new ArrayList<String>(u.getOrders().size());
 			boolean changed = false;
-			for (String orderLine : u.getOrders()) {
+			for (String oldOrder : u.getOrders()) {
 				OrderList orderList;
-				try {
-					orderList = parseOrder(u, orderLine, getTeachTag(namespace), getLearnTag(namespace));
-				} catch (OrderFormatException e) {
-					orderList = new OrderList(Order.TEACH);
-				}
+				orderList = parseOrder(u, oldOrder, namespaces);
 				if (orderList.orders.isEmpty()) {
-					newOrders.add(orderLine);
+					newOrders.add(oldOrder);
 				} else {
 					changed = true;
-					StringBuffer sb = new StringBuffer();
-					newOrders.add(orderList.getName(namespace));
+					newOrders.add(orderList.getName());
 				}
 			}
 			if (changed) {
@@ -979,7 +998,7 @@ public class Teacher {
 	}
 
 	/**
-	 * Parses all units and sets tags.
+	 * Removes tags from all units.
 	 * 
 	 */
 	public void unTag() {
@@ -999,7 +1018,7 @@ public class Teacher {
 		if (sUnits.length == 0)
 			return 0;
 
-		log.info("teaching " + sUnits.length + " units in namespace \"" + namespace + "\"");
+		log.info("teaching " + sUnits.length + " units in namespace \"" + namespaces.toString() + "\"");
 
 		final int minRounds = Math.max(40, (int) (sUnits.length));
 		final int maxRounds = Math.max(120, (int) (sUnits.length) * 6);
@@ -1008,8 +1027,8 @@ public class Teacher {
 		final int numPreSolvedRounds = 3;
 		final int select = 5;
 
-		ui.setMaximum(numMetaRounds * maxRounds + minRounds + minRounds/10+1);
-//		ui.show();
+		ui.setMaximum(numMetaRounds * maxRounds + minRounds + minRounds / 10 + 1);
+		// ui.show();
 
 		// the best solution of all runs are collected here
 		Solution[] veryBest = new Solution[numMetaRounds * select * 3 / 2];
@@ -1028,7 +1047,8 @@ public class Teacher {
 			// do one run of the evol. algo. terminate if max number of rounds is reached or if minimum
 			// number of rounds is reached and the solution quality does not increase any more
 			int round = 0;
-			for (; (round < minRounds || (round < maxRounds && notImproved <= minRounds / 5)) && !stopFlag; ++round) {
+			for (; (round < minRounds || (round < maxRounds && notImproved <= minRounds / 5))
+					&& !stopFlag; ++round) {
 				if (population[0].evaluate() > oldBest)
 					notImproved = 0;
 				else
@@ -1036,9 +1056,9 @@ public class Teacher {
 				if (best[0] != null)
 					oldBest = best[0].evaluate();
 				if (round % Math.ceil(minRounds / 10) == 0) {
-					mutate(population, Math.min(1 / Math.log(round + 1), .2), numMetaRounds-metaRound-1);
+					mutate(population, Math.min(1 / Math.log(round + 1), .2), numMetaRounds - metaRound - 1);
 				} else
-					mutate(population, Math.min(.3 / Math.log(round + 1), .2), numMetaRounds-metaRound-1);
+					mutate(population, Math.min(.3 / Math.log(round + 1), .2), numMetaRounds - metaRound - 1);
 
 				recombine(population);
 
@@ -1056,33 +1076,34 @@ public class Teacher {
 				}
 			}
 			// collect best solutions
-			for (int i = 0; i < select-1; ++i) {
+			for (int i = 0; i < select - 1; ++i) {
 				veryBest[veryBest.length - 1 - metaRound * select - i] = population[i];
 			}
-			veryBest[veryBest.length - 1 - metaRound * select - (select-1)] = best[0];
-			log.info("***" + minRounds + "/"+ round + "/"+ maxRounds + " 0: " + best[0].evaluate() + " " + population[0].evaluate() + " " + population.length / 10
-					+ ": " + population[population.length / 10].evaluate() + " "
-					+ (population.length / 10 * 9) + " " + population[population.length / 10 * 9].evaluate()
-					+ " " + (population.length - 1) + ": " + population[population.length - 1].evaluate());
+			veryBest[veryBest.length - 1 - metaRound * select - (select - 1)] = best[0];
+			log.info("***" + minRounds + "/" + round + "/" + maxRounds + " 0: " + best[0].evaluate()
+					+ " " + population[0].evaluate() + " " + population.length / 10 + ": "
+					+ population[population.length / 10].evaluate() + " " + (population.length / 10 * 9)
+					+ " " + population[population.length / 10 * 9].evaluate() + " " + (population.length - 1)
+					+ ": " + population[population.length - 1].evaluate());
 		}
 
 		// optimize population of best solutions
 		select(veryBest);
 		log.info(" 0: " + veryBest[0].evaluate() + " l/3: " + veryBest[veryBest.length / 3].evaluate()
 				+ " " + (veryBest.length - 1) + ": " + veryBest[veryBest.length - 1].evaluate());
-		stopFlag=false;
-		for (int round = 0; round < minRounds * 4  && !stopFlag; ++round) {
+		stopFlag = false;
+		for (int round = 0; round < minRounds * 4 && !stopFlag; ++round) {
 			ui.setProgress("" + veryBest[0].evaluate(), numMetaRounds * maxRounds + round);
 			mutate(veryBest, .1, 1);
 			recombine(veryBest);
 			select(veryBest);
 		}
 		select(veryBest);
-//		veryBest[0].assignTeachers();
+		// veryBest[0].assignTeachers();
 		log.info("***** 0: " + veryBest[0].evaluate() + " l/3: "
 				+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
 				+ veryBest[veryBest.length - 1].evaluate());
-//		ui.ready();
+		// ui.ready();
 
 		if (veryBest.length == 0)
 			return -1;
@@ -1123,10 +1144,10 @@ public class Teacher {
 		}
 		try {
 			if (current)
-				for (int i=0; i<population.length && i < Math.max(1, Math.log(population.length)-3); ++i)
+				for (int i = 0; i < population.length && i < Math.max(1, Math.log(population.length) - 3); ++i)
 					population[i] = new Solution(units, true);
-		} catch (Exception e){
-			log.error("orders foul: "+e);
+		} catch (Exception e) {
+			log.error("orders foul: " + e);
 			e.printStackTrace();
 		}
 	}
@@ -1242,7 +1263,7 @@ public class Teacher {
 		// find old teach and learn orders, and replace with comment for each
 		for (Solution.Info info : best.infos) {
 			List<String> orders = new ArrayList<String>(info.getUnit().getOrders());
-			List<String> toAdd= new ArrayList<String>();
+			List<String> toAdd = new ArrayList<String>();
 			for (Iterator<String> it = orders.iterator(); it.hasNext();) {
 				String o = (String) it.next().trim();
 				if (o.startsWith("LEHRE") || o.startsWith("LERNE")) {
@@ -1254,7 +1275,7 @@ public class Teacher {
 				orders.add(newOrder);
 			info.getUnit().setOrders(orders);
 		}
-		
+
 		// add new order according to best
 		StringBuffer[] orders = new StringBuffer[best.units.length];
 		for (int i = 0; i < best.infos.length; ++i) {
@@ -1267,7 +1288,7 @@ public class Teacher {
 				else
 					orders[info.getTeacher()].append(" " + info.getUnit().getID());
 		}
-		
+
 		// add debug information
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
@@ -1287,13 +1308,13 @@ public class Teacher {
 							info.getUnit().setOrdersConfirmed(true);
 						else if (isUnconfirm())
 							info.getUnit().setOrdersConfirmed(false);
-					else if (isConfirmEmptyTeachers()
-							&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
-									/ 100.)
-						// partially full teacher
-						info.getUnit().setOrdersConfirmed(true);
-					else if (isUnconfirm())
-						info.getUnit().setOrdersConfirmed(false);
+						else if (isConfirmEmptyTeachers()
+								&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
+										/ 100.)
+							// partially full teacher
+							info.getUnit().setOrdersConfirmed(true);
+						else if (isUnconfirm())
+							info.getUnit().setOrdersConfirmed(false);
 				} else {
 					if (info.getTeacher() != -1 && isConfirmTaughtStudents())
 						// student with teacher
@@ -1310,38 +1331,33 @@ public class Teacher {
 		return best.evaluate();
 	}
 
-	public static void clear(Collection<Unit> units, String namespace) {
-		(new Teacher(units, namespace, new NullUserInterface())).clear();
+	public static void clear(Collection<Unit> units, Collection<String> namespaces) {
+		(new Teacher(units, namespaces, new NullUserInterface())).clear();
 
 	}
 
-	public static void parse(Collection<Unit> units, String namespace, ProgressBarUI ui) {
-		(new Teacher(units, namespace, ui)).parse();
+	public static void parse(Collection<Unit> units, Collection<String> namespaces, ProgressBarUI ui) {
+		(new Teacher(units, namespaces, ui)).parse();
 	}
 
-	public static void untag(Collection<Unit> units, String namespace, ProgressBarUI ui) {
-		(new Teacher(units, namespace, ui)).unTag();
+	public static void untag(Collection<Unit> units, Collection<String> namespaces, ProgressBarUI ui) {
+		(new Teacher(units, namespaces, ui)).unTag();
 	}
 
 	public static void addOrder(Collection<Unit> units, String namespace, Order newOrder) {
 		// replace order
-		delOrder(units, namespace, newOrder);
+		delOrder(units, Collections.singletonList(namespace), newOrder);
 		// add new meta order to all units
 		for (Unit u : units) {
 			Collection<String> oldOrders = u.getOrders();
 			List<OrderList> relevantOrders = new ArrayList<OrderList>();
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
-			boolean foundSame = false;
 
 			// look for matching meta order
 			for (String line : oldOrders) {
 				boolean isRelevant = false;
 				OrderList orderList;
-				try {
-					orderList = parseOrder(u, line, getTeachTag(namespace), getLearnTag(namespace));
-				} catch (OrderFormatException e) {
-					orderList = new OrderList(Order.TEACH);
-				}
+				orderList = parseOrder(u, line, Collections.singletonList(namespace));
 				if (!orderList.orders.isEmpty() && orderList.getType().equals(newOrder.getType())) {
 					isRelevant = true;
 					relevantOrders.add(orderList);
@@ -1352,25 +1368,24 @@ public class Teacher {
 			}
 
 			// add all meta orders
-			boolean added = false;
 			if (relevantOrders.isEmpty()) {
-				relevantOrders.add(new OrderList(newOrder.getType()));
+				relevantOrders.add(new OrderList(newOrder.getType(), namespace));
 			}
 			relevantOrders.get(0).addOrder(newOrder);
 
 			for (OrderList orderList : relevantOrders) {
-				newOrders.add(orderList.getName(namespace));
+				newOrders.add(orderList.getName());
 			}
 			u.setOrders(newOrders);
 		}
 	}
 
-	public static void delOrder(Collection<Unit> units, String namespace, Order newOrder) {
-		delOrder(units, namespace, newOrder, false);
+	public static void delOrder(Collection<Unit> units, Collection<String> namespaces, Order newOrder) {
+		delOrder(units, namespaces, newOrder, false);
 	}
 
-	public static void delAllOrders(Collection<Unit> units, String namespace) {
-		delOrder(units, namespace, null, true);
+	public static void delAllOrders(Collection<Unit> units, Collection<String> namespaces) {
+		delOrder(units, namespaces, null, true);
 	}
 
 	/**
@@ -1380,9 +1395,7 @@ public class Teacher {
 	 * @param namespace
 	 * @param newPrio
 	 */
-	public static void setPrio(Collection<Unit> units, String namespace, double newPrio){
-		if (namespace == null)
-			namespace = "";
+	public static void setPrio(Collection<Unit> units, Collection<String> namespace, double newPrio) {
 		for (Unit u : units) {
 			Collection<String> oldOrders = u.getOrders();
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
@@ -1391,26 +1404,21 @@ public class Teacher {
 
 				OrderList orderList;
 				// try to parse the old order
-				try {
-					orderList = parseOrder(u, line, getTeachTag(namespace), getLearnTag(namespace));
-				} catch (OrderFormatException e) {
-					// this is not a teach or learn order
-					orderList = new OrderList(Order.LEARN);
-				}
+				orderList = parseOrder(u, line, namespace);
 				if (orderList.orders.isEmpty()) {
-					// just keep the old line 
+					// just keep the old line
 					newOrders.add(line);
 				} else {
 					// change priority of order
 					if (orderList.getType().equals(Order.LEARN))
 						orderList.setPrio(newPrio);
-					newOrders.add(orderList.getName(namespace));
+					newOrders.add(orderList.getName());
 				}
 			}
 			u.setOrders(newOrders);
-		}		
+		}
 	}
-	
+
 	/**
 	 * Deletes orders matching newOrder from units orders. If <code>newOrder == null && safety</code>
 	 * then delete <em>all</em> meta orders of all units.
@@ -1421,25 +1429,18 @@ public class Teacher {
 	 * @param newOrder
 	 * @param safety
 	 */
-	protected static void delOrder(Collection<Unit> units, String namespace, Order newOrder,
+	protected static void delOrder(Collection<Unit> units, Collection<String> namespaces, Order newOrder,
 			boolean safety) {
-		if (namespace == null)
-			namespace = "";
 		for (Unit u : units) {
 			Collection<String> oldOrders = u.getOrders();
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
 
 			// iterate through the unit's orders
 			for (String line : oldOrders) {
-				
+
 				// try to parse the order
 				OrderList orderList;
-				try {
-					orderList = parseOrder(u, line, getTeachTag(namespace), getLearnTag(namespace));
-				} catch (OrderFormatException e) {
-					// this is not a valid teach or learn order
-					orderList = new OrderList(Order.LEARN);
-				}
+				orderList = parseOrder(u, line, namespaces);
 				if (orderList.orders.isEmpty()) {
 					// no order: just keep the old line
 					newOrders.add(line);
@@ -1451,8 +1452,8 @@ public class Teacher {
 						// delete this line
 					}
 				} else {
-					// iterate through the sub-orders of this line 
-					OrderList newOrderList = new OrderList(orderList.getType());
+					// iterate through the sub-orders of this line
+					OrderList newOrderList = new OrderList(orderList.getType(), orderList.getNamespace());
 					for (Order order : orderList.orders) {
 						if (!order.getType().equals(newOrder.getType())
 								|| !order.getTalent().equalsIgnoreCase(newOrder.getTalent())) {
@@ -1462,7 +1463,7 @@ public class Teacher {
 					}
 					// add result to new unit orders
 					if (!newOrderList.orders.isEmpty()) {
-						newOrders.add(newOrderList.getName(namespace));
+						newOrders.add(newOrderList.getName());
 					}
 				}
 			}
@@ -1527,13 +1528,13 @@ public class Teacher {
 	}
 
 	public void stop() {
-		stopFlag  = true;
+		stopFlag = true;
 	}
 
-	public boolean isUnconfirm(){
-	  return unconfirm;
+	public boolean isUnconfirm() {
+		return unconfirm;
 	}
-	
+
 	public void setUnconfirm(boolean unconfirm) {
 		this.unconfirm = unconfirm;
 	}
