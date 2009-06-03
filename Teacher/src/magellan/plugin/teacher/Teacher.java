@@ -284,14 +284,14 @@ public class Teacher {
 			}
 			for (Info info : infos) {
 				Order o = getCurrentOrder(info.getUnit());
-				if (o.isLearnOrder()) {
+				if (o != null && o.isLearnOrder()) {
 					info.setLearning(getSkillIndex(o.getTalent()));
 					info.students = 0;
 				}
 			}
 			for (Info info : infos) {
 				Order o = getCurrentOrder(info.getUnit());
-				if (o.isTeachOrder()) {
+				if (o != null && o.isTeachOrder()) {
 					info.setLearning(null);
 					String s = getCurrentOrder(info.getUnit(), true);
 					if (s != null) {
@@ -778,7 +778,7 @@ public class Teacher {
 	 */
 	protected static OrderList parseOrder(Unit unit, String orderLine, Collection<String> namespaces) {
 		for (String nsp : namespaces) {
-	    OrderList result = null;
+			OrderList result = null;
 			String teachTag = getTeachTag(nsp);
 			String learnTag = getLearnTag(nsp);
 			try {
@@ -842,7 +842,7 @@ public class Teacher {
 			} catch (Exception e) {
 				// throw new OrderFormatException("parse error in line " + orderLine, e);
 			}
-			if (result!=null && result.orders.size()>0)
+			if (result != null && result.orders.size() > 0)
 				return result;
 		}
 		return new OrderList(Order.LEARN, namespaces.iterator().next());
@@ -856,8 +856,8 @@ public class Teacher {
 		private double prio = 1;
 
 		public OrderList(String type, String namespace) {
-		  if (type==null || namespace == null)
-		    throw new NullPointerException();
+			if (type == null || namespace == null)
+				throw new NullPointerException();
 			this.type = type;
 			this.namespace = namespace;
 		}
@@ -894,8 +894,9 @@ public class Teacher {
 		}
 
 		/**
-		 * Returns an order string for this order list like <code>"// $stm$L 100 Stangenwaffen 10 99 Ausdauer 5 99</code> for learn orders and <code>"// $stm$T Hiebwaffen 2</code> for teach
-		 * orders. Here, <code>stm</code> is the namespace.
+		 * Returns an order string for this order list like
+		 * <code>"// $stm$L 100 Stangenwaffen 10 99 Ausdauer 5 99</code> for learn orders and <code>"// $stm$T Hiebwaffen 2</code> for
+		 * teach orders. Here, <code>stm</code> is the namespace.
 		 * 
 		 * @param namespace
 		 * @return
@@ -916,9 +917,9 @@ public class Teacher {
 			}
 			return sb.toString();
 		}
-		
-		public String getNamespace(){
-		  return namespace;
+
+		public String getNamespace() {
+			return namespace;
 		}
 	}
 
@@ -1066,9 +1067,9 @@ public class Teacher {
 				best[best.length - 1] = population[0].clone();
 				select(best);
 				if (round == 1 || round % Math.ceil(minRounds / 10) == 0) {
-					log.info(round + " 0: " + best[0].evaluate() + " " + population[0].evaluate() + " "
+					log.info(round + " best: " + best[0].evaluate() + " 0: " + population[0].evaluate() + " "
 							+ population.length / 10 + ": " + population[population.length / 10].evaluate() + " "
-							+ (population.length / 10 * 9) + " "
+							+ (population.length / 10 * 9) + ": "
 							+ population[population.length / 10 * 9].evaluate() + " " + (population.length - 1)
 							+ ": " + population[population.length - 1].evaluate());
 					ui.setProgress((metaRound > 0 ? best[metaRound - 1].evaluate() : "0") + " - "
@@ -1080,10 +1081,10 @@ public class Teacher {
 				veryBest[veryBest.length - 1 - metaRound * select - i] = population[i];
 			}
 			veryBest[veryBest.length - 1 - metaRound * select - (select - 1)] = best[0];
-			log.info("***" + minRounds + "/" + round + "/" + maxRounds + " 0: " + best[0].evaluate()
-					+ " " + population[0].evaluate() + " " + population.length / 10 + ": "
+			log.info("***" + minRounds + "/" + round + "/" + maxRounds + " best: " + best[0].evaluate()
+					+ " 0: " + population[0].evaluate() + " " + population.length / 10 + ": "
 					+ population[population.length / 10].evaluate() + " " + (population.length / 10 * 9)
-					+ " " + population[population.length / 10 * 9].evaluate() + " " + (population.length - 1)
+					+ ": " + population[population.length / 10 * 9].evaluate() + " " + (population.length - 1)
 					+ ": " + population[population.length - 1].evaluate());
 		}
 
@@ -1205,14 +1206,22 @@ public class Teacher {
 				if (value != null) {
 					return null;
 				}
-				// FIXME syntax error gets OutOfBoundsException if Befehl.equals("LEHRE")
-				value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 0, true);
+				if (o.indexOf(" ") >= 0) {
+					String argument = o.substring(o.indexOf(" ")).trim().toLowerCase();
+					if (argument.trim().length() > 0)
+						value = new Order(argument, 0, true);
+				}
+
 			}
 			if (o.toUpperCase().startsWith("LERNE")) {
 				if (value != null) {
 					return null;
 				}
-				value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 1, 1, 0);
+				if (o.indexOf(" ") >= 0) {
+					String argument = o.substring(o.indexOf(" ")).trim().toLowerCase();
+					if (argument.trim().length() > 0)
+						value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 1, 1, 0);
+				}
 			}
 		}
 		if (value == null)
@@ -1302,19 +1311,20 @@ public class Teacher {
 				info.getUnit().addOrder(orders[i].toString(), false, 0);
 				if (info.getLearning() == null) {
 					// confirm according to settings
-					if (info.students == info.getUnit().getModifiedPersons() * 10)
+					if (info.students == info.getUnit().getModifiedPersons() * 10) {
 						// full teacher
 						if (isConfirmFullTeachers())
 							info.getUnit().setOrdersConfirmed(true);
 						else if (isUnconfirm())
 							info.getUnit().setOrdersConfirmed(false);
-						else if (isConfirmEmptyTeachers()
-								&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
-										/ 100.)
-							// partially full teacher
-							info.getUnit().setOrdersConfirmed(true);
-						else if (isUnconfirm())
-							info.getUnit().setOrdersConfirmed(false);
+					} else if (isConfirmEmptyTeachers()
+							&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
+									/ 100.){
+						// partially full teacher
+						info.getUnit().setOrdersConfirmed(true);
+					}else if (isUnconfirm()){
+						info.getUnit().setOrdersConfirmed(false);
+					}
 				} else {
 					if (info.getTeacher() != -1 && isConfirmTaughtStudents())
 						// student with teacher
@@ -1429,8 +1439,8 @@ public class Teacher {
 	 * @param newOrder
 	 * @param safety
 	 */
-	protected static void delOrder(Collection<Unit> units, Collection<String> namespaces, Order newOrder,
-			boolean safety) {
+	protected static void delOrder(Collection<Unit> units, Collection<String> namespaces,
+			Order newOrder, boolean safety) {
 		for (Unit u : units) {
 			Collection<String> oldOrders = u.getOrders();
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
