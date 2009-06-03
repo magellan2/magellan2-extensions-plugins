@@ -648,17 +648,21 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	private void doTeachUnits(final Collection<Unit> values, TeachClosingListener listener,
 			ProgressBarUI ui) {
 		synchronized (client.getData()) {
-			final Teacher t = new Teacher(values, getNamespaces(), ui);
-			listener.setTeacher(t);
-			t.setUnconfirm(unconfirm);
-			t.setConfirmFullTeachers(confirmFullTeachers);
-			t.setConfirmEmptyTeachers(confirmEmptyTeachers);
-			t.setPercentFull(percentFull);
-			t.setConfirmTaughtStudents(confirmTaughtStudents);
-			t.setConfirmUntaughtStudents(confirmUntaughtStudents);
+			try {
+				final Teacher t = new Teacher(values, getNamespaces(), ui);
+				listener.setTeacher(t);
+				t.setUnconfirm(unconfirm);
+				t.setConfirmFullTeachers(confirmFullTeachers);
+				t.setConfirmEmptyTeachers(confirmEmptyTeachers);
+				t.setPercentFull(percentFull);
+				t.setConfirmTaughtStudents(confirmTaughtStudents);
+				t.setConfirmUntaughtStudents(confirmUntaughtStudents);
 
-			t.mainrun();
-			listener.setTeacher(null);
+				t.mainrun();
+				listener.setTeacher(null);
+			}catch (Exception e){
+				log.error(e);
+			}
 		}
 	}
 
