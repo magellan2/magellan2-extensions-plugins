@@ -1,3 +1,8 @@
+2009-06-03 (Build 49 or some such)- stm (stm_@users.sourceforge.net)
+    * support for different order locales
+    * improvement to post-algorithm order fixing
+    * fixes for parse error after "LEHRE" without arguments and for order confirmation
+
 2009-06-01 (Build 43)- stm (stm_@users.sourceforge.net)
 	* support for multiple namespaces
 	* ProgressBar deadlock fix
