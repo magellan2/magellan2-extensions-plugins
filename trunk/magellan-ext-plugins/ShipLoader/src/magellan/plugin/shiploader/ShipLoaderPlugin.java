@@ -215,7 +215,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	 *      magellan.library.GameData, magellan.library.UnitContainer, Collection)
 	 */
 	public JMenuItem createContextMenu(final EventDispatcher dispatcher, final GameData data,
-			final UnitContainer container, final Collection selectedObjects) {
+			final UnitContainer container, final Collection<?> selectedObjects) {
 		JMenu menu = new JMenu(getString("plugin.shiploader.contextmenu.title"));
 
 		if (selectedObjects.contains(container) && container instanceof Ship) {
@@ -490,10 +490,9 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			super.finalize();
 		}
 
-		private void addUnits(Collection selectedObjects) {
+		private void addUnits(Collection<?> selectedObjects) {
 			unitRoot.removeAllChildren();
 
-			Map<Region, DefaultMutableTreeNode> regionNodes = new HashMap<Region, DefaultMutableTreeNode>();
 			for (Object o : selectedObjects) {
 				if (!(o instanceof Unit))
 					continue;
@@ -506,7 +505,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			unitModel.nodeStructureChanged(unitRoot);
 		}
 
-		private void addShips(Collection selectedObjects) {
+		private void addShips(Collection<?> selectedObjects) {
 			shipRoot.removeAllChildren();
 			shipRegionNodes.clear();
 			for (Object o : selectedObjects) {

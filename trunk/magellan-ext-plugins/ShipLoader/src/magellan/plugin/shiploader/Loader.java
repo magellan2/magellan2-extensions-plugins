@@ -198,7 +198,7 @@ public class Loader {
 	 * 
 	 * @param selectedObjects
 	 */
-	public void add(Collection selectedObjects) {
+	public void add(Collection<?> selectedObjects) {
 		if (selectedObjects == null)
 			return;
 		for (Object o : selectedObjects) {
@@ -214,7 +214,7 @@ public class Loader {
 	 * 
 	 * @param selectedObjects
 	 */
-	public void remove(Collection selectedObjects) {
+	public void remove(Collection<?> selectedObjects) {
 		if (selectedObjects == null)
 			return;
 		for (Object o : selectedObjects) {
@@ -359,7 +359,7 @@ public class Loader {
 	 * 
 	 * @param selectedObjects
 	 */
-	public void distribute(Collection selectedObjects) {
+	public void distribute(Collection<?> selectedObjects) {
 		if (selectedObjects == null)
 			return;
 		if (ships.size() == 0) {
@@ -418,7 +418,6 @@ public class Loader {
 				if (getSpace(s, u) >= u.getModifiedWeight()) {
 					bestMatch = s;
 				} else {
-					bestMatch = bestMatch;
 					break;
 				}
 			}
@@ -591,7 +590,7 @@ public class Loader {
 	 * @return
 	 */
 	public String getComment() {
-		return "; $" + getMarker() + "$sl";
+		return "; $" + getMarker() + "$loaded";
 	}
 
 	/**
