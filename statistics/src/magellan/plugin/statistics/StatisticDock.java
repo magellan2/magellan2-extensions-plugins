@@ -69,7 +69,7 @@ import net.infonode.docking.View;
  * @author Thoralf Rickert.
  * @version 1.0, 03.05.2008
  */
-public class StatisticDock extends JPanel implements SelectionListener<Object>, DockingWindowListener {
+public class StatisticDock extends JPanel implements SelectionListener, DockingWindowListener {
   private static Logger log = Logger.getInstance(StatisticDock.class);
   protected StatisticsPlugIn plugin = null;
   protected JTabbedPane tabbedPane = null;
@@ -122,7 +122,7 @@ public class StatisticDock extends JPanel implements SelectionListener<Object>, 
   /**
    * @see magellan.client.event.SelectionListener#selectionChanged(magellan.client.event.SelectionEvent)
    */
-  public void selectionChanged(SelectionEvent<Object> e) {
+  public void selectionChanged(SelectionEvent e) {
     Object o = e.getActiveObject();
     
     if (o == null) return;
