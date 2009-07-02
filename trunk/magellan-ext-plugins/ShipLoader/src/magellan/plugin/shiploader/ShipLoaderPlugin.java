@@ -128,6 +128,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	public void init(Client _client, Properties _properties) {
 		// init the plugin
 		this.client = _client;
+		this.client.getDispatcher().addGameDataListener(this);
 		this.properties = _properties;
 		Resources.getInstance().initialize(Client.getSettingsDirectory(), "shiploaderplugin_");
 
@@ -492,13 +493,26 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 		private void addUnits(Collection<?> selectedObjects) {
 			unitRoot.removeAllChildren();
+			
+			ArrayList<Unit> units = new ArrayList<Unit>();
 
 			for (Object o : selectedObjects) {
 				if (!(o instanceof Unit))
 					continue;
-				Unit u = (Unit) o;
-				addUnit(u);
+				Unit newUnit = (Unit) o;
+				if (units.size()==0)
+					units.add(newUnit);
+				for (int i = 0; i<units.size(); ++i){
+					if (units.get(i).getModifiedWeight()>newUnit.getModifiedWeight()){
+						units.add(i, newUnit);
+						break;
+					} else if (i==units.size()){
+						units.add(i+1, newUnit);
+					}
+				}
 			}
+			for (Unit newUnit : units)
+				addUnit(newUnit);
 
 			if (loader.units.size() > 0)
 				unitTree.expandPath(new TreePath(unitRoot));
