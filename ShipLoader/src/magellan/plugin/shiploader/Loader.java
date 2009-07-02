@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.swing.JOptionPane;
+
 import magellan.client.Client;
 import magellan.client.event.UnitOrdersEvent;
 import magellan.library.GameData;
@@ -21,11 +23,13 @@ import magellan.library.Ship;
 import magellan.library.Unit;
 import magellan.library.UnitContainer;
 import magellan.library.gamebinding.EresseaConstants;
+import magellan.library.gamebinding.EresseaOrderParser;
 import magellan.library.relation.ItemTransferRelation;
 import magellan.library.relation.ReserveRelation;
 import magellan.library.relation.UnitRelation;
 import magellan.library.rules.ItemType;
 import magellan.library.utils.Resources;
+import magellan.library.utils.logging.Logger;
 
 /**
  * Class for helping loading of units onto ships.
@@ -104,7 +108,7 @@ public class Loader {
 	 * @param gameData
 	 */
 	void init(GameData gameData) {
-		silver = client.getData().rules.getItemType(EresseaConstants.I_SILVER);
+		silver = gameData.rules.getItemType(EresseaConstants.I_SILVER);
 		ships = new HashSet<Ship>();
 		units = new HashSet<Unit>();
 		setMarkerName("");
@@ -244,7 +248,6 @@ public class Loader {
 		for (Unit u : units) {
 			removeOrders(u, getComment(), true);
 		}
-		fireEvents();
 	}
 
 	protected void checkInput() {
@@ -255,10 +258,11 @@ public class Loader {
 				ShipLoaderPlugin.log.warn("estimating weight of " + u);
 			// check if unit is on ship
 			if (u.getUnitContainer() instanceof Ship) {
-				if (isChangeShip())
+				if (isChangeShip()) {
 					u.addOrder(Resources.getOrderTranslation(EresseaConstants.O_LEAVE, u.getFaction()
 							.getLocale()), true, 1);
-				else {
+					client.getDispatcher().fire(new UnitOrdersEvent(this, u));
+				} else {
 					ShipLoaderPlugin.log.warn("removing unit, which is on ship: " + u);
 					it.remove();
 					notifyRemoval(u);
@@ -314,6 +318,13 @@ public class Loader {
 	 * Distribute silver such that every unit u has at least getSafety(null, u).
 	 */
 	public void distribute() {
+		if (silver == null) {
+			silver = client.getData().rules.getItemType("Silber");
+			if (silver == null) {
+				JOptionPane.showMessageDialog(client, "error, no silver type");
+				return;
+			}
+		}
 		// check, but ignore if units are on ships
 		boolean change = isChangeShip();
 		setChangeShip(true);
@@ -327,31 +338,35 @@ public class Loader {
 			int giverAmount = getSilver(u) - getSafety(null, u);
 			if (giverAmount > 0)
 				givers.add(u);
-			int getterAmount = u.getModifiedItem(silver) == null ? 0 : u.getModifiedItem(silver)
-					.getAmount();
-			if (getterAmount < getSafety(null, u))
+			if (giverAmount < 0)
 				getters.add(u);
 		}
 
 		// iterate through givers
 		for (Unit giver : givers) {
-			int giverAmount = getFreeSilver(giver);
-			if (giverAmount > getSafetyPerPerson()) {
+			boolean given = false;
+			if (getFreeSilver(giver) > getSafety(null, giver)) {
 				// as long as there is silver left, give silver to getters
 				for (Iterator<Unit> it = getters.iterator(); it.hasNext();) {
 					Unit getter = it.next();
-					int amount = Math.min(getSafety(null, getter) - getSilver(getter), getFreeSilver(giver));
+					int amount = Math.min(getSafety(null, getter) - getSilver(getter), getFreeSilver(giver)
+							- getSafety(null, giver));
 					if (amount > 0) {
+						given = true;
 						give(giver, getter, amount, silver);
 					}
 					if (getSafety(null, getter) - getSilver(getter) <= 0)
 						it.remove();
-					if (getFreeSilver(giver) <= 0)
+					if (getFreeSilver(giver) - getSafety(null, giver) <= 0)
 						break;
 				}
 			}
+			if (given)
+				client.getDispatcher().fire(new UnitOrdersEvent(this, giver));
 		}
-		fireEvents();
+		Logger log = Logger.getInstance(EresseaOrderParser.class);
+		if (getters.size() > 0)
+			log.info("not enough silver");
 	}
 
 	/**
@@ -373,8 +388,7 @@ public class Loader {
 					int amount = Math.min(getSpace(s, null), getFreeSilver(u));
 					if (amount > 0) {
 						give(u, s.getOwnerUnit(), amount, silver);
-					} else
-						break;
+					}
 				}
 				client.getDispatcher().fire(new UnitOrdersEvent(this, u), true);
 			}
@@ -462,7 +476,7 @@ public class Loader {
 	}
 
 	/**
-	 * Mark a unit with an error marker.
+	 * Mark a unit with an error marker. Does <em>not</em> fire UnitOrderEvents.
 	 * 
 	 * @param u
 	 */
@@ -490,11 +504,13 @@ public class Loader {
 				.getLocale());
 		unit
 				.addOrder(enter + " " + shiff + " " + ship.getID().toString() + " " + getComment(), true, 1);
-		removeOrders(unit, leave, false);
+		if (!removeOrders(unit, leave, false))
+			// otherwise removeOrders will already have fired
+			client.getDispatcher().fire(new UnitOrdersEvent(this, unit));
 	}
 
 	/**
-	 * Add orders to give amount of item from giver to getter.
+	 * Add orders to give amount of item from giver to getter. Does <em>not</em> fire UnitOrderEvents!
 	 * 
 	 * @param giver
 	 * @param getter
@@ -515,16 +531,21 @@ public class Loader {
 	 * @param unit
 	 * @param orderStub
 	 * @param contains
+	 * @return <code>true</code> if orders were removed.
 	 */
-	private void removeOrders(Unit unit, String orderStub, boolean contains) {
+	private boolean removeOrders(Unit unit, String orderStub, boolean contains) {
 		Collection<String> newOrders = new ArrayList<String>();
 		for (String order : unit.getOrders()) {
 			if ((contains && !order.contains(orderStub))
 					|| (!contains && !order.trim().startsWith(orderStub)))
 				newOrders.add(order);
 		}
-		if (newOrders.size() != unit.getOrders().size())
+		if (newOrders.size() != unit.getOrders().size()) {
 			unit.setOrders(newOrders, true);
+			client.getDispatcher().fire(new UnitOrdersEvent(this, unit));
+			return true;
+		}
+		return false;
 	}
 
 	/**
