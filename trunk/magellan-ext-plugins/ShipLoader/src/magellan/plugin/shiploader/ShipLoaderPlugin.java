@@ -369,6 +369,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		shower.setVisible(true);
 	}
 
+	@SuppressWarnings("serial")
 	public class ShowDialog extends JDialog implements Loader.SelectionListener, GameDataListener {
 
 		private DefaultMutableTreeNode unitRoot;
@@ -404,17 +405,17 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 				public void valueChanged(TreeSelectionEvent e) {
 					LinkedList<Unit> mySelectedUnits = new LinkedList<Unit>();
-          if (unitTree.getSelectionPaths()!=null){
-          	for (TreePath path : unitTree.getSelectionPaths()) {
-          		DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-          		Object o = actNode.getUserObject();
-          		if (o instanceof UnitNodeWrapper) {
-          			UnitNodeWrapper nodeWrapper = (UnitNodeWrapper) o;
-          			Unit actUnit = nodeWrapper.getUnit();
-          			mySelectedUnits.add(actUnit);
-          		}
-          	}
-          }
+					if (unitTree.getSelectionPaths() != null) {
+						for (TreePath path : unitTree.getSelectionPaths()) {
+							DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+							Object o = actNode.getUserObject();
+							if (o instanceof UnitNodeWrapper) {
+								UnitNodeWrapper nodeWrapper = (UnitNodeWrapper) o;
+								Unit actUnit = nodeWrapper.getUnit();
+								mySelectedUnits.add(actUnit);
+							}
+						}
+					}
 					if (mySelectedUnits.size() > 0) {
 						unitContextManager.setSelection(mySelectedUnits);
 					} else {
@@ -438,7 +439,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 				public void valueChanged(TreeSelectionEvent e) {
 					LinkedList<UnitContainer> mySelection = new LinkedList<UnitContainer>();
-					if (shipTree.getSelectionPaths()!=null){
+					if (shipTree.getSelectionPaths() != null) {
 						for (TreePath path : shipTree.getSelectionPaths()) {
 							DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
 							Object o = actNode.getUserObject();
@@ -493,23 +494,20 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 		private void addUnits(Collection<?> selectedObjects) {
 			unitRoot.removeAllChildren();
-			
+
 			ArrayList<Unit> units = new ArrayList<Unit>();
 
 			for (Object o : selectedObjects) {
 				if (!(o instanceof Unit))
 					continue;
 				Unit newUnit = (Unit) o;
-				if (units.size()==0)
-					units.add(newUnit);
-				for (int i = 0; i<units.size(); ++i){
-					if (units.get(i).getModifiedWeight()>newUnit.getModifiedWeight()){
-						units.add(i, newUnit);
+				int newPos = 0;
+				for (; newPos < units.size(); ++newPos) {
+					if (units.get(newPos).getModifiedWeight() > newUnit.getModifiedWeight()) {
 						break;
-					} else if (i==units.size()){
-						units.add(i+1, newUnit);
 					}
 				}
+				units.add(newPos, newUnit);
 			}
 			for (Unit newUnit : units)
 				addUnit(newUnit);
