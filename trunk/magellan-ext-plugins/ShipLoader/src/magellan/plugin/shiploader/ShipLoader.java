@@ -37,20 +37,20 @@ import magellan.library.utils.logging.Logger;
  * @author stm
  * 
  */
-public class Loader {
+public class ShipLoader {
 
-	public class SelectionEvent {
+	public class InclusionEvent {
 
 		private Ship ship;
 		private Unit unit;
 		private boolean added;
 
-		public SelectionEvent(Ship ship, boolean added) {
+		public InclusionEvent(Ship ship, boolean added) {
 			this.ship = ship;
 			this.added = added;
 		}
 
-		public SelectionEvent(Unit unit, boolean added) {
+		public InclusionEvent(Unit unit, boolean added) {
 			this.unit = unit;
 			this.added = added;
 		}
@@ -76,8 +76,8 @@ public class Loader {
 		}
 	}
 
-	public interface SelectionListener {
-		public void selectionChanged(SelectionEvent e);
+	public interface InclusionListener {
+		public void selectionChanged(InclusionEvent e);
 	}
 
 	private Client client;
@@ -95,11 +95,15 @@ public class Loader {
 	private int errors;
 	private boolean changeShip;
 
-	private Collection<SelectionListener> listeners = new LinkedList<SelectionListener>();
+	private Collection<InclusionListener> listeners = new LinkedList<InclusionListener>();
 
-	public Loader(ShipLoaderPlugin shipLoaderPlugin, Client client) {
+	public ShipLoader(ShipLoaderPlugin shipLoaderPlugin, Client client) {
 		this.client = client;
 		init(client.getData());
+    setMarkerName("");
+    setSafety(1000);
+    setSafetyPerPerson(10);
+    setChangeShip(false);
 	}
 
 	/**
@@ -111,10 +115,6 @@ public class Loader {
 		silver = gameData.rules.getItemType(EresseaConstants.I_SILVER);
 		ships = new HashSet<Ship>();
 		units = new HashSet<Unit>();
-		setMarkerName("");
-		setSafety(1000);
-		setSafetyPerPerson(10);
-		setChangeShip(false);
 	}
 
 	/**
@@ -134,15 +134,15 @@ public class Loader {
 	}
 
 	private void notifyAddition(Ship ship) {
-		SelectionEvent event = new SelectionEvent(ship, true);
-		for (SelectionListener listener : listeners) {
+		InclusionEvent event = new InclusionEvent(ship, true);
+		for (InclusionListener listener : listeners) {
 			listener.selectionChanged(event);
 		}
 	}
 
 	private void notifyRemoval(Ship ship) {
-		SelectionEvent event = new SelectionEvent(ship, false);
-		for (SelectionListener listener : listeners) {
+		InclusionEvent event = new InclusionEvent(ship, false);
+		for (InclusionListener listener : listeners) {
 			listener.selectionChanged(event);
 		}
 	}
@@ -184,15 +184,15 @@ public class Loader {
 	}
 
 	private void notifyAddition(Unit unit) {
-		SelectionEvent event = new SelectionEvent(unit, true);
-		for (SelectionListener listener : listeners) {
+		InclusionEvent event = new InclusionEvent(unit, true);
+		for (InclusionListener listener : listeners) {
 			listener.selectionChanged(event);
 		}
 	}
 
 	private void notifyRemoval(Unit unit) {
-		SelectionEvent event = new SelectionEvent(unit, false);
-		for (SelectionListener listener : listeners) {
+		InclusionEvent event = new InclusionEvent(unit, false);
+		for (InclusionListener listener : listeners) {
 			listener.selectionChanged(event);
 		}
 	}
@@ -260,7 +260,7 @@ public class Loader {
 			if (u.getUnitContainer() instanceof Ship) {
 				if (isChangeShip()) {
 					u.addOrder(Resources.getOrderTranslation(EresseaConstants.O_LEAVE, u.getFaction()
-							.getLocale()), true, 1);
+							.getLocale()) + getComment(), true, 1);
 					client.getDispatcher().fire(new UnitOrdersEvent(this, u));
 				} else {
 					ShipLoaderPlugin.log.warn("removing unit, which is on ship: " + u);
@@ -691,11 +691,11 @@ public class Loader {
 		changeShip = change;
 	}
 
-	public void addListener(SelectionListener listener) {
+	public void addListener(InclusionListener listener) {
 		listeners.add(listener);
 	}
 
-	public void removeSelectionListener(SelectionListener listener) {
+	public void removeListener(InclusionListener listener) {
 		listeners.remove(listener);
 	}
 

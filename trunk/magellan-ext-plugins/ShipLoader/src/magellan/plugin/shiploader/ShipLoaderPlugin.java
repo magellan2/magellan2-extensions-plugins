@@ -88,7 +88,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	private Properties properties = null;
 	private GameData gd = null;
 
-	private Loader loader;
+	private ShipLoader loader;
 
 	/**
 	 * An enum for all action types in this plugin.
@@ -132,7 +132,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		this.properties = _properties;
 		Resources.getInstance().initialize(Client.getSettingsDirectory(), "shiploaderplugin_");
 
-		loader = new Loader(this, client);
+		loader = new ShipLoader(this, client);
 
 		initProperties();
 
@@ -370,7 +370,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	}
 
 	@SuppressWarnings("serial")
-	public class ShowDialog extends JDialog implements Loader.SelectionListener, GameDataListener {
+	public class ShowDialog extends JDialog implements ShipLoader.InclusionListener, GameDataListener {
 
 		private DefaultMutableTreeNode unitRoot;
 		private DefaultTreeModel unitModel;
@@ -378,14 +378,14 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		private DefaultMutableTreeNode shipRoot;
 		private DefaultTreeModel shipModel;
 		private JTree shipTree;
-		private Loader loader;
+		private ShipLoader loader;
 		private NodeWrapperFactory factory;
 		private ContextManager unitContextManager;
 		private ContextManager shipContextManager;
 		private HashMap<Region, DefaultMutableTreeNode> shipRegionNodes;
 		private HashMap<Region, DefaultMutableTreeNode> unitRegionNodes;
 
-		public ShowDialog(JFrame frame, Loader loader) {
+		public ShowDialog(JFrame frame, ShipLoader loader) {
 			super(frame);
 			this.loader = loader;
 			loader.addListener(this);
@@ -488,7 +488,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		 */
 		@Override
 		protected void finalize() throws Throwable {
-			loader.removeSelectionListener(this);
+			loader.removeListener(this);
 			super.finalize();
 		}
 
@@ -537,7 +537,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			shipContextManager.setGameData(e.getGameData());
 		}
 
-		public void selectionChanged(magellan.plugin.shiploader.Loader.SelectionEvent e) {
+		public void selectionChanged(magellan.plugin.shiploader.ShipLoader.InclusionEvent e) {
 			synchronized (this) {
 				if (e.getShip() != null) {
 					if (e.isAdded())
