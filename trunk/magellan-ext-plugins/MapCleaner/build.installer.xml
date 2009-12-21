@@ -13,7 +13,7 @@
   <property name="magellan2"    location="${basedir}/../Magellan2/"/>
   <property name="installer"    location="${magellan2}/installer"/>
 
-  <property name="plugin.name"  value="mapcleaner-plugin.jar"/>
+  <property name="plugin.name"  value="mapcleaner-installer.jar"/>
 
   <!-- Compile Settings -->
   <property name="debug"             value="on" />
@@ -72,7 +72,7 @@
     <jar jarfile="${plugin.name}" basedir="${classes}">
       <manifest>
         <attribute name="Built-By" value="${user.name}" />
-        <attribute name="Specification-Title" value="Magellan Memorywatch Plugin [build ${build.number}]" />
+        <attribute name="Specification-Title" value="Magellan MapCleaner Plugin [build ${build.number}]" />
         <attribute name="Specification-Vendor" value="Fiete"/>
       </manifest>
     </jar>
