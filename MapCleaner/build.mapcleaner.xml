@@ -8,7 +8,7 @@
   </description>
 
 	<property name="VERSION.MAJOR" value="1" />
-	<property name="VERSION.MINOR" value="0" />
+	<property name="VERSION.MINOR" value="1" />
 	<property name="VERSION.SUB" value="0" />
 
 	<property name="VERSION" value="${VERSION.MAJOR}_${VERSION.MINOR}_${VERSION.SUB}" />

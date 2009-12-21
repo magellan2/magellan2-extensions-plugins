@@ -2,7 +2,7 @@
 <installation version="1.0">
   <info>
     <appname>Magellan MapCleaner Plugin</appname>
-    <appversion>1.0</appversion>
+    <appversion>1.1</appversion>
     <appsubpath>Magellan</appsubpath>
     <authors>
       <author name="Thoralf Rickert" email="thoralf@m84.de"/>
@@ -39,7 +39,7 @@
   </panels>
 
   <packs>
-    <pack name="MemoryWatch for Magellan2" required="yes">
+    <pack name="MapCleaner for Magellan2" required="yes">
       <description>A plugin for Magellan2 to clean a CR report.</description>
       <file src="doc"                            targetdir="$INSTALL_PATH/doc/mapcleaner"/>
       <file src="mapcleaner-plugin.jar"          targetdir="$INSTALL_PATH/plugins"/>
