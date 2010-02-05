@@ -112,7 +112,7 @@ public class ShipLoader {
 	 * @param gameData
 	 */
 	void init(GameData gameData) {
-		silver = gameData.rules.getItemType(EresseaConstants.I_SILVER);
+		silver = gameData.rules.getItemType(EresseaConstants.I_USILVER);
 		ships = new HashSet<Ship>();
 		units = new HashSet<Unit>();
 	}
