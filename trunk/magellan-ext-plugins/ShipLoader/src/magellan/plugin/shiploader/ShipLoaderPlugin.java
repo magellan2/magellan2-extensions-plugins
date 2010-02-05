@@ -40,6 +40,7 @@ import javax.swing.tree.TreePath;
 
 import magellan.client.Client;
 import magellan.client.event.EventDispatcher;
+import magellan.client.event.SelectionEvent;
 import magellan.client.extern.MagellanPlugIn;
 import magellan.client.swing.basics.SpringUtilities;
 import magellan.client.swing.context.UnitContainerContextFactory;
@@ -69,7 +70,7 @@ import magellan.library.utils.logging.Logger;
  * @author stm
  */
 public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
-		UnitContextMenuProvider, ActionListener, GameDataListener {
+UnitContextMenuProvider, ActionListener, GameDataListener {
 
 	public static final String SAFETY_PROPERTY = "plugins.shiploader.safety";
 	public static final String SAFETYPERPERSON_PROPERTY = "plugins.shiploader.safetyperperson";
@@ -97,10 +98,10 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	 */
 	public enum PlugInAction {
 		EXECUTE("mainmenu.execute"), DISTRIBUTESILVER("mainmenu.distribute"), SHOW("mainmenu.show"), CLEAR(
-				"mainmenu.clear"), CLEARORDERS("mainmenu.clearorders"), CONFIRMORDERS("mainmenu.confirm"), UNCONFIRMORDERS(
-				"mainmenu.unconfirm"), UNKNOWN("");
+		"mainmenu.clear"), CLEARORDERS("mainmenu.clearorders"), CONFIRMORDERS("mainmenu.confirm"), UNCONFIRMORDERS(
+		"mainmenu.unconfirm"), UNKNOWN("");
 
-		private String id;
+		private final String id;
 
 		private PlugInAction(String id) {
 			this.id = id;
@@ -113,7 +114,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		public static PlugInAction getAction(ActionEvent e) {
 			if (e == null)
 				return UNKNOWN;
-			for (PlugInAction action : values()) {
+			for (final PlugInAction action : values()) {
 				if (action.id.equalsIgnoreCase(e.getActionCommand()))
 					return action;
 			}
@@ -157,45 +158,45 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	 * @see magellan.client.extern.MagellanPlugIn#getMenuItems()
 	 */
 	public List<JMenuItem> getMenuItems() {
-		List<JMenuItem> items = new ArrayList<JMenuItem>();
+		final List<JMenuItem> items = new ArrayList<JMenuItem>();
 
-		JMenu menu = new JMenu(getString("plugin.shiploader.mainmenu.title"));
+		final JMenu menu = new JMenu(getString("plugin.shiploader.mainmenu.title"));
 		items.add(menu);
 
-		JMenuItem executeMenu = new JMenuItem(getString("plugin.shiploader.mainmenu.execute.title"));
+		final JMenuItem executeMenu = new JMenuItem(getString("plugin.shiploader.mainmenu.execute.title"));
 		executeMenu.setActionCommand(PlugInAction.EXECUTE.getID());
 		executeMenu.addActionListener(this);
 		menu.add(executeMenu);
 
-		JMenuItem distributeMenu = new JMenuItem(
+		final JMenuItem distributeMenu = new JMenuItem(
 				getString("plugin.shiploader.mainmenu.distribute.title"));
 		distributeMenu.setActionCommand(PlugInAction.DISTRIBUTESILVER.getID());
 		distributeMenu.addActionListener(this);
 		menu.add(distributeMenu);
 
-		JMenuItem showMenu = new JMenuItem(getString("plugin.shiploader.mainmenu.show.title"));
+		final JMenuItem showMenu = new JMenuItem(getString("plugin.shiploader.mainmenu.show.title"));
 		showMenu.setActionCommand(PlugInAction.SHOW.getID());
 		showMenu.addActionListener(this);
 		menu.add(showMenu);
 
-		JMenuItem clearMenu = new JMenuItem(getString("plugin.shiploader.mainmenu.clear.title"));
+		final JMenuItem clearMenu = new JMenuItem(getString("plugin.shiploader.mainmenu.clear.title"));
 		clearMenu.setActionCommand(PlugInAction.CLEAR.getID());
 		clearMenu.addActionListener(this);
 		menu.add(clearMenu);
 
-		JMenuItem clearOrdersMenu = new JMenuItem(
+		final JMenuItem clearOrdersMenu = new JMenuItem(
 				getString("plugin.shiploader.mainmenu.clearorders.title"));
 		clearOrdersMenu.setActionCommand(PlugInAction.CLEARORDERS.getID());
 		clearOrdersMenu.addActionListener(this);
 		menu.add(clearOrdersMenu);
 
-		JMenuItem confirmOrdersMenu = new JMenuItem(
+		final JMenuItem confirmOrdersMenu = new JMenuItem(
 				getString("plugin.shiploader.mainmenu.confirmorders.title"));
 		confirmOrdersMenu.setActionCommand(PlugInAction.CONFIRMORDERS.getID());
 		confirmOrdersMenu.addActionListener(this);
 		menu.add(confirmOrdersMenu);
 
-		JMenuItem unconfirmOrdersMenu = new JMenuItem(
+		final JMenuItem unconfirmOrdersMenu = new JMenuItem(
 				getString("plugin.shiploader.mainmenu.unconfirmorders.title"));
 		unconfirmOrdersMenu.setActionCommand(PlugInAction.UNCONFIRMORDERS.getID());
 		unconfirmOrdersMenu.addActionListener(this);
@@ -217,11 +218,11 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	 */
 	public JMenuItem createContextMenu(final EventDispatcher dispatcher, final GameData data,
 			final UnitContainer container, final Collection<?> selectedObjects) {
-		JMenu menu = new JMenu(getString("plugin.shiploader.contextmenu.title"));
+		final JMenu menu = new JMenu(getString("plugin.shiploader.contextmenu.title"));
 
 		if (selectedObjects.contains(container) && container instanceof Ship) {
 
-			JMenuItem addMenu = new JMenuItem(getString("plugin.shiploader.contextmenu.addships.title"));
+			final JMenuItem addMenu = new JMenuItem(getString("plugin.shiploader.contextmenu.addships.title"));
 			addMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					loader.add(selectedObjects);
@@ -229,7 +230,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			});
 			menu.add(addMenu);
 
-			JMenuItem removeMenu = new JMenuItem(
+			final JMenuItem removeMenu = new JMenuItem(
 					getString("plugin.shiploader.contextmenu.removeships.title"));
 			removeMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -238,7 +239,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			});
 			menu.add(removeMenu);
 		} else if (selectedObjects.contains(container)) {
-			JMenuItem addMenu = new JMenuItem(getString("plugin.shiploader.contextmenu.addunits.title"));
+			final JMenuItem addMenu = new JMenuItem(getString("plugin.shiploader.contextmenu.addunits.title"));
 			addMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					loader.add(selectedObjects);
@@ -246,7 +247,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			});
 			menu.add(addMenu);
 
-			JMenuItem removeMenu = new JMenuItem(
+			final JMenuItem removeMenu = new JMenuItem(
 					getString("plugin.shiploader.contextmenu.removeunits.title"));
 			removeMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -268,10 +269,10 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	@SuppressWarnings("unchecked")
 	public JMenuItem createContextMenu(EventDispatcher dispatcher, GameData data, final Unit unit,
 			final Collection selectedObjects) {
-		JMenu menu = new JMenu(getString("plugin.shiploader.contextmenu.title"));
+		final JMenu menu = new JMenu(getString("plugin.shiploader.contextmenu.title"));
 
 		if (selectedObjects.contains(unit)) {
-			JMenuItem addMenu = new JMenuItem(getString("plugin.shiploader.contextmenu.addunits.title"));
+			final JMenuItem addMenu = new JMenuItem(getString("plugin.shiploader.contextmenu.addunits.title"));
 			addMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					loader.add(selectedObjects);
@@ -279,7 +280,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			});
 			menu.add(addMenu);
 
-			JMenuItem removeMenu = new JMenuItem(
+			final JMenuItem removeMenu = new JMenuItem(
 					getString("plugin.shiploader.contextmenu.removeunits.title"));
 			removeMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -288,7 +289,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			});
 			menu.add(removeMenu);
 
-			JMenuItem distributeMenu = new JMenuItem(
+			final JMenuItem distributeMenu = new JMenuItem(
 					getString("plugin.shiploader.contextmenu.distribute.title"));
 			distributeMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -338,13 +339,13 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	}
 
 	private void unconfirmOrders() {
-		for (Unit u : loader.units) {
+		for (final Unit u : loader.units) {
 			u.setOrdersConfirmed(false);
 		}
 	}
 
 	private void confirmOrders() {
-		for (Unit u : loader.units) {
+		for (final Unit u : loader.units) {
 			u.setOrdersConfirmed(true);
 		}
 	}
@@ -363,7 +364,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		// log.info(u);
 		// }
 
-		ShowDialog shower = new ShowDialog(client, loader);
+		final ShowDialog shower = new ShowDialog(client, loader);
 		shower.setPreferredSize(new Dimension(600, 400));
 		shower.pack();
 		shower.setVisible(true);
@@ -372,18 +373,18 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 	@SuppressWarnings("serial")
 	public class ShowDialog extends JDialog implements ShipLoader.InclusionListener, GameDataListener {
 
-		private DefaultMutableTreeNode unitRoot;
-		private DefaultTreeModel unitModel;
-		private JTree unitTree;
-		private DefaultMutableTreeNode shipRoot;
-		private DefaultTreeModel shipModel;
-		private JTree shipTree;
-		private ShipLoader loader;
-		private NodeWrapperFactory factory;
-		private ContextManager unitContextManager;
-		private ContextManager shipContextManager;
-		private HashMap<Region, DefaultMutableTreeNode> shipRegionNodes;
-		private HashMap<Region, DefaultMutableTreeNode> unitRegionNodes;
+		private final DefaultMutableTreeNode unitRoot;
+		private final DefaultTreeModel unitModel;
+		private final JTree unitTree;
+		private final DefaultMutableTreeNode shipRoot;
+		private final DefaultTreeModel shipModel;
+		private final JTree shipTree;
+		private final ShipLoader loader;
+		private final NodeWrapperFactory factory;
+		private final ContextManager unitContextManager;
+		private final ContextManager shipContextManager;
+		private final HashMap<Region, DefaultMutableTreeNode> shipRegionNodes;
+		private final HashMap<Region, DefaultMutableTreeNode> unitRegionNodes;
 
 		public ShowDialog(JFrame frame, ShipLoader loader) {
 			super(frame);
@@ -392,8 +393,8 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 			factory = new NodeWrapperFactory(properties, "ShipLoader", null);
 
-			SpringLayout layout = new SpringLayout();
-			JPanel mainPanel = new JPanel(layout);
+			final SpringLayout layout = new SpringLayout();
+			final JPanel mainPanel = new JPanel(layout);
 
 			unitRoot = new DefaultMutableTreeNode(getString("plugin.shiploader.showdialog.units"));
 			unitModel = new DefaultTreeModel(unitRoot);
@@ -404,20 +405,21 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			unitTree.addTreeSelectionListener(new TreeSelectionListener() {
 
 				public void valueChanged(TreeSelectionEvent e) {
-					LinkedList<Unit> mySelectedUnits = new LinkedList<Unit>();
+					final LinkedList<Unit> mySelectedUnits = new LinkedList<Unit>();
 					if (unitTree.getSelectionPaths() != null) {
-						for (TreePath path : unitTree.getSelectionPaths()) {
-							DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-							Object o = actNode.getUserObject();
+						for (final TreePath path : unitTree.getSelectionPaths()) {
+							final DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+							final Object o = actNode.getUserObject();
 							if (o instanceof UnitNodeWrapper) {
-								UnitNodeWrapper nodeWrapper = (UnitNodeWrapper) o;
-								Unit actUnit = nodeWrapper.getUnit();
+								final UnitNodeWrapper nodeWrapper = (UnitNodeWrapper) o;
+								final Unit actUnit = nodeWrapper.getUnit();
 								mySelectedUnits.add(actUnit);
 							}
 						}
 					}
 					if (mySelectedUnits.size() > 0) {
-						unitContextManager.setSelection(mySelectedUnits);
+						unitContextManager.setSelection(SelectionEvent.create(this, null, mySelectedUnits));
+						//						unitContextManager.setSelection(mySelectedUnits);
 					} else {
 						unitContextManager.setSelection(null);
 					}
@@ -438,20 +440,22 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			shipTree.addTreeSelectionListener(new TreeSelectionListener() {
 
 				public void valueChanged(TreeSelectionEvent e) {
-					LinkedList<UnitContainer> mySelection = new LinkedList<UnitContainer>();
+					final LinkedList<Ship> mySelection = new LinkedList<Ship>();
 					if (shipTree.getSelectionPaths() != null) {
-						for (TreePath path : shipTree.getSelectionPaths()) {
-							DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-							Object o = actNode.getUserObject();
+						for (final TreePath path : shipTree.getSelectionPaths()) {
+							final DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+							final Object o = actNode.getUserObject();
 							if (o instanceof UnitContainerNodeWrapper) {
-								UnitContainerNodeWrapper nodeWrapper = (UnitContainerNodeWrapper) o;
-								UnitContainer container = nodeWrapper.getUnitContainer();
-								mySelection.add(container);
+								final UnitContainerNodeWrapper nodeWrapper = (UnitContainerNodeWrapper) o;
+								final UnitContainer container = nodeWrapper.getUnitContainer();
+								if (container instanceof Ship)
+									mySelection.add((Ship) container);
 							}
 						}
 					}
 					if (mySelection.size() > 0) {
-						shipContextManager.setSelection(mySelection);
+						unitContextManager.setSelection(SelectionEvent.create(this, null, mySelection));
+						//						shipContextManager.setSelection(mySelection);
 					} else {
 						shipContextManager.setSelection(null);
 					}
@@ -466,12 +470,12 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 			addShips(loader.ships);
 
-			JScrollPane unitScroll = new JScrollPane(unitTree);
+			final JScrollPane unitScroll = new JScrollPane(unitTree);
 			unitScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 			unitScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			mainPanel.add(unitScroll);
 
-			JScrollPane shipScroll = new JScrollPane(shipTree);
+			final JScrollPane shipScroll = new JScrollPane(shipTree);
 			shipScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 			shipScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			mainPanel.add(shipScroll);
@@ -495,12 +499,12 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		private void addUnits(Collection<?> selectedObjects) {
 			unitRoot.removeAllChildren();
 
-			ArrayList<Unit> units = new ArrayList<Unit>();
+			final ArrayList<Unit> units = new ArrayList<Unit>();
 
-			for (Object o : selectedObjects) {
+			for (final Object o : selectedObjects) {
 				if (!(o instanceof Unit))
 					continue;
-				Unit newUnit = (Unit) o;
+				final Unit newUnit = (Unit) o;
 				int newPos = 0;
 				for (; newPos < units.size(); ++newPos) {
 					if (units.get(newPos).getModifiedWeight() > newUnit.getModifiedWeight()) {
@@ -509,7 +513,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 				}
 				units.add(newPos, newUnit);
 			}
-			for (Unit newUnit : units)
+			for (final Unit newUnit : units)
 				addUnit(newUnit);
 
 			if (loader.units.size() > 0)
@@ -520,10 +524,10 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		private void addShips(Collection<?> selectedObjects) {
 			shipRoot.removeAllChildren();
 			shipRegionNodes.clear();
-			for (Object o : selectedObjects) {
+			for (final Object o : selectedObjects) {
 				if (!(o instanceof Ship))
 					continue;
-				Ship s = (Ship) o;
+				final Ship s = (Ship) o;
 				addShip(s);
 			}
 
@@ -533,8 +537,10 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		}
 
 		public void gameDataChanged(GameDataEvent e) {
-			unitContextManager.setGameData(e.getGameData());
-			shipContextManager.setGameData(e.getGameData());
+			//      unitContextManager.setGameData(e.getGameData());
+			//      shipContextManager.setGameData(e.getGameData());
+			unitContextManager.gameDataChanged(e);
+			shipContextManager.gameDataChanged(e);
 		}
 
 		public void selectionChanged(magellan.plugin.shiploader.ShipLoader.InclusionEvent e) {
@@ -554,13 +560,13 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		}
 
 		private void removeUnit(Unit unit) {
-			DefaultMutableTreeNode regionNode = unitRegionNodes.get(unit.getRegion());
+			final DefaultMutableTreeNode regionNode = unitRegionNodes.get(unit.getRegion());
 			if (regionNode != null && regionNode.getChildCount() > 0) {
-				for (Enumeration<?> enumeration = regionNode.children(); enumeration.hasMoreElements();) {
-					DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
+				for (final Enumeration<?> enumeration = regionNode.children(); enumeration.hasMoreElements();) {
+					final DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
 					if (((UnitNodeWrapper) node.getUserObject()).getUnit().equals(unit)) {
 						regionNode.remove(node);
-						RegionNodeWrapper rwrapper = (RegionNodeWrapper) regionNode.getUserObject();
+						final RegionNodeWrapper rwrapper = (RegionNodeWrapper) regionNode.getUserObject();
 						rwrapper.setAmount(rwrapper.getAmount() - unit.getModifiedWeight());
 						unitModel.nodeStructureChanged(regionNode);
 						break;
@@ -570,13 +576,13 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 		}
 
 		private void removeShip(Ship ship) {
-			DefaultMutableTreeNode regionNode = shipRegionNodes.get(ship.getRegion());
+			final DefaultMutableTreeNode regionNode = shipRegionNodes.get(ship.getRegion());
 			if (regionNode != null && regionNode.getChildCount() > 0) {
-				for (Enumeration<?> enumeration = regionNode.children(); enumeration.hasMoreElements();) {
-					DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
+				for (final Enumeration<?> enumeration = regionNode.children(); enumeration.hasMoreElements();) {
+					final DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
 					if (((UnitContainerNodeWrapper) node.getUserObject()).getUnitContainer().equals(ship)) {
 						regionNode.remove(node);
-						RegionNodeWrapper rwrapper = (RegionNodeWrapper) regionNode.getUserObject();
+						final RegionNodeWrapper rwrapper = (RegionNodeWrapper) regionNode.getUserObject();
 						rwrapper.setAmount(rwrapper.getAmount() - loader.getSpace(ship, null));
 						shipModel.nodeStructureChanged(regionNode);
 						break;
@@ -594,7 +600,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 				unitRoot.add(regionNode);
 				unitModel.nodeStructureChanged(unitRoot);
 			}
-			RegionNodeWrapper rwrapper = (RegionNodeWrapper) regionNode.getUserObject();
+			final RegionNodeWrapper rwrapper = (RegionNodeWrapper) regionNode.getUserObject();
 			rwrapper.setAmount(rwrapper.getAmount() + unit.getModifiedWeight());
 
 			regionNode.add(new DefaultMutableTreeNode(factory.createUnitNodeWrapper(unit, unit.toString()
@@ -612,7 +618,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 				shipRoot.add(regionNode);
 				shipModel.nodeStructureChanged(shipRoot);
 			}
-			RegionNodeWrapper rwrapper = (RegionNodeWrapper) regionNode.getUserObject();
+			final RegionNodeWrapper rwrapper = (RegionNodeWrapper) regionNode.getUserObject();
 			rwrapper.setAmount(rwrapper.getAmount() + loader.getSpace(ship, null));
 
 			regionNode.add(new DefaultMutableTreeNode(factory.createUnitContainerNodeWrapper(ship)));
@@ -684,27 +690,27 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
 		protected void initGUI() {
 			mainPanel = new JPanel();
-			JPanel panel = new JPanel(new GridBagLayout());
+			final JPanel panel = new JPanel(new GridBagLayout());
 
 			txtSafety = new JTextArea("" + loader.getSafety());
 			txtSafety.setMinimumSize(new Dimension(50, 20));
 			txtSafety.setPreferredSize(new java.awt.Dimension(50, 20));
 			txtSafety
-					.setToolTipText(getString("plugin.shiploader.preferences.label.safetymargin.tooltip"));
-			JLabel lblSafety = new JLabel(getString("plugin.shiploader.preferences.label.safetymargin"));
+			.setToolTipText(getString("plugin.shiploader.preferences.label.safetymargin.tooltip"));
+			final JLabel lblSafety = new JLabel(getString("plugin.shiploader.preferences.label.safetymargin"));
 			lblSafety
-					.setToolTipText(getString("plugin.shiploader.preferences.label.safetymargin.tooltip"));
+			.setToolTipText(getString("plugin.shiploader.preferences.label.safetymargin.tooltip"));
 			lblSafety.setLabelFor(txtSafety);
 
 			txtSafetyPerPerson = new JTextArea("" + loader.getSafetyPerPerson());
 			txtSafetyPerPerson.setMinimumSize(new Dimension(50, 20));
 			txtSafetyPerPerson.setPreferredSize(new java.awt.Dimension(50, 20));
 			txtSafetyPerPerson
-					.setToolTipText(getString("plugin.shiploader.preferences.label.unitsilver.tooltip"));
-			JLabel lblSafetyPerPerson = new JLabel(
+			.setToolTipText(getString("plugin.shiploader.preferences.label.unitsilver.tooltip"));
+			final JLabel lblSafetyPerPerson = new JLabel(
 					getString("plugin.shiploader.preferences.label.unitsilver"));
 			lblSafetyPerPerson
-					.setToolTipText(getString("plugin.shiploader.preferences.label.unitsilver.tooltip"));
+			.setToolTipText(getString("plugin.shiploader.preferences.label.unitsilver.tooltip"));
 			lblSafetyPerPerson.setLabelFor(txtSafetyPerPerson);
 
 			chkChangeShip = new JCheckBox(getString("plugin.shiploader.preferences.label.changeship"));
@@ -716,13 +722,13 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			txtMarker.setMinimumSize(new Dimension(100, 20));
 			txtMarker.setPreferredSize(new java.awt.Dimension(100, 20));
 			// txtMarker.setToolTipText(getString("plugin.shiploader.preferences.label.marker.tooltip"));
-			JLabel lblMarker = new JLabel(getString("plugin.shiploader.preferences.label.marker"));
+			final JLabel lblMarker = new JLabel(getString("plugin.shiploader.preferences.label.marker"));
 			// lblMarker.setToolTipText(getString("plugin.shiploader.preferences.label.Markermargin.tooltip"));
 			lblMarker.setLabelFor(txtMarker);
 
 			// GridBagConstraints con = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
 			// GridBagConstraints.HORIZONTAL, new Insets(3, 3, 3, 3), 0, 0);
-			GridBagConstraints con = new GridBagConstraints();
+			final GridBagConstraints con = new GridBagConstraints();
 			con.insets = new Insets(2, 2, 2, 2);
 			con.fill = GridBagConstraints.HORIZONTAL;
 			con.anchor = GridBagConstraints.WEST;
@@ -766,7 +772,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			con.weightx = 0.1;
 			panel.add(new JLabel(""), con);
 
-			JPanel restrictPanel = new JPanel(new BorderLayout());
+			final JPanel restrictPanel = new JPanel(new BorderLayout());
 			mainPanel = new JPanel(new BorderLayout());
 			mainPanel.add(restrictPanel, BorderLayout.CENTER);
 			restrictPanel.add(panel, BorderLayout.NORTH);
@@ -792,13 +798,13 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 			try {
 				loader.setSafety(Integer.parseInt(txtSafety.getText()));
 				properties.setProperty(SAFETY_PROPERTY, String.valueOf(loader.getSafety()));
-			} catch (NumberFormatException e) {
+			} catch (final NumberFormatException e) {
 			}
 			try {
 				loader.setSafetyPerPerson(Integer.parseInt(txtSafetyPerPerson.getText()));
 				properties.setProperty(SAFETYPERPERSON_PROPERTY, String
 						.valueOf(loader.getSafetyPerPerson()));
-			} catch (NumberFormatException e) {
+			} catch (final NumberFormatException e) {
 			}
 			loader.setChangeShip(chkChangeShip.isSelected());
 			properties.setProperty(CHANGESHIP_PROPERTY, chkChangeShip.isSelected() ? "true" : "false");
