@@ -1,3 +1,6 @@
+2010-02-05 (Build 53)- stm (stm_@users.sourceforge.net)
+    * new versions for 2.0.5 stable and nightly
+
 2009-06-03 (Build 49 or some such)- stm (stm_@users.sourceforge.net)
     * support for different order locales
     * improvement to post-algorithm order fixing

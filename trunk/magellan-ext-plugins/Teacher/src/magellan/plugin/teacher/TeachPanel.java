@@ -76,7 +76,7 @@ import magellan.library.utils.logging.Logger;
  * @author stm
  */
 public class TeachPanel extends InternationalizedDataDialog implements SelectionListener,
-		ActionListener, UnitOrdersListener {
+ActionListener, UnitOrdersListener {
 	private static Logger log = Logger.getInstance(TeachPanel.class);
 	public static final String IDENTIFIER = "TEACH";
 
@@ -94,7 +94,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 
 	private Teacher teacher;
 
-	private Collection<String> namespaces;
+	private final Collection<String> namespaces;
 	private JComboBox rBox;
 
 	/**
@@ -110,7 +110,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 
 		if (namespaces==null)
 			throw new NullPointerException();
-		
+
 		this.namespaces = new ArrayList<String>(namespaces);
 
 		learnTargetChar = TeachPlugin.getString("teachpanel.constants.learnTargetChar");
@@ -134,8 +134,8 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 	}
 
 	protected void init() {
-		int width = 800; // Integer.parseInt(settings.getProperty("TradeOrganizer.width", "800"));
-		int height = 600; // Integer.parseInt(settings.getProperty("TradeOrganizer.height", "600"));
+		final int width = 800; // Integer.parseInt(settings.getProperty("TradeOrganizer.width", "800"));
+		final int height = 600; // Integer.parseInt(settings.getProperty("TradeOrganizer.height", "600"));
 		int xPos = -1; // Integer.parseInt(settings.getProperty("TradeOrganizer.xPos", "-1"));
 		int yPos = -1; // Integer.parseInt(settings.getProperty("TradeOrganizer.yPos", "-1"));
 
@@ -154,11 +154,11 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		// build GUI
 
 		// build top panel
-		JPanel topPanel = new JPanel();
+		final JPanel topPanel = new JPanel();
 		topPanel.setBorder(new TitledBorder(""));
 		topPanel.setLayout(new GridBagLayout());
 
-		GridBagConstraints c = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
+		final GridBagConstraints c = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
 				GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0);
 
 		rBox = new JComboBox(data.regions().values().toArray());
@@ -168,9 +168,9 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		c.gridx++;
 		topPanel.add(rBox, c);
 
-		JScrollPane tablePanel = createTablePanel();
+		final JScrollPane tablePanel = createTablePanel();
 
-		Container cp = getContentPane();
+		final Container cp = getContentPane();
 		cp.setLayout(new BorderLayout());
 
 		cp.add(topPanel, BorderLayout.NORTH);
@@ -182,7 +182,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		tTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		// tTable.setAutoResizeMode(TeachTable.AUTO_RESIZE_ALL_COLUMNS);
 		tTable.setDragEnabled(true);
-		JPanel panel = new JPanel(new BorderLayout());
+		final JPanel panel = new JPanel(new BorderLayout());
 		panel.add(new JScrollPane(tTable), BorderLayout.CENTER);
 		return new JScrollPane(panel);
 
@@ -190,7 +190,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 
 	private void updateGUI() {
 		rBox.removeAllItems();
-		for (Region region : data.regions().values())
+		for (final Region region : data.regions().values())
 			rBox.addItem(region);
 	}
 
@@ -202,7 +202,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		if (teacher == null)
 			tTable.setUnits(Collections.<SUnit> emptyList());
 		else {
-			Collection<SUnit> units = teacher.getUnits(false);
+			final Collection<SUnit> units = teacher.getUnits(false);
 			tTable.setUnits(units);
 		}
 	}
@@ -250,9 +250,9 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 	 */
 	@SuppressWarnings("serial")
 	public class TeachTable extends JTable implements MouseListener {
-		private TeachTableModel model;
-		private TableSorter sorter;
-		private TableCellRenderer sunitRenderer = new SUnitRenderer();
+		private final TeachTableModel model;
+		private final TableSorter sorter;
+		private final TableCellRenderer sunitRenderer = new SUnitRenderer();
 
 		class SUnitRenderer implements TableCellRenderer {
 
@@ -293,12 +293,13 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			this.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 				public void valueChanged(ListSelectionEvent e) {
-					int i = TeachTable.this.getSelectedRow();
+					final int i = TeachTable.this.getSelectedRow();
 					if (i >= 0) {
-						Unit u = (Unit) sorter.getValueAt(i, 0);
+						final Unit u = (Unit) sorter.getValueAt(i, 0);
 
 						if (u != null) {
-							dispatcher.fire(new SelectionEvent(this, null, u, SelectionEvent.ST_DEFAULT));
+							dispatcher.fire(SelectionEvent.create(this, u));
+							//              dispatcher.fire(new SelectionEvent(this, null, u));
 						}
 					}
 				}
@@ -310,12 +311,14 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		/**
 		 * @return
 		 */
+		@Override
 		protected JTableHeader createDefaultTableHeader() {
 			return new JTableHeader(getColumnModel()) {
+				@Override
 				public String getToolTipText(MouseEvent e) {
-					java.awt.Point p = e.getPoint();
-					int index = columnModel.getColumnIndexAtX(p.x);
-					int realIndex = columnModel.getColumn(index).getModelIndex();
+					final java.awt.Point p = e.getPoint();
+					final int index = columnModel.getColumnIndexAtX(p.x);
+					final int realIndex = columnModel.getColumn(index).getModelIndex();
 					TableModel m = getModel();
 					if (m instanceof TableSorter) {
 						m = ((TableSorter) m).getTableModel();
@@ -353,7 +356,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		 */
 		private void updateUnit(Unit unit) {
 			if (teacher != null) {
-				SUnit su = Teacher.parseUnit(unit, getNamespaces(), false);
+				final SUnit su = Teacher.parseUnit(unit, getNamespaces(), false);
 				if (su != null)
 					model.addUnit(su);
 				else if (model.findRow(unit) >= 0)
@@ -381,9 +384,9 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		public void mouseClicked(final MouseEvent mouseEvent) {
 
 			if (mouseEvent.getButton() == MouseEvent.BUTTON3) {
-				JPopupMenu menu = new JPopupMenu();
+				final JPopupMenu menu = new JPopupMenu();
 				// int row = rowAtPoint(mouseEvent.getPoint());
-				int col = columnAtPoint(mouseEvent.getPoint());
+				final int col = columnAtPoint(mouseEvent.getPoint());
 				JMenuItem setValueMenu;
 				JMenuItem delValueMenu;
 
@@ -472,29 +475,29 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			// determine kind of cell
 			if (getSelectedRowCount() <= 0)
 				return;
-			int selectedColumn = getColumnModel().getColumnIndexAtX(m.getPoint().x);
+			final int selectedColumn = getColumnModel().getColumnIndexAtX(m.getPoint().x);
 
 			if (selectedColumn < getInternalModel().getColumnCount()
 					- getInternalModel().getTalentCount() * 4)
 				return;
 			String talent = getInternalModel().getColumnName(selectedColumn);
-			String mode = talent.substring(talent.length() - 1);
+			final String mode = talent.substring(talent.length() - 1);
 			talent = talent.substring(0, talent.length() - 2);
 
 			if (mode.equals(learnTargetChar) || mode.equals(learnMaxChar)) {
 				// add a learn oder
-				String userInput = JOptionPane.showInputDialog(TeachPanel.this, TeachPlugin.getString(
+				final String userInput = JOptionPane.showInputDialog(TeachPanel.this, TeachPlugin.getString(
 						"teachpanel.contextmenu.add.text." + mode, new Object[] { talent }), "20 20");
 				if (userInput != null) {
 					try {
-						StringTokenizer st = new StringTokenizer(userInput, " ", false);
-						int target = Integer.parseInt(st.nextToken());
-						int max = Integer.parseInt(st.nextToken());
+						final StringTokenizer st = new StringTokenizer(userInput, " ", false);
+						final int target = Integer.parseInt(st.nextToken());
+						final int max = Integer.parseInt(st.nextToken());
 
 						Collection<Unit> units = null;
 						units = new ArrayList<Unit>(getSelectedRowCount());
 
-						for (int row : getSelectedRows()) {
+						for (final int row : getSelectedRows()) {
 							units.add((Unit) getModel().getValueAt(row, 0));
 						}
 						if (mode.equals(learnTargetChar) || mode.equals(learnMaxChar)) {
@@ -502,7 +505,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 						}
 						getDispatcher().fire(new GameDataEvent(this, getData()));
 
-					} catch (Exception ex) {
+					} catch (final Exception ex) {
 						log.warn(ex);
 						JOptionPane.showMessageDialog(this, TeachPlugin
 								.getString("plugin.teacher.addlearn.error"));
@@ -510,17 +513,17 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 				}
 			} else if (mode.equals(teachDiffChar)) {
 				// add a teach order
-				String userInput = JOptionPane.showInputDialog(TeachPanel.this, TeachPlugin.getString(
+				final String userInput = JOptionPane.showInputDialog(TeachPanel.this, TeachPlugin.getString(
 						"teachpanel.contextmenu.add.text." + mode, new Object[] { talent }), "20");
 				if (userInput != null) {
 					try {
-						StringTokenizer st = new StringTokenizer(userInput, " ", false);
-						int diff = Integer.parseInt(st.nextToken());
+						final StringTokenizer st = new StringTokenizer(userInput, " ", false);
+						final int diff = Integer.parseInt(st.nextToken());
 
 						Collection<Unit> units = null;
 						units = new ArrayList<Unit>(getSelectedRowCount());
 
-						for (int row : getSelectedRows()) {
+						for (final int row : getSelectedRows()) {
 							units.add((Unit) getModel().getValueAt(row, 0));
 						}
 						if (mode.equals(teachDiffChar)) {
@@ -528,7 +531,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 						}
 						getDispatcher().fire(new GameDataEvent(this, getData()));
 
-					} catch (Exception ex) {
+					} catch (final Exception ex) {
 						log.warn(ex);
 						JOptionPane.showMessageDialog(this, TeachPlugin
 								.getString("plugin.teacher.addlearn.error"));
@@ -548,9 +551,9 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			if (getSelectedRowCount() <= 0)
 				return;
 
-			int selectedColumn = getColumnModel().getColumnIndexAtX(m.getPoint().x);
+			final int selectedColumn = getColumnModel().getColumnIndexAtX(m.getPoint().x);
 			String talent = getModel().getColumnName(selectedColumn);
-			String mode = talent.substring(talent.length() - 1);
+			final String mode = talent.substring(talent.length() - 1);
 			talent = talent.substring(0, talent.length() - 2);
 
 			if ((mode.equals("L") || mode.equals("T"))
@@ -560,7 +563,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 							JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 				Collection<Unit> units = null;
 				units = new ArrayList<Unit>(getSelectedRowCount());
-				for (int row : getSelectedRows()) {
+				for (final int row : getSelectedRows()) {
 					units.add((Unit) getModel().getValueAt(row, 0));
 				}
 				if (mode.equals(learnTargetChar) || mode.equals(learnMaxChar)) {
@@ -578,15 +581,15 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			if (getSelectedRowCount() <= 0)
 				return;
 
-			String userInput = JOptionPane.showInputDialog(TeachPanel.this, TeachPlugin
+			final String userInput = JOptionPane.showInputDialog(TeachPanel.this, TeachPlugin
 					.getString("plugin.teacher.prio.message"), model.getValueAt(rowAtPoint(m.getPoint()),
-					columnAtPoint(m.getPoint())));
+							columnAtPoint(m.getPoint())));
 			if (userInput != null) {
 				try {
-					double newPrio = Double.parseDouble(userInput);
+					final double newPrio = Double.parseDouble(userInput);
 
-					Collection<Unit> units = new ArrayList<Unit>(getSelectedRowCount());
-					for (int row : getSelectedRows()) {
+					final Collection<Unit> units = new ArrayList<Unit>(getSelectedRowCount());
+					for (final int row : getSelectedRows()) {
 						units.add((Unit) getModel().getValueAt(row, 0));
 					}
 
@@ -594,7 +597,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 
 					getDispatcher().fire(new GameDataEvent(this, getData()));
 
-				} catch (Exception ex) {
+				} catch (final Exception ex) {
 					log.warn(ex);
 					JOptionPane.showMessageDialog(this, TeachPlugin.getString("plugin.teacher.prio.error"));
 				}
@@ -611,7 +614,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 	 */
 	@SuppressWarnings("serial")
 	private static class TeachTableModel extends AbstractTableModel {
-		private Set<SUnit> tableUnits = new HashSet<SUnit>();
+		private final Set<SUnit> tableUnits = new HashSet<SUnit>();
 		private static final int numFixedColumns = 6;
 
 		/**
@@ -623,8 +626,8 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		private enum ColumnType {
 			UNIT(0, "name", Object.class), ID(1, "id", Object.class), PERSONS(2, "persons", Integer.class), ORDERMODE(
 					3, "ordermode", Object.class), ORDERTALENT(4, "ordertalent", Object.class), PRIORITY(5,
-					"priority", Double.class), LEARNTARGET(0, "target", Integer.class), LEARNMAX(1, "max",
-					Integer.class), TEACH(2, "diff", Integer.class), VALUE(3, "value", Integer.class);
+							"priority", Double.class), LEARNTARGET(0, "target", Integer.class), LEARNMAX(1, "max",
+									Integer.class), TEACH(2, "diff", Integer.class), VALUE(3, "value", Integer.class);
 
 			private int initialColumn;
 			private Class<? extends Object> type;
@@ -653,10 +656,10 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			}
 
 			String getTooltip() {
-				String result = TeachPlugin
-						.getString("teachpanel.column." + getInternalName() + ".tooltip");
+				final String result = TeachPlugin
+				.getString("teachpanel.column." + getInternalName() + ".tooltip");
 				return result; // (result=="" ||
-												// result.equals("teachpanel.column."+getInternalName()+".tooltip"))?null:result;
+				// result.equals("teachpanel.column."+getInternalName()+".tooltip"))?null:result;
 			}
 		};
 
@@ -687,8 +690,8 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			talentIndices = new HashMap<String, Integer>();
 			talents = new ArrayList<String>();
 			int talentCount = 0;
-			for (SUnit unit : tableUnits) {
-				for (String lTalent : unit.getLearnTalentsAsString()) {
+			for (final SUnit unit : tableUnits) {
+				for (final String lTalent : unit.getLearnTalentsAsString()) {
 					if (!talentIndices.containsKey(lTalent)) {
 						talentIndices.put(lTalent, talentCount++);
 						talents.add(lTalent);
@@ -706,7 +709,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			// fill content
 			content = new Object[tableUnits.size()][getColumnCount() + 1];
 			int count = 0;
-			for (SUnit unit : tableUnits) {
+			for (final SUnit unit : tableUnits) {
 				setRow(content[count], unit);
 
 				content[count][getColumnCount()] = count;
@@ -725,7 +728,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			row[ColumnType.UNIT.getColumn()] = unit.getUnit();
 			row[ColumnType.ID.getColumn()] = unit.getUnit().getID();
 			row[ColumnType.PERSONS.getColumn()] = unit.getUnit().getModifiedPersons();
-			Order o = Teacher.getCurrentOrder(unit.getUnit());
+			final Order o = Teacher.getCurrentOrder(unit.getUnit());
 			if (o == null) {
 				row[ColumnType.ORDERMODE.getColumn()] = errorChar;
 				row[ColumnType.ORDERTALENT.getColumn()] = "--";
@@ -745,17 +748,17 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 			for (int col = numFixedColumns; col < row.length; ++col) {
 				row[col] = null;
 			}
-			for (String lTalent : unit.getLearnTalentsAsString()) {
+			for (final String lTalent : unit.getLearnTalentsAsString()) {
 				row[numFixedColumns + talentIndices.get(lTalent) * 4] = unit.getTarget(lTalent);
 				row[numFixedColumns + talentIndices.get(lTalent) * 4 + 1] = unit.getMax(lTalent);
 				row[numFixedColumns + talentIndices.get(lTalent) * 4 + 3] = Teacher.getLevel(
 						unit.getUnit(), lTalent);
 			}
 
-			for (String tTalent : unit.getTeachTalentsAsString()) {
+			for (final String tTalent : unit.getTeachTalentsAsString()) {
 				if (talentIndices.containsKey(tTalent)) {
 					row[numFixedColumns + talentIndices.get(tTalent) * 4 + 2] = unit
-							.getMaximumDifference(tTalent);
+					.getMaximumDifference(tTalent);
 					row[numFixedColumns + talentIndices.get(tTalent) * 4 + 3] = Teacher.getLevel(unit
 							.getUnit(), tTalent);
 				}
@@ -903,7 +906,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		public void addUnit(SUnit unit) {
 			// see if we have to add columns
 			boolean structureChanged = false;
-			for (String lTalent : unit.getLearnTalentsAsString()) {
+			for (final String lTalent : unit.getLearnTalentsAsString()) {
 				if (!talentIndices.containsKey(lTalent)) {
 					structureChanged = true;
 					break;
@@ -919,7 +922,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 
 			if (structureChanged) {
 				// redo everything...
-				for (Iterator<SUnit> it = tableUnits.iterator(); it.hasNext();) {
+				for (final Iterator<SUnit> it = tableUnits.iterator(); it.hasNext();) {
 					if (it.next().getUnit().equals(unit.getUnit()))
 						it.remove();
 				}
@@ -927,15 +930,15 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 				init();
 			} else {
 				// just update relevant row
-				int row = findRow(unit.getUnit());
-				Object[] sameUnit = row >= 0 ? content[row] : null;
+				final int row = findRow(unit.getUnit());
+				final Object[] sameUnit = row >= 0 ? content[row] : null;
 				if (sameUnit != null) {
 					// replace unit
 					setRow(sameUnit, unit);
 					fireTableRowsUpdated(row, row);
 				} else {
 					// add unit
-					Object[][] newContent = new Object[content.length + 1][getColumnCount() + 1];
+					final Object[][] newContent = new Object[content.length + 1][getColumnCount() + 1];
 					for (int i = 0; i < content.length; ++i)
 						newContent[i] = content[i];
 					setRow(newContent[newContent.length - 1], unit);
@@ -956,7 +959,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 		public int findRow(Unit unit) {
 			int sameUnit = -1;
 			for (int i = 0; i < content.length; ++i) {
-				Unit u = (Unit) content[i][ColumnType.UNIT.getColumn()];
+				final Unit u = (Unit) content[i][ColumnType.UNIT.getColumn()];
 				if (u.equals(unit)) {
 					sameUnit = i;
 					break;
@@ -990,7 +993,7 @@ public class TeachPanel extends InternationalizedDataDialog implements Selection
 	 */
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == rBox) {
-			Region region = (Region) rBox.getSelectedItem();
+			final Region region = (Region) rBox.getSelectedItem();
 			setActiveRegion(region);
 		}
 	}
