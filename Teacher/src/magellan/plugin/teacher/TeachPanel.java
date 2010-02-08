@@ -298,8 +298,10 @@ ActionListener, UnitOrdersListener {
 						final Unit u = (Unit) sorter.getValueAt(i, 0);
 
 						if (u != null) {
-							dispatcher.fire(SelectionEvent.create(this, u));
-							//              dispatcher.fire(new SelectionEvent(this, null, u));
+							// newer version:
+							//							dispatcher.fire(SelectionEvent.create(this, u));
+							// 2.0.5 version:
+							dispatcher.fire(new SelectionEvent(this, null, u));
 						}
 					}
 				}
