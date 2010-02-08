@@ -65,7 +65,7 @@
 		<echo message="Building Map Cleaner JAR file" />
 
 		<!-- delete old library -->
-		<delete file="${release}/MapCleaner.jar" failonerror="false" />
+		<delete file="${basedir}/mapcleaner-plugin.jar" failonerror="false" />
 
 		<copy file="${etc.ext}/manifest.mf.mapcleaner.template" tofile="${etc.ext}/manifest.mf" overwrite="yes">
 			<filterset>
@@ -78,7 +78,7 @@
 
 		<!-- JAR File erzeugen -->
 		<mkdir dir="${release}" />
-		<jar jarfile="${release}/MapCleaner.jar" basedir="${classes}" 
+		<jar jarfile="${basedir}/mapcleaner-plugin.jar" basedir="${classes}" 
 			 manifest="${etc.ext}/manifest.mf">
 	    	
 	    	<fileset dir="${src.ext}">
