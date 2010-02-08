@@ -40,7 +40,6 @@ import javax.swing.tree.TreePath;
 
 import magellan.client.Client;
 import magellan.client.event.EventDispatcher;
-import magellan.client.event.SelectionEvent;
 import magellan.client.extern.MagellanPlugIn;
 import magellan.client.swing.basics.SpringUtilities;
 import magellan.client.swing.context.UnitContainerContextFactory;
@@ -418,8 +417,10 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 						}
 					}
 					if (mySelectedUnits.size() > 0) {
-						unitContextManager.setSelection(SelectionEvent.create(this, null, mySelectedUnits));
-						//						unitContextManager.setSelection(mySelectedUnits);
+						// newer version:
+						//						unitContextManager.setSelection(SelectionEvent.create(this, null, mySelectedUnits));
+						// 2.0.5 version:
+						unitContextManager.setSelection(mySelectedUnits);
 					} else {
 						unitContextManager.setSelection(null);
 					}
@@ -454,8 +455,10 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 						}
 					}
 					if (mySelection.size() > 0) {
-						unitContextManager.setSelection(SelectionEvent.create(this, null, mySelection));
-						//						shipContextManager.setSelection(mySelection);
+						// newer version:
+						//						unitContextManager.setSelection(SelectionEvent.create(this, null, mySelection));
+						// 2.0.5 version:
+						shipContextManager.setSelection(mySelection);
 					} else {
 						shipContextManager.setSelection(null);
 					}
@@ -537,10 +540,12 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 		}
 
 		public void gameDataChanged(GameDataEvent e) {
-			//      unitContextManager.setGameData(e.getGameData());
-			//      shipContextManager.setGameData(e.getGameData());
-			unitContextManager.gameDataChanged(e);
-			shipContextManager.gameDataChanged(e);
+			// newer version:
+			unitContextManager.setGameData(e.getGameData());
+			shipContextManager.setGameData(e.getGameData());
+			// 2.0.5 version:
+			//			unitContextManager.gameDataChanged(e);
+			//			shipContextManager.gameDataChanged(e);
 		}
 
 		public void selectionChanged(magellan.plugin.shiploader.ShipLoader.InclusionEvent e) {
