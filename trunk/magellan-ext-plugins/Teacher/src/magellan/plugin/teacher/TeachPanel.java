@@ -299,9 +299,9 @@ ActionListener, UnitOrdersListener {
 
 						if (u != null) {
 							// newer version:
-							//							dispatcher.fire(SelectionEvent.create(this, u));
+							dispatcher.fire(SelectionEvent.create(this, u));
 							// 2.0.5 version:
-							dispatcher.fire(new SelectionEvent(this, null, u));
+							//							dispatcher.fire(new SelectionEvent(this, null, u));
 						}
 					}
 				}
