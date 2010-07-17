@@ -40,19 +40,20 @@ public class AlliancePlugIn implements MagellanPlugIn, ActionListener {
   private Client client = null;
   private Properties settings = null;
 
-
   /**
-   * @see magellan.client.extern.MagellanPlugIn#init(magellan.client.Client, java.util.Properties)
+   * @see magellan.client.extern.MagellanPlugIn#init(magellan.client.Client,
+   *      java.util.Properties)
    */
   public void init(Client client, Properties properties) {
     // init the plugin
     log = Logger.getInstance(AlliancePlugIn.class);
-    Resources.getInstance().initialize(Client.getSettingsDirectory(),"allianceplugin_");
+    Resources.getInstance().initialize(Client.getResourceDirectory(), "allianceplugin_");
     this.client = client;
-    this.settings = properties;
-    log.info(getName()+" initialized...(Client)");
-   
-    // check, if the client loads automatically the last loaded report on start and inform user.
+    settings = properties;
+    log.info(getName() + " initialized...(Client)");
+
+    // check, if the client loads automatically the last loaded report on start
+    // and inform user.
     if (PropertiesHelper.getBoolean(settings, PropertiesHelper.CLIENTPREFERENCES_LOAD_LAST_REPORT, true)) {
       // okay, yes - should we inform the user about that?
       if (PropertiesHelper.getBoolean(settings, Constants.PROPERTY_INFORM_USER_ABOUT_LOAD_LAST_REPORT, true)) {
@@ -68,47 +69,47 @@ public class AlliancePlugIn implements MagellanPlugIn, ActionListener {
         }
       }
     }
-    
+
     if (PropertiesHelper.getBoolean(settings, Constants.PROPERTY_SHOW_DOWNLOAD_DIALOG_ON_START, true)) {
       DownloadReportDialog dialog = new DownloadReportDialog(client);
       dialog.setOpenAtStart(true);
       dialog.setVisible(true);
     }
   }
-  
+
   /**
    * @see magellan.client.extern.MagellanPlugIn#init(magellan.library.GameData)
    */
   public void init(GameData data) {
     // init the report
-    log.info(getName()+" initialized...(GameData)");
-    
+    log.info(getName() + " initialized...(GameData)");
+
     // hmm, do we need something to checks?
   }
-  
+
   /**
    * @see magellan.client.extern.MagellanPlugIn#getMenuItems()
    */
   public List<JMenuItem> getMenuItems() {
     List<JMenuItem> items = new ArrayList<JMenuItem>();
-    
+
     JMenu menu = new JMenu(Resources.get(Constants.RESOURCE_MAINMENU_TITLE));
     items.add(menu);
-    
+
     JMenuItem uploadReportMenu = new JMenuItem(Resources.get(Constants.RESOURCE_MAINMENU_UPLOADDIALOG_TITLE));
     uploadReportMenu.setActionCommand(AlliancePlugInAction.UPLOAD_REPORT.getID());
     uploadReportMenu.addActionListener(this);
-    menu.add(uploadReportMenu);    
-    
+    menu.add(uploadReportMenu);
+
     JMenuItem downloadReportMenu = new JMenuItem(Resources.get(Constants.RESOURCE_MAINMENU_DOWNLOADDIALOG_TITLE));
     downloadReportMenu.setActionCommand(AlliancePlugInAction.DOWNLOAD_REPORT.getID());
     downloadReportMenu.addActionListener(this);
-    menu.add(downloadReportMenu);    
+    menu.add(downloadReportMenu);
 
     JMenuItem mergeOrdersMenu = new JMenuItem(Resources.get(Constants.RESOURCE_MAINMENU_MERGEORDERS_TITLE));
     mergeOrdersMenu.setActionCommand(AlliancePlugInAction.MERGE_ORDERS.getID());
     mergeOrdersMenu.addActionListener(this);
-    menu.add(mergeOrdersMenu);    
+    menu.add(mergeOrdersMenu);
 
     return items;
   }
@@ -127,7 +128,7 @@ public class AlliancePlugIn implements MagellanPlugIn, ActionListener {
     // we don't need that yet.
     return null;
   }
-  
+
   /**
    * @see magellan.client.extern.MagellanPlugIn#getDocks()
    */
@@ -141,34 +142,32 @@ public class AlliancePlugIn implements MagellanPlugIn, ActionListener {
   public void quit(boolean storeSettings) {
     // hmm...
   }
-  
+
   /**
    * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
    */
   public void actionPerformed(ActionEvent e) {
     log.info(e.getActionCommand());
     switch (AlliancePlugInAction.getAction(e)) {
-      case UPLOAD_REPORT: {
-        log.info("Upload a report and merge on the server...");
-        UploadReportDialog dialog = new UploadReportDialog(client);
-        dialog.setVisible(true);
-        break;
-      }
-      case DOWNLOAD_REPORT: {
-        log.info("Download the merged report...");
-        DownloadReportDialog dialog = new DownloadReportDialog(client);
-        dialog.setVisible(true);
-        break;
-      }
-      case MERGE_ORDERS: {
-        log.info("Merge orders with server...");
-        MergeOrdersDialog dialog = new MergeOrdersDialog(client);
-        dialog.setVisible(true);
-        break;
-      }
+    case UPLOAD_REPORT: {
+      log.info("Upload a report and merge on the server...");
+      UploadReportDialog dialog = new UploadReportDialog(client);
+      dialog.setVisible(true);
+      break;
+    }
+    case DOWNLOAD_REPORT: {
+      log.info("Download the merged report...");
+      DownloadReportDialog dialog = new DownloadReportDialog(client);
+      dialog.setVisible(true);
+      break;
+    }
+    case MERGE_ORDERS: {
+      log.info("Merge orders with server...");
+      MergeOrdersDialog dialog = new MergeOrdersDialog(client);
+      dialog.setVisible(true);
+      break;
+    }
     }
   }
 
-  
-  
 }

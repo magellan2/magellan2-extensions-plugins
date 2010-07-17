@@ -70,7 +70,7 @@ import magellan.library.utils.logging.Logger;
  * @author stm
  */
 public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
-UnitContextMenuProvider, ActionListener, GameDataListener {
+		UnitContextMenuProvider, ActionListener, GameDataListener {
 
 	public static final String SAFETY_PROPERTY = "plugins.shiploader.safety";
 	public static final String SAFETYPERPERSON_PROPERTY = "plugins.shiploader.safetyperperson";
@@ -98,8 +98,8 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 	 */
 	public enum PlugInAction {
 		EXECUTE("mainmenu.execute"), DISTRIBUTESILVER("mainmenu.distribute"), SHOW("mainmenu.show"), CLEAR(
-		"mainmenu.clear"), CLEARORDERS("mainmenu.clearorders"), CONFIRMORDERS("mainmenu.confirm"), UNCONFIRMORDERS(
-		"mainmenu.unconfirm"), UNKNOWN("");
+				"mainmenu.clear"), CLEARORDERS("mainmenu.clearorders"), CONFIRMORDERS("mainmenu.confirm"), UNCONFIRMORDERS(
+				"mainmenu.unconfirm"), UNKNOWN("");
 
 		private final String id;
 
@@ -128,10 +128,10 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 	 */
 	public void init(Client _client, Properties _properties) {
 		// init the plugin
-		this.client = _client;
-		this.client.getDispatcher().addGameDataListener(this);
-		this.properties = _properties;
-		Resources.getInstance().initialize(Client.getSettingsDirectory(), "shiploaderplugin_");
+		client = _client;
+		client.getDispatcher().addGameDataListener(this);
+		properties = _properties;
+		Resources.getInstance().initialize(Client.getResourceDirectory(), "shiploaderplugin_");
 
 		loader = new ShipLoader(this, client);
 
@@ -150,7 +150,7 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 	 */
 	public void init(GameData data) {
 		// init the report
-		this.gd = data;
+		gd = data;
 
 	}
 
@@ -163,7 +163,8 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 		final JMenu menu = new JMenu(getString("plugin.shiploader.mainmenu.title"));
 		items.add(menu);
 
-		final JMenuItem executeMenu = new JMenuItem(getString("plugin.shiploader.mainmenu.execute.title"));
+		final JMenuItem executeMenu = new JMenuItem(
+				getString("plugin.shiploader.mainmenu.execute.title"));
 		executeMenu.setActionCommand(PlugInAction.EXECUTE.getID());
 		executeMenu.addActionListener(this);
 		menu.add(executeMenu);
@@ -222,7 +223,8 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 
 		if (selectedObjects.contains(container) && container instanceof Ship) {
 
-			final JMenuItem addMenu = new JMenuItem(getString("plugin.shiploader.contextmenu.addships.title"));
+			final JMenuItem addMenu = new JMenuItem(
+					getString("plugin.shiploader.contextmenu.addships.title"));
 			addMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					loader.add(selectedObjects);
@@ -239,7 +241,8 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 			});
 			menu.add(removeMenu);
 		} else if (selectedObjects.contains(container)) {
-			final JMenuItem addMenu = new JMenuItem(getString("plugin.shiploader.contextmenu.addunits.title"));
+			final JMenuItem addMenu = new JMenuItem(
+					getString("plugin.shiploader.contextmenu.addunits.title"));
 			addMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					loader.add(selectedObjects);
@@ -272,7 +275,8 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 		final JMenu menu = new JMenu(getString("plugin.shiploader.contextmenu.title"));
 
 		if (selectedObjects.contains(unit)) {
-			final JMenuItem addMenu = new JMenuItem(getString("plugin.shiploader.contextmenu.addunits.title"));
+			final JMenuItem addMenu = new JMenuItem(
+					getString("plugin.shiploader.contextmenu.addunits.title"));
 			addMenu.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					loader.add(selectedObjects);
@@ -408,7 +412,8 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 					final LinkedList<Unit> mySelectedUnits = new LinkedList<Unit>();
 					if (unitTree.getSelectionPaths() != null) {
 						for (final TreePath path : unitTree.getSelectionPaths()) {
-							final DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+							final DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path
+									.getLastPathComponent();
 							final Object o = actNode.getUserObject();
 							if (o instanceof UnitNodeWrapper) {
 								final UnitNodeWrapper nodeWrapper = (UnitNodeWrapper) o;
@@ -421,7 +426,7 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 						// newer version:
 						unitContextManager.setSelection(SelectionEvent.create(this, null, mySelectedUnits));
 						// 2.0.5 version:
-						//						unitContextManager.setSelection(mySelectedUnits);
+						// unitContextManager.setSelection(mySelectedUnits);
 					} else {
 						unitContextManager.setSelection(null);
 					}
@@ -445,13 +450,15 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 					final LinkedList<Ship> mySelection = new LinkedList<Ship>();
 					if (shipTree.getSelectionPaths() != null) {
 						for (final TreePath path : shipTree.getSelectionPaths()) {
-							final DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+							final DefaultMutableTreeNode actNode = (DefaultMutableTreeNode) path
+									.getLastPathComponent();
 							final Object o = actNode.getUserObject();
 							if (o instanceof UnitContainerNodeWrapper) {
 								final UnitContainerNodeWrapper nodeWrapper = (UnitContainerNodeWrapper) o;
 								final UnitContainer container = nodeWrapper.getUnitContainer();
-								if (container instanceof Ship)
+								if (container instanceof Ship) {
 									mySelection.add((Ship) container);
+								}
 							}
 						}
 					}
@@ -459,7 +466,7 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 						// newer version:
 						unitContextManager.setSelection(SelectionEvent.create(this, null, mySelection));
 						// 2.0.5 version:
-						//						shipContextManager.setSelection(mySelection);
+						// shipContextManager.setSelection(mySelection);
 					} else {
 						shipContextManager.setSelection(null);
 					}
@@ -506,8 +513,9 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 			final ArrayList<Unit> units = new ArrayList<Unit>();
 
 			for (final Object o : selectedObjects) {
-				if (!(o instanceof Unit))
+				if (!(o instanceof Unit)) {
 					continue;
+				}
 				final Unit newUnit = (Unit) o;
 				int newPos = 0;
 				for (; newPos < units.size(); ++newPos) {
@@ -517,11 +525,13 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 				}
 				units.add(newPos, newUnit);
 			}
-			for (final Unit newUnit : units)
+			for (final Unit newUnit : units) {
 				addUnit(newUnit);
+			}
 
-			if (loader.units.size() > 0)
+			if (loader.units.size() > 0) {
 				unitTree.expandPath(new TreePath(unitRoot));
+			}
 			unitModel.nodeStructureChanged(unitRoot);
 		}
 
@@ -529,21 +539,23 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 			shipRoot.removeAllChildren();
 			shipRegionNodes.clear();
 			for (final Object o : selectedObjects) {
-				if (!(o instanceof Ship))
+				if (!(o instanceof Ship)) {
 					continue;
+				}
 				final Ship s = (Ship) o;
 				addShip(s);
 			}
 
-			if (loader.ships.size() > 0)
+			if (loader.ships.size() > 0) {
 				shipTree.expandPath(new TreePath(new Object[] { shipRoot, shipRoot.getFirstChild() }));
+			}
 			shipModel.nodeStructureChanged(shipRoot);
 		}
 
 		public void gameDataChanged(GameDataEvent e) {
 			// newer version:
-			//			unitContextManager.setGameData(e.getGameData());
-			//			shipContextManager.setGameData(e.getGameData());
+			// unitContextManager.setGameData(e.getGameData());
+			// shipContextManager.setGameData(e.getGameData());
 			// 2.0.5 version:
 			unitContextManager.gameDataChanged(e);
 			shipContextManager.gameDataChanged(e);
@@ -552,15 +564,17 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 		public void selectionChanged(magellan.plugin.shiploader.ShipLoader.InclusionEvent e) {
 			synchronized (this) {
 				if (e.getShip() != null) {
-					if (e.isAdded())
+					if (e.isAdded()) {
 						addShip(e.getShip());
-					else
+					} else {
 						removeShip(e.getShip());
+					}
 				} else if (e.getUnit() != null) {
-					if (e.isAdded())
+					if (e.isAdded()) {
 						addUnit(e.getUnit());
-					else
+					} else {
 						removeUnit(e.getUnit());
+					}
 				}
 			}
 		}
@@ -568,7 +582,8 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 		private void removeUnit(Unit unit) {
 			final DefaultMutableTreeNode regionNode = unitRegionNodes.get(unit.getRegion());
 			if (regionNode != null && regionNode.getChildCount() > 0) {
-				for (final Enumeration<?> enumeration = regionNode.children(); enumeration.hasMoreElements();) {
+				for (final Enumeration<?> enumeration = regionNode.children(); enumeration
+						.hasMoreElements();) {
 					final DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
 					if (((UnitNodeWrapper) node.getUserObject()).getUnit().equals(unit)) {
 						regionNode.remove(node);
@@ -584,7 +599,8 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 		private void removeShip(Ship ship) {
 			final DefaultMutableTreeNode regionNode = shipRegionNodes.get(ship.getRegion());
 			if (regionNode != null && regionNode.getChildCount() > 0) {
-				for (final Enumeration<?> enumeration = regionNode.children(); enumeration.hasMoreElements();) {
+				for (final Enumeration<?> enumeration = regionNode.children(); enumeration
+						.hasMoreElements();) {
 					final DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
 					if (((UnitContainerNodeWrapper) node.getUserObject()).getUnitContainer().equals(ship)) {
 						regionNode.remove(node);
@@ -702,21 +718,22 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 			txtSafety.setMinimumSize(new Dimension(50, 20));
 			txtSafety.setPreferredSize(new java.awt.Dimension(50, 20));
 			txtSafety
-			.setToolTipText(getString("plugin.shiploader.preferences.label.safetymargin.tooltip"));
-			final JLabel lblSafety = new JLabel(getString("plugin.shiploader.preferences.label.safetymargin"));
+					.setToolTipText(getString("plugin.shiploader.preferences.label.safetymargin.tooltip"));
+			final JLabel lblSafety = new JLabel(
+					getString("plugin.shiploader.preferences.label.safetymargin"));
 			lblSafety
-			.setToolTipText(getString("plugin.shiploader.preferences.label.safetymargin.tooltip"));
+					.setToolTipText(getString("plugin.shiploader.preferences.label.safetymargin.tooltip"));
 			lblSafety.setLabelFor(txtSafety);
 
 			txtSafetyPerPerson = new JTextArea("" + loader.getSafetyPerPerson());
 			txtSafetyPerPerson.setMinimumSize(new Dimension(50, 20));
 			txtSafetyPerPerson.setPreferredSize(new java.awt.Dimension(50, 20));
 			txtSafetyPerPerson
-			.setToolTipText(getString("plugin.shiploader.preferences.label.unitsilver.tooltip"));
+					.setToolTipText(getString("plugin.shiploader.preferences.label.unitsilver.tooltip"));
 			final JLabel lblSafetyPerPerson = new JLabel(
 					getString("plugin.shiploader.preferences.label.unitsilver"));
 			lblSafetyPerPerson
-			.setToolTipText(getString("plugin.shiploader.preferences.label.unitsilver.tooltip"));
+					.setToolTipText(getString("plugin.shiploader.preferences.label.unitsilver.tooltip"));
 			lblSafetyPerPerson.setLabelFor(txtSafetyPerPerson);
 
 			chkChangeShip = new JCheckBox(getString("plugin.shiploader.preferences.label.changeship"));
@@ -859,8 +876,8 @@ UnitContextMenuProvider, ActionListener, GameDataListener {
 	}
 
 	public void gameDataChanged(GameDataEvent e) {
-		this.gd = e.getGameData();
-		loader.init(this.gd);
+		gd = e.getGameData();
+		loader.init(gd);
 	}
 
 }
