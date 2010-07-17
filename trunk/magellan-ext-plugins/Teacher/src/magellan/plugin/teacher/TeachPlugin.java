@@ -195,7 +195,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		// init the plugin
 		client = _client;
 		properties = _properties;
-		Resources.getInstance().initialize(Client.getSettingsDirectory(), "teachplugin_");
+		Resources.getInstance().initialize(Client.getResourceDirectory(), "teachplugin_");
 
 		initProperties();
 
