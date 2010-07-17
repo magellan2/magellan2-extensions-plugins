@@ -63,6 +63,7 @@ import magellan.library.Unit;
 import magellan.library.UnitContainer;
 import magellan.library.event.GameDataEvent;
 import magellan.library.utils.Resources;
+import magellan.library.utils.UserInterface.ClosingListener;
 import magellan.library.utils.logging.Logger;
 
 /**
@@ -192,8 +193,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 */
 	public void init(Client _client, Properties _properties) {
 		// init the plugin
-		this.client = _client;
-		this.properties = _properties;
+		client = _client;
+		properties = _properties;
 		Resources.getInstance().initialize(Client.getSettingsDirectory(), "teachplugin_");
 
 		initProperties();
@@ -223,7 +224,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 */
 	public void init(GameData data) {
 		// init the report
-		this.gd = data;
+		gd = data;
 	}
 
 	/**
@@ -417,8 +418,9 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 						if (selectedObjects != null) {
 							units = new ArrayList<Unit>(selectedObjects.size());
 							for (Object o : selectedObjects) {
-								if (o instanceof Unit)
+								if (o instanceof Unit) {
 									units.add((Unit) o);
+								}
 							}
 						}
 
@@ -448,8 +450,9 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 						if (selectedObjects != null) {
 							units = new ArrayList<Unit>(selectedObjects.size());
 							for (Object o : selectedObjects) {
-								if (o instanceof Unit)
+								if (o instanceof Unit) {
 									units.add((Unit) o);
+								}
 							}
 						}
 
@@ -480,8 +483,9 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 						if (selectedObjects != null) {
 							units = new ArrayList<Unit>(selectedObjects.size());
 							for (Object o : selectedObjects) {
-								if (o instanceof Unit)
+								if (o instanceof Unit) {
 									units.add((Unit) o);
+								}
 							}
 						}
 
@@ -518,16 +522,18 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 				if (talent != null) {
 					try {
 						Order newOrder;
-						if (talent.equals(Order.ALL))
+						if (talent.equals(Order.ALL)) {
 							newOrder = new Order(0);
-						else
+						} else {
 							newOrder = new Order(talent, 0, true);
+						}
 						Collection<Unit> units = null;
 						if (selectedObjects != null) {
 							units = new ArrayList<Unit>(selectedObjects.size());
 							for (Object o : selectedObjects) {
-								if (o instanceof Unit)
+								if (o instanceof Unit) {
 									units.add((Unit) o);
+								}
 							}
 						}
 
@@ -595,8 +601,9 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 					ui.setTitle(getString("plugin.teacher.mainmenu.executeall.title"));
 					ui.show();
 					for (Region r : gd.regions().values()) {
-						if (listener.aborted)
+						if (listener.aborted) {
 							break;
+						}
 						ui.setTitle(r.toString());
 						switch (PlugInAction.getAction(e)) {
 						case EXECUTE_ALL:
@@ -660,13 +667,13 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 				t.mainrun();
 				listener.setTeacher(null);
-			}catch (Exception e){
+			} catch (Exception e) {
 				log.error(e);
 			}
 		}
 	}
 
-	private class TeachClosingListener implements ProgressBarUI.ClosingListener {
+	private class TeachClosingListener implements ClosingListener {
 		protected Teacher teacher = null;
 		protected boolean aborted = false;
 		private Object lock = new Object();
@@ -677,12 +684,13 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			}
 		}
 
-		public boolean proceed(WindowEvent e) {
+		public boolean close(WindowEvent e) {
 			synchronized (getLock()) {
 				if (JOptionPane.showConfirmDialog(client, Resources.get("progressbarui.abort.message"),
 						Resources.get("progressbarui.abort.title"), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-					if (teacher != null)
+					if (teacher != null) {
 						teacher.stop();
+					}
 					aborted = true;
 					return false;
 				} else
@@ -694,6 +702,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		protected Object getLock() {
 			return lock;
 		}
+
 	}
 
 	private void doParse(final Collection<Unit> values, TeachClosingListener listener,
@@ -711,12 +720,14 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		StringTokenizer st = new StringTokenizer(initString, ";");
 		while (st.hasMoreElements()) {
 			String s = st.nextToken().trim();
-			if (!s.equals(""))
+			if (!s.equals("")) {
 				namespaces.add(s);
+			}
 		}
-		if (namespaceMenu != null)
+		if (namespaceMenu != null) {
 			namespaceMenu.setText(getString("plugin.teacher.mainmenu.namespace.title",
 					new Object[] { getNamespaces().toString() }));
+		}
 
 	}
 
@@ -725,10 +736,11 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 *          the namespace to set
 	 */
 	private void addNamespace(String namespace) {
-		this.namespaces.add(namespace);
-		if (namespaceMenu != null)
+		namespaces.add(namespace);
+		if (namespaceMenu != null) {
 			namespaceMenu.setText(getString("plugin.teacher.mainmenu.namespace.title",
 					new Object[] { getNamespaces().toString() }));
+		}
 	}
 
 	/**
@@ -736,10 +748,11 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 *          the namespace to set
 	 */
 	private void clearNamespaces() {
-		this.namespaces.clear();
-		if (namespaceMenu != null)
+		namespaces.clear();
+		if (namespaceMenu != null) {
 			namespaceMenu.setText(getString("plugin.teacher.mainmenu.namespace.title",
 					new Object[] { getNamespaces().toString() }));
+		}
 	}
 
 	/**
@@ -755,8 +768,9 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	private String getNamespacesString() {
 		StringBuffer sb = new StringBuffer();
 		for (String s : getNamespaces()) {
-			if (sb.length() > 0)
+			if (sb.length() > 0) {
 				sb.append(";");
+			}
 			sb.append(s);
 		}
 		return sb.toString();
