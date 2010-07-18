@@ -2,7 +2,7 @@
 <installation version="1.0">
   <info>
     <appname>Magellan MemoryWatch Plugin</appname>
-    <appversion>1.0</appversion>
+    <appversion>1.0.1</appversion>
     <appsubpath>Magellan</appsubpath>
     <authors>
       <author name="Thoralf Rickert" email="thoralf@m84.de"/>
