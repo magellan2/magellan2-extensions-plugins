@@ -105,7 +105,8 @@ public class ConnectorPlugin implements MagellanPlugIn, ActionListener{
 	  }
 
 	  /**
-	   * handels the event that one of our Items was selected
+	   * Handles the event that one of our Items was selected.
+	   * 
 	   * @param e the event
 	   */
 	  public void actionPerformed(ActionEvent e) {
