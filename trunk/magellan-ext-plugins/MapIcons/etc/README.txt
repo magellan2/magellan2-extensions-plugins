@@ -1,0 +1,1 @@
+The MapIcons plugin displays several icons in the map to show battles, monsters etc 

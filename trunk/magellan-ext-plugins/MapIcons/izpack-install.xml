@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
+<installation version="1.0">
+  <info>
+    <appname>Magellan MapIcons Plugin</appname>
+    <appversion>0.2</appversion>
+    <appsubpath>Magellan</appsubpath>
+    <authors>
+      <author name="Fiete Fietz" email="sf@fietefietz.de"/>
+    </authors>
+    <url>http://magellan-client.sourceforge.net/</url>
+    <uninstaller write="no"/>
+    <javaversion>1.6</javaversion>
+  </info>
+  
+  <guiprefs width="640" height="480" resizable="no"/>
+  
+  <locale>
+    <langpack iso3="eng"/>
+    <langpack iso3="deu"/>
+  </locale>
+  
+  <resources>
+    <res id="InfoPanel.info"   src="README.txt"/>
+    <res id="useNativeLAF"     src="README.txt"/>
+  </resources>
+
+  <panels>
+    <panel classname="HelloPanel"/>
+    <panel classname="InfoPanel"/>
+    <panel classname="MagellanPluginTargetPanel"/> 
+    <!--<panel classname="PacksPanel"/>-->
+    <panel classname="InstallPanel"/>
+    <panel classname="SimpleFinishPanel"/>
+  </panels>
+
+  <packs>
+    <pack name="MapIcons Plugin for Magellan2" required="yes">
+      <description>A plugin for Magellan2 for easily visualizing more messages from the report.</description>
+      <file src="doc"                            targetdir="$INSTALL_PATH/doc/mapicons"/>
+      <file src="README.txt"                     targetdir="$INSTALL_PATH/doc/mapicons"/>
+      <file src="mapicons-plugin.jar"             targetdir="$INSTALL_PATH/plugins"/>
+      <file src="etc"                            targetdir="$INSTALL_PATH"/>
+      <file src="lib"                            targetdir="$INSTALL_PATH"/>
+    </pack>
+  </packs>
+</installation>
