@@ -1,0 +1,4 @@
+
+2010-10-30 - Fiete <sf@fietefietz.de>
+	* start coding
+  
