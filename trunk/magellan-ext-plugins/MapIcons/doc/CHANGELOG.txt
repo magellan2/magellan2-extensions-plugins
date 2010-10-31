@@ -1,4 +1,7 @@
 
+2010-10-31 - Fiete <sf@fietefietz.de>
+	* initial release 0.2 to the Monopol and the forum
+
 2010-10-30 - Fiete <sf@fietefietz.de>
 	* start coding
   
