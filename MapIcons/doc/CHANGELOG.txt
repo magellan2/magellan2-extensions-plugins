@@ -1,3 +1,9 @@
+2010-11-04 - Fiete <sf@fietefietz.de>
+	* release 0.3
+	* added Hunger
+	* added special events
+	* added thief-messages
+	* added short cut (ALT + M) for toggling the icons
 
 2010-10-31 - Fiete <sf@fietefietz.de>
 	* initial release 0.2 to the Monopol and the forum
