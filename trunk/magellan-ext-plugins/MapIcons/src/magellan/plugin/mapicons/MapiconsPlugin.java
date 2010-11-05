@@ -42,7 +42,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	
 
-	public static final String version="0.3";
+	public static final String version="0.4";
 	
 	private Client client = null;
 	
@@ -265,7 +265,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private void initShortcuts(){
 		shortcuts = new ArrayList<KeyStroke>();
 		// 0: toggle Map Icons
-	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_MASK));
+	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
 	    
 	    DesktopEnvironment.registerShortcutListener(this);
 	}
