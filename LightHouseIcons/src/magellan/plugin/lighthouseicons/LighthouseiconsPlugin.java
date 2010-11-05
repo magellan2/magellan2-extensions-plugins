@@ -3,9 +3,12 @@ package magellan.plugin.lighthouseicons;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -13,8 +16,11 @@ import java.util.StringTokenizer;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.KeyStroke;
 
 import magellan.client.Client;
+import magellan.client.desktop.DesktopEnvironment;
+import magellan.client.desktop.ShortcutListener;
 import magellan.client.extern.MagellanPlugIn;
 import magellan.client.swing.map.MarkingsImageCellRenderer;
 import magellan.client.swing.preferences.PreferencesFactory;
@@ -24,6 +30,7 @@ import magellan.library.GameData;
 import magellan.library.Region;
 import magellan.library.Unit;
 import magellan.library.Region.Visibility;
+import magellan.library.event.GameDataEvent;
 import magellan.library.gamebinding.EresseaConstants;
 import magellan.library.rules.BuildingType;
 import magellan.library.rules.RegionType;
@@ -32,9 +39,9 @@ import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
 
 
-public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener {
+public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutListener {
 
-	public static final String version="0.1";
+	public static final String version="0.2";
 	
 	private Client client = null;
 	
@@ -48,6 +55,11 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener {
 	private static final String MAPICON_LIGHTHOUSERANGE = "lh_range.gif";
 	private static final String MAPICON_LIGHTHOUSERANGE_OTHER = "lh_range_other.gif";
 
+	// shortcuts
+	private List<KeyStroke> shortcuts;
+	
+	private boolean mapIcons_showing_all = true;
+	
 	/* (non-Javadoc)
 	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
@@ -55,6 +67,27 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		log.info(getName() + ": action " + e.getActionCommand());
 
+		
+		// toggleIcons
+		if (e.getActionCommand().equalsIgnoreCase("toggleIcons")){
+			new Thread(new Runnable() {
+				public void run() {
+					if (mapIcons_showing_all){
+						// jetzt zu sehen -> ausschalten
+						removeMyRegionIcons();
+						mapIcons_showing_all=false;
+					} else {
+						// einschalten
+						processGameData();
+						mapIcons_showing_all=false;
+					}
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+				}
+			}).start();
+		}
+		
+		
+		
 		// showInfo
 		if (e.getActionCommand().equalsIgnoreCase("showInfo")){
 			new Thread(new Runnable() {
@@ -82,6 +115,11 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener {
 
 		JMenu menu = new JMenu(getName());
 		
+		
+		JMenuItem toogleIconsMenu = new JMenuItem(getString("plugin.lighthouseicons.menu.toggleIcons"));
+		toogleIconsMenu.setActionCommand("toggleIcons");
+		toogleIconsMenu.addActionListener(this);
+		menu.add(toogleIconsMenu);
 		
 		
 		JMenuItem showInfo = new JMenuItem(getString("plugin.lighthouseicons.menu.showInfo"));
@@ -112,7 +150,7 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener {
 	 */
 	public void init(Client _client, Properties _properties) {
 		client = _client;
-		
+		initShortcuts();
 		Resources.getInstance().initialize(Client.getMagellanDirectory(), "lighthouseiconsplugin_");
 
 		// initProperties();
@@ -311,6 +349,83 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener {
 				r.removeTag(MarkingsImageCellRenderer.ICON_TAG);
 			}
 		}
+	}
+
+
+	/**
+	 * init the shortcuts
+	 */
+	private void initShortcuts(){
+		shortcuts = new ArrayList<KeyStroke>();
+		// 0: toggle Map Icons
+	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
+	    
+	    DesktopEnvironment.registerShortcutListener(this);
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see magellan.client.desktop.ShortcutListener#getListenerDescription()
+	 */
+	public String getListenerDescription() {
+		return getString("plugin.lighthouseicons.shortcuts.description");
+	}
+
+
+	/* (non-Javadoc)
+	 * @see magellan.client.desktop.ShortcutListener#getShortcutDescription(javax.swing.KeyStroke)
+	 */
+	public String getShortcutDescription(KeyStroke stroke) {
+		int index = shortcuts.indexOf(stroke);
+	    return getString("plugin.lighthouseicons.shortcuts.description." + String.valueOf(index));
+	}
+
+
+	/* (non-Javadoc)
+	 * @see magellan.client.desktop.ShortcutListener#getShortCuts()
+	 */
+	public Iterator<KeyStroke> getShortCuts() {
+		return shortcuts.iterator();
+	}
+
+
+	/**
+	   * This method is called when a shortcut from getShortCuts() is recognized.
+	   * 
+	   * @param shortcut
+	   *          DOCUMENT-ME
+	   */
+	public void shortCut(KeyStroke shortcut) {
+		int index = shortcuts.indexOf(shortcut);
+
+	    switch (index) {
+	    case -1:
+	      break; // unknown shortcut
+
+	    case 0:
+	      // Toggle MapIcons
+	      if (mapIcons_showing_all){
+	    	  // ausschalten
+	    	  new Thread(new Runnable() {
+					public void run() {
+						removeMyRegionIcons();
+						mapIcons_showing_all = false;
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}).start();
+	      } else {
+	    	  // anschalten
+	    	  new Thread(new Runnable() {
+					public void run() {
+						processGameData();
+						mapIcons_showing_all = true;
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}).start(); 
+	      }
+
+	      break;
+	    }
 	}
 	
 	
