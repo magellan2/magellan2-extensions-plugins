@@ -1,3 +1,7 @@
+2010-11-05 - Fiete <sf@fietefietz.de>
+	* release 0.4
+	* changed shortcut to CTRL+L
+
 2010-11-04 - Fiete <sf@fietefietz.de>
 	* release 0.3
 	* added Hunger
