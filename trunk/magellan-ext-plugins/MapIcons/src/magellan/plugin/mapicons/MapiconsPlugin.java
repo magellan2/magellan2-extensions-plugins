@@ -347,10 +347,15 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		if (f.getBattles()!=null && f.getBattles().size()>0){
 			for (Battle b:f.getBattles()){
 				Region r = gd.getRegion(b.getID());
-				if (!regionsBattles.contains(r)){
-					regionsBattles.add(r);
-					// debug
-					// log.info(getName() +  ": found " + r.getName() + " as battle-region");
+				if (r==null){
+      				// region with battle disappeared from game data
+      				log.info(getName() + " cannot display battle (missing region):" + b.toString());
+				} else {
+					if (!regionsBattles.contains(r)){
+						regionsBattles.add(r);
+						// debug
+						// log.info(getName() +  ": found " + r.getName() + " as battle-region");
+					}
 				}
 			}
 		}
@@ -404,6 +409,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			}
 		}
 		// Tags setzen
+		
 		for (Region r:regionsHunger){
 			setRegionIcon(MAPICON_HUNGER,r);
 		}
@@ -448,9 +454,15 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		          			// yep, dies ist eine Hunger Message und wir
 		          			// haben regionskoords dafür
 		          			Region r = gd.getRegion(coordinate);
-		          			if (!(regionsHunger.contains(r))){
-		          				// log.info("Debug: added hunger region: " + r.toString());
-		          				regionsHunger.add(r);
+		          			
+		          			if (r==null){
+		          				// region with hunger disappeared from game data
+		          				log.info(getName() + " cannot display message (missing region):" + msg.getText());
+		          			} else {
+			          			if (!(regionsHunger.contains(r))){
+			          				// log.info("Debug: added hunger region: " + r.toString());
+			          				regionsHunger.add(r);
+			          			}
 		          			}
 		          		}
 		          		
@@ -701,6 +713,10 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 */
 	private void setRegionIcon(String iconname, Region r){
 		String finalIconName = MapiconsPlugin.myIconPREFIX + iconname;
+		if (r==null){
+			log.error(getName() + ": error: region is null, iconname: " + iconname);
+			return;
+		}
 		if(r.containsTag(MarkingsImageCellRenderer.ICON_TAG)) {
 			StringTokenizer st = new StringTokenizer(r.getTag(MarkingsImageCellRenderer.ICON_TAG), " ");
 			while(st.hasMoreTokens()) {
