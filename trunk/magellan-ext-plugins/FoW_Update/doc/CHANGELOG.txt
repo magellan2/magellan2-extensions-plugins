@@ -1,0 +1,7 @@
+2010-11-09 - Fiete <sf@fietefietz.de>
+	* added "About" menu
+	* released Version 0.2
+	
+2010-11-05 - Fiete <sf@fietefietz.de>
+	* start coding
+  
