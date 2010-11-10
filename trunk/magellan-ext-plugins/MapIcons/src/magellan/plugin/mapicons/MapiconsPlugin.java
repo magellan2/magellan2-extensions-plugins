@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
@@ -23,8 +24,10 @@ import magellan.client.desktop.ShortcutListener;
 import magellan.client.extern.MagellanPlugIn;
 import magellan.client.swing.map.MarkingsImageCellRenderer;
 import magellan.client.swing.preferences.PreferencesFactory;
+import magellan.library.Alliance;
 import magellan.library.Battle;
 import magellan.library.CoordinateID;
+import magellan.library.EntityID;
 import magellan.library.Faction;
 import magellan.library.GameData;
 import magellan.library.Message;
@@ -42,7 +45,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	
 
-	public static final String version="0.4";
+	public static final String version="0.5";
 	
 	private Client client = null;
 	
@@ -58,9 +61,15 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private static final String MAPICON_SPECIALEVENT = "specialevents.gif";
 	private static final String MAPICON_THIEF = "dieb.gif";
 	
+	private static final String MAPICON_GUARD_FRIEND = "guard_friend.gif";
+	private static final String MAPICON_GUARD_ENEMY = "guard_enemy.gif";
+	
 	private static final String MONSTER_FACTION = "ii";
 	
 	private boolean mapIcons_showing_all = true;
+	private boolean mapIcons_showing_Guarding = false;
+	
+	private JCheckBoxMenuItem showGuardMenu;
 	
 	// shortcuts
 	private List<KeyStroke> shortcuts;
@@ -177,6 +186,22 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			}).start();
 		}
 		
+		// showGuard
+		if (e.getActionCommand().equalsIgnoreCase("showGuard")){
+			new Thread(new Runnable() {
+				public void run() {
+					mapIcons_showing_Guarding = !mapIcons_showing_Guarding;
+					showGuardMenu.setSelected(mapIcons_showing_Guarding);
+					if (mapIcons_showing_all){
+						processGameData();
+						mapIcons_showing_all = true;
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}
+			}).start();
+		}
+		
+		
 		// showInfo
 		if (e.getActionCommand().equalsIgnoreCase("showInfo")){
 			new Thread(new Runnable() {
@@ -214,6 +239,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		recreateAllIconsMenu.addActionListener(this);
 		menu.add(recreateAllIconsMenu);
 		
+		menu.addSeparator();
+		showGuardMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showGuard"));
+		showGuardMenu.setActionCommand("showGuard");
+		showGuardMenu.setSelected(mapIcons_showing_Guarding);
+		showGuardMenu.addActionListener(this);
+		menu.add(showGuardMenu);
 		
 		menu.addSeparator();
 		
@@ -309,11 +340,17 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private void processGameData(){
 		if (gd == null) {return;}
 		// die einzelnen Bereiche aufrufen..
+		if (mapIcons_showing_Guarding){
+			log.info(getName() +  " set " + this.setGuarding() + " regions with guard information");
+		}
 		log.info(getName() +  " found " + this.searchBattles() + " battle-regions");
 		log.info(getName() +  " found " + this.searchMonsters() + " regions with monsters");
 		log.info(getName() +  " found " + this.searchHunger() + " regions with hunger");
 		log.info(getName() +  " found " + this.searchSpecialEvents() + " regions with special events");
 		log.info(getName() +  " found " + this.searchThiefs() + " regions with thief-events");
+		
+		
+		
 	}
 	
 	/**
@@ -392,6 +429,57 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 				}
 			}
 		}
+		return erg;
+	}
+	
+	/**
+	 * Setzt freundliche und feindliche Bewachung
+	 * @return
+	 */
+	private int setGuarding(){
+		int erg=0;
+		for (Region r:gd.regions().values()){
+			erg += setGuardingRegion(r);
+		}
+		return erg;
+	}
+	
+	
+	private int setGuardingRegion(Region r){
+		int erg=0;
+		boolean friendly = false;
+		boolean enemy = false;
+		if (r.getGuards()!=null && r.getGuards().size()>0){
+			for (Unit u:r.getGuards()){
+				boolean actFriendly=false;
+				if (u.isWeightWellKnown()){
+					actFriendly=true;
+				}
+				if (u.getFaction()!=null && !u.isSpy() && u.getFaction().isPrivileged()){
+					actFriendly=true;
+				}
+				
+				if (u.getFaction()!=null && !u.isSpy() && hasHelpGuard(u.getFaction())){
+					actFriendly=true;
+				}
+				if (actFriendly){
+					friendly=true;
+				} else {
+					enemy = true;
+				}
+			}
+		}
+		
+		if (friendly){
+			this.setRegionIcon(MAPICON_GUARD_FRIEND, r);
+			erg=1;
+		}
+		if (enemy){
+			this.setRegionIcon(MAPICON_GUARD_ENEMY, r);
+			erg=1;
+		}
+		
+		
 		return erg;
 	}
 	
@@ -771,6 +859,32 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 				r.removeTag(MarkingsImageCellRenderer.ICON_TAG);
 			}
 		}
+	}
+	
+	
+	/**
+	 * Prüft, ob eine priviligierte Faction zu _f HELFE BEWACHE hat
+	 * @param _f zu prüfende Faction
+	 * @return true or false
+	 */
+	public boolean hasHelpGuard(Faction _f) {
+		if(gd.factions() != null) {
+			for(Faction f:gd.factions().values()) {
+				if(f.isPrivileged() && (f.getAllies() != null)) { // privileged
+
+					for (Alliance alliance:f.getAllies().values()){
+						Faction ally = alliance.getFaction();
+						if (ally.equals(_f)){
+							if (alliance.getState(16)){
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 	
 	
