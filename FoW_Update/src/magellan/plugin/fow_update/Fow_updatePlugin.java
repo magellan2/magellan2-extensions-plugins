@@ -53,11 +53,7 @@ public class Fow_updatePlugin implements MagellanPlugIn, ActionListener {
 		toogleIconsMenu.setActionCommand("showInfo");
 		toogleIconsMenu.addActionListener(this);
 		menu.add(toogleIconsMenu);
-		
-		
-		
-		
-		
+
 		items.add(menu);
 
 		return items;
@@ -83,9 +79,7 @@ public class Fow_updatePlugin implements MagellanPlugIn, ActionListener {
 		log = Logger.getInstance(Fow_updatePlugin.class);
 		client = _client;
 		log.info(getName() + " initialized (Client)...");
-		
-		
-		
+
 	}
 	
 	
@@ -98,8 +92,8 @@ public class Fow_updatePlugin implements MagellanPlugIn, ActionListener {
 		// init the report
 		gd = data;
 		log.info(getName() + " initialized with new GameData...");
-		adjustFogOfWar2Visibility();
-		log.info(getName() + " finished with Fog of War");
+		int counter = adjustFogOfWar2Visibility();
+		log.info(getName() + " finished with Fog of War, lifted " + counter + " fogs");
 	}
 	/* (non-Javadoc)
 	 * @see magellan.client.extern.MagellanPlugIn#quit(boolean)
@@ -114,15 +108,18 @@ public class Fow_updatePlugin implements MagellanPlugIn, ActionListener {
 	   * 
 	   * @param data World
 	   */
-	  private void adjustFogOfWar2Visibility() {
+	  private int adjustFogOfWar2Visibility() {
+		int erg = 0;
 	    if (gd.regions()!= null) {
 	      for (Region r : gd.regions().values()) {
 	        r.setFogOfWar(-1);
 	        if (r.getVisibility().greaterEqual(Visibility.LIGHTHOUSE)) {
 	          r.setFogOfWar(0);
+	          erg++;
 	        }
 	      }
 	    }
+	    return erg;
 	  }
 	  
 	  
