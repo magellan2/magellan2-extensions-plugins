@@ -26,15 +26,17 @@ import magellan.client.swing.map.MarkingsImageCellRenderer;
 import magellan.client.swing.preferences.PreferencesFactory;
 import magellan.library.Alliance;
 import magellan.library.Battle;
+import magellan.library.Building;
 import magellan.library.CoordinateID;
-import magellan.library.EntityID;
 import magellan.library.Faction;
 import magellan.library.GameData;
 import magellan.library.Message;
 import magellan.library.Region;
 import magellan.library.Unit;
+import magellan.library.Region.Visibility;
 import magellan.library.event.GameDataEvent;
 import magellan.library.impl.MagellanMessageImpl;
+import magellan.library.rules.CastleType;
 import magellan.library.rules.Race;
 import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
@@ -45,7 +47,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	
 
-	public static final String version="0.5";
+	public static final String version="0.6";
 	
 	private Client client = null;
 	
@@ -64,12 +66,16 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private static final String MAPICON_GUARD_FRIEND = "guard_friend.gif";
 	private static final String MAPICON_GUARD_ENEMY = "guard_enemy.gif";
 	
+	private static final String MAPICON_EMPTY_TOWER = "empty_tower.gif";
+	
 	private static final String MONSTER_FACTION = "ii";
 	
 	private boolean mapIcons_showing_all = true;
 	private boolean mapIcons_showing_Guarding = false;
+	private boolean mapIcons_showing_Empty_Towers = false;
 	
 	private JCheckBoxMenuItem showGuardMenu;
+	private JCheckBoxMenuItem showEmptyTowersMenu;
 	
 	// shortcuts
 	private List<KeyStroke> shortcuts;
@@ -192,15 +198,36 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 				public void run() {
 					mapIcons_showing_Guarding = !mapIcons_showing_Guarding;
 					showGuardMenu.setSelected(mapIcons_showing_Guarding);
+					log.info(getName() + ": switching showing guard info to " + mapIcons_showing_Guarding);
 					if (mapIcons_showing_all){
+						if (!mapIcons_showing_Guarding){
+							removeMyRegionIcons();
+						}
 						processGameData();
-						mapIcons_showing_all = true;
 						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 					}
 				}
 			}).start();
 		}
 		
+		
+		// empty_towers
+		if (e.getActionCommand().equalsIgnoreCase("emptyTower")){
+			new Thread(new Runnable() {
+				public void run() {
+					mapIcons_showing_Empty_Towers = !mapIcons_showing_Empty_Towers;
+					showEmptyTowersMenu.setSelected(mapIcons_showing_Empty_Towers);
+					log.info(getName() + ": switching showing empty towers info to " + mapIcons_showing_Empty_Towers);
+					if (mapIcons_showing_all){
+						if (!mapIcons_showing_Empty_Towers){
+							removeMyRegionIcons();
+						}
+						processGameData();
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}
+			}).start();
+		}
 		
 		// showInfo
 		if (e.getActionCommand().equalsIgnoreCase("showInfo")){
@@ -245,6 +272,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		showGuardMenu.setSelected(mapIcons_showing_Guarding);
 		showGuardMenu.addActionListener(this);
 		menu.add(showGuardMenu);
+		
+		showEmptyTowersMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showEmptyTowers"));
+		showEmptyTowersMenu.setActionCommand("emptyTower");
+		showEmptyTowersMenu.setSelected(mapIcons_showing_Empty_Towers);
+		showEmptyTowersMenu.addActionListener(this);
+		menu.add(showEmptyTowersMenu);
 		
 		menu.addSeparator();
 		
@@ -309,6 +342,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		// init the report
 		gd = data;
 		log.info(getName() + " initialized with new GameData...");
+		removeMyRegionIcons();
 		processGameData();
 		
 	}
@@ -349,7 +383,9 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		log.info(getName() +  " found " + this.searchSpecialEvents() + " regions with special events");
 		log.info(getName() +  " found " + this.searchThiefs() + " regions with thief-events");
 		
-		
+		if (mapIcons_showing_Empty_Towers){
+			log.info(getName() +  " found " + this.setEmptyTowers() + " regions with empty towers");
+		}
 		
 	}
 	
@@ -477,6 +513,45 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		if (enemy){
 			this.setRegionIcon(MAPICON_GUARD_ENEMY, r);
 			erg=1;
+		}
+		
+		
+		return erg;
+	}
+	
+	
+	/**
+	 * Setzt freundliche und feindliche Bewachung
+	 * @return
+	 */
+	private int setEmptyTowers(){
+		int erg=0;
+		for (Region r:gd.regions().values()){
+			erg += setEmptyTowersRegion(r);
+		}
+		return erg;
+	}
+	
+	
+	private int setEmptyTowersRegion(Region r){
+		int erg=0;
+		if (r.buildings()==null || r.buildings().size()==0){
+			return erg;
+		}
+		
+		if (r.getVisibility().lessThan(Visibility.TRAVEL)) {
+			return erg;
+		}
+		
+		for (Building b:r.buildings()){
+			if (b.getBuildingType()!=null){
+				if (b.getBuildingType() instanceof CastleType){
+					if (b.getModifiedOwnerUnit()==null){
+						this.setRegionIcon(MAPICON_EMPTY_TOWER, r);
+						return 1;
+					}
+				}
+			}
 		}
 		
 		
