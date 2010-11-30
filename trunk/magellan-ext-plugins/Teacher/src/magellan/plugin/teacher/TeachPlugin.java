@@ -44,7 +44,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.JTextComponent;
@@ -126,6 +128,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	public static final String PERCENTFULL_PROPERTY = "plugins.teacher.percentfull";
 
+	public static final String MINDIST_PROPERTY = "plugins.teacher.mindist";
+
 	private static Logger log = null;
 
 	private Client client = null;
@@ -146,6 +150,10 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	public boolean confirmUntaughtStudents = false;
 
 	public int percentFull;
+
+	public int minDist = Teacher.TEACH_DIFF;
+
+	public double quality = 1;
 
 	JMenuItem namespaceMenu;
 
@@ -215,8 +223,11 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 				confirmTaughtStudents ? "true" : "false").equals("true");
 		confirmUntaughtStudents = properties.getProperty(CONFIRMUNTAUGHTSTUDENTS_PROPERTY,
 				confirmUntaughtStudents ? "true" : "false").equals("true");
-		percentFull = Integer.parseInt(properties.getProperty(PERCENTFULL_PROPERTY, String
-				.valueOf(percentFull)));
+		percentFull = Integer.parseInt(properties.getProperty(PERCENTFULL_PROPERTY,
+				String.valueOf(percentFull)));
+		minDist = Integer.parseInt(properties.getProperty(MINDIST_PROPERTY, String.valueOf(minDist)));
+
+		// we currently don't save the rounds property
 	}
 
 	/**
@@ -293,7 +304,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	 */
 	public JMenuItem createContextMenu(final EventDispatcher dispatcher, final GameData data,
 			final UnitContainer container, final Collection<?> selectedObjects) {
-		JMenu menu = new JMenu(getString("plugin.teacher.contextmenu.title"));
+		JMenu menu = new JMenu(getString("plugin.teacher.contextmenu.title", container));
 
 		// do teaching for this unit container
 		JMenuItem editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.execute.title"));
@@ -371,9 +382,9 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.deleteall.title"));
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (JOptionPane.showConfirmDialog(client, Resources
-						.get("plugin.teacher.delall.confirm.message"), Resources
-						.get("plugin.teacher.delall.confirm.title"), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+				if (JOptionPane.showConfirmDialog(client,
+						Resources.get("plugin.teacher.delall.confirm.message"),
+						Resources.get("plugin.teacher.delall.confirm.title"), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 					Teacher.delAllOrders(container.units(), getNamespaces());
 					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 				}
@@ -664,6 +675,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 				t.setPercentFull(percentFull);
 				t.setConfirmTaughtStudents(confirmTaughtStudents);
 				t.setConfirmUntaughtStudents(confirmUntaughtStudents);
+				t.setMinDist(minDist);
+				t.setQuality(quality);
 
 				t.mainrun();
 				listener.setTeacher(null);
@@ -813,6 +826,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		private JCheckBox chkConfirmUntaughtStudents;
 		private JSlider sldPercentTeacher;
 		private JPanel westPanel;
+		private JSpinner spiMinDist;
+		private JSpinner spiQuality;
 
 		public TeachPreferences() {
 			initGUI();
@@ -856,6 +871,16 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			chkConfirmUntaughtStudents = new JCheckBox(
 					getString("plugin.teacher.preferences.label.confirmuntaughtstudents"));
 
+			JLabel lblMinDist = new JLabel(getString("plugin.teacher.preferences.label.mindist"));
+			spiMinDist = new JSpinner(new SpinnerNumberModel(Teacher.TEACH_DIFF, Teacher.TEACH_DIFF, 99,
+					1));
+
+			JLabel lblQuality = new JLabel(getString("plugin.teacher.preferences.label.quality"));
+			spiQuality = new JSpinner(new SpinnerNumberModel(1, 0.05, 20, .1)); // new JSpinner(new
+																																					// SpinnerNumberModel(0,
+																																					// 0, 100000, 1));
+			lblQuality.setLabelFor(spiQuality);
+
 			// GridBagConstraints con = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
 			// GridBagConstraints.HORIZONTAL, new Insets(3, 3, 3, 3), 0, 0);
 			GridBagConstraints con = new GridBagConstraints();
@@ -866,6 +891,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			con.insets.left = 0;
 			con.gridx = 0;
 			con.gridy = 0;
+			con.gridwidth = 2;
 			panel.add(lblNamespace, con);
 
 			con.insets.left = 0;
@@ -893,6 +919,20 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 			con.gridy++;
 			panel.add(chkConfirmUntaughtStudents, con);
+
+			con.gridwidth = 1;
+			con.gridy++;
+			panel.add(spiMinDist, con);
+			con.gridx++;
+			panel.add(lblMinDist, con);
+			con.gridx--;
+
+			con.gridy++;
+			panel.add(spiQuality, con);
+			con.gridx++;
+			panel.add(lblQuality, con);
+			con.gridx--;
+			con.gridwidth = 2;
 
 			con.gridx = 1;
 			con.gridy = 0;
@@ -927,6 +967,12 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 					: "false");
 			percentFull = sldPercentTeacher.getValue();
 			properties.setProperty(PERCENTFULL_PROPERTY, String.valueOf(percentFull));
+
+			minDist = (Integer) spiMinDist.getValue();
+			properties.setProperty(MINDIST_PROPERTY, String.valueOf(minDist));
+
+			quality = (Double) spiQuality.getValue();
+			// we currently don't save the quality property
 		}
 
 		public Component getComponent() {
@@ -944,6 +990,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			chkConfirmTaughtStudents.setSelected(confirmTaughtStudents);
 			chkConfirmUntaughtStudents.setSelected(confirmUntaughtStudents);
 			sldPercentTeacher.setValue(percentFull);
+			spiMinDist.setValue(minDist);
+			spiQuality.setValue(quality);
 		}
 
 	}
@@ -964,7 +1012,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		// }
 	}
 
-	protected static String getString(String key, Object[] args) {
+	protected static String getString(String key, Object... args) {
 		String value = getString(key);
 		if (value != null) {
 			value = new MessageFormat(value).format(args);
