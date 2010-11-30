@@ -1,3 +1,6 @@
+2010-09-28 (Build 58)- stm (stm_@users.sourceforge.net)
+    * minimum skill distance between teachers and students now configurable in options
+
 2010-02-05 (Build 53)- stm (stm_@users.sourceforge.net)
     * new versions for 2.0.5 stable and nightly
 

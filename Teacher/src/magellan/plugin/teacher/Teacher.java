@@ -74,11 +74,17 @@ public class Teacher {
 
 	private int percentFull;
 
+	private int minDist;
+
+	private double quality;
+
 	private UserInterface ui;
 
 	private SUnit[] sUnits;
 
 	public static final String delim = " ";
+
+	public static final int TEACH_DIFF = 2;
 
 	Random random = new Random();
 
@@ -101,13 +107,14 @@ public class Teacher {
 	 */
 	Teacher(Collection<Unit> units, Collection<String> namespaces, UserInterface ui) {
 		this.units = units;
-		if (namespaces == null || namespaces.size() == 0)
+		if (namespaces == null || namespaces.size() == 0) {
 			this.namespaces = Collections.singletonList("");
-		else
+		} else {
 			this.namespaces = new LinkedList<String>(namespaces);
-		if (ui != null)
+		}
+		if (ui != null) {
 			this.ui = ui;
-		else {
+		} else {
 			this.ui = NullUserInterface.getInstance();
 		}
 	}
@@ -167,6 +174,7 @@ public class Teacher {
 				}
 			}
 
+			@Override
 			public String toString() {
 				return unit.toString() + " " + getSkillName(getLearning()) + " " + students + " " + teacher;
 			}
@@ -188,8 +196,9 @@ public class Teacher {
 			}
 
 			public void removeTeacher(int t) {
-				if (teacher == t)
+				if (teacher == t) {
 					teacher = -1;
+				}
 			}
 
 			public int getNumTeachers() {
@@ -229,6 +238,7 @@ public class Teacher {
 				return -1;
 			}
 
+			@Override
 			public Info clone() {
 				try {
 					return (Info) super.clone();
@@ -270,14 +280,15 @@ public class Teacher {
 		 * @param units
 		 */
 		public Solution(SUnit[] units) {
-			this.units = units;
-			init();
+			this(units, false);
 		}
 
-		public Solution(SUnit[] units, boolean b) {
+		public Solution(SUnit[] units, boolean initToCurrent) {
 			this.units = units;
 			init();
-			adjustToCurrentOrders();
+			if (initToCurrent) {
+				adjustToCurrentOrders();
+			}
 		}
 
 		private void adjustToCurrentOrders() {
@@ -315,7 +326,7 @@ public class Teacher {
 		}
 
 		void init() {
-			this.infos = new Info[this.units.length];
+			infos = new Info[units.length];
 			for (int i = 0; i < infos.length; ++i) {
 				Info info = new Info(units[i]);
 				infos[i] = info;
@@ -324,6 +335,7 @@ public class Teacher {
 			result = 0;
 		}
 
+		@Override
 		public Solution clone() {
 			Solution result = null;
 			try {
@@ -371,13 +383,21 @@ public class Teacher {
 					int maxDiff = teacher.getSUnit().getMaximumDifference(info.getLearning());
 					if (maxDiff == 1) {
 						value = 0;
-					} else if (tLevel - sLevel < 2) {
-						// log.warn("diff<2");
-						value = 0;
+					} else if (tLevel - sLevel < TEACH_DIFF) {
+						// log.warn("diff<2: " + teacher.getUnit() + " " + info.getUnit() + " "
+						// + getSkillName(info.getLearning()));
+						// value = 0;
+					} else if (tLevel - sLevel < getMinDist()) {
+						if (maxDiff != 0 && maxDiff < tLevel - sLevel) {
+							value *= (1 + WRONGLEVEL_VALUE * sLevel / tLevel);
+						} else {
+							value *= (1 + WRONGLEVEL_VALUE);
+						}
 					} else if (maxDiff != 0 && maxDiff < tLevel - sLevel) {
-						value *= (1 + WRONGLEVEL_VALUE * sLevel / (double) tLevel);
-					} else
+						value *= (1 + WRONGLEVEL_VALUE * sLevel / tLevel);
+					} else {
 						value *= 2;
+					}
 				}
 			}
 			return value;
@@ -389,10 +409,10 @@ public class Teacher {
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
 		 */
 		public int compareTo(Solution o) {
-			double e2 = ((Solution) o).evaluate();
+			double e2 = (o).evaluate();
 			double e1 = evaluate();
 
-			return (int) (e2 > e1 ? (int) (e2 - e1 + 1) : e2 == e1 ? 0 : (int) (e2 - e1 - 1));
+			return (e2 > e1 ? (int) (e2 - e1 + 1) : e2 == e1 ? 0 : (int) (e2 - e1 - 1));
 		}
 
 		/**
@@ -421,16 +441,18 @@ public class Teacher {
 							// become teacher
 							info.setLearning(null);
 							info.students = 0;
-							if (info.getTeacher() != -1)
+							if (info.getTeacher() != -1) {
 								infos[info.getTeacher()].students -= info.getUnit().getModifiedPersons();
+							}
 							info.clearTeachers();
 						}
 					}
 
 					// assign new teacher
 					if (info.getLearning() != null && random.nextDouble() < teacherProb) {
-						if (info.getTeacher() != -1)
+						if (info.getTeacher() != -1) {
 							infos[info.getTeacher()].students -= info.getUnit().getModifiedPersons();
+						}
 						info.clearTeachers();
 					}
 				}
@@ -470,8 +492,9 @@ public class Teacher {
 						info.setLearning(maxT);
 						changed = true;
 						fixes++;
-					} else
+					} else {
 						info.setLearning(oldTalent);
+					}
 				}
 			}
 			return fixes;
@@ -489,8 +512,9 @@ public class Teacher {
 				if (info.getLearning() == null) {
 					teacherSet.add(new Integer(i));
 				}
-				if (info.getTeacher() != -1 && infos[info.getTeacher()].getLearning() != null)
+				if (info.getTeacher() != -1 && infos[info.getTeacher()].getLearning() != null) {
 					info.clearTeachers();
+				}
 
 			}
 
@@ -564,12 +588,13 @@ public class Teacher {
 			for (int i = 0; i < infos.length; ++i) {
 				Info info = infos[i];
 				Info parent;
-				if (parents[i] % 2 == 0)
+				if (parents[i] % 2 == 0) {
 					// if (i<=crossoverPoint1)// || (i>crossoverPoint2 && i<=crossoverPoint3) ||
 					// (i>crossoverPoint4))
 					parent = solution.infos[i];
-				else
+				} else {
 					parent = solution2.infos[i];
+				}
 				info.setLearning(parent.getLearning());
 				info.students = 0;
 				info.clearTeachers();
@@ -579,15 +604,17 @@ public class Teacher {
 			for (int i = 0; i < infos.length; ++i) {
 				Info student = infos[i];
 				Info parent;
-				if (parents[i] % 2 == 0)
+				if (parents[i] % 2 == 0) {
 					// if (i<=crossoverPoint1)// || (i>crossoverPoint2 && i<=crossoverPoint3) ||
 					// (i>crossoverPoint4))
 					parent = solution.infos[i];
-				else
+				} else {
 					parent = solution2.infos[i];
+				}
 				if (student.getLearning() != null && parent.getTeacher() != -1) {
-					if (validTeacher(student, parent.getTeacher()))
+					if (validTeacher(student, parent.getTeacher())) {
 						assignTeacher(student, parent.getTeacher());
+					}
 				}
 			}
 			assignTeachers();
@@ -603,12 +630,13 @@ public class Teacher {
 			boolean result = false;
 			if (teacher.getLearning() != null
 					|| teacher.getSUnit().getSkillLevel(student.getLearning()) < student.getSUnit()
-							.getSkillLevel(student.getLearning()) + 2)
+							.getSkillLevel(student.getLearning()) + TEACH_DIFF) {
 				result = false;
-			else
+			} else {
 				result = partial
 						|| teacher.getUnit().getModifiedPersons() * 10 >= teacher.students
 								+ student.getUnit().getModifiedPersons();
+			}
 			return result;
 		}
 
@@ -626,9 +654,8 @@ public class Teacher {
 		Collection<Skill> skills = unit.getModifiedSkills();
 		if (skills != null) {
 			for (Skill skill : skills) {
-				if (skill.getSkillType().getName().equalsIgnoreCase(skillName)) {
+				if (skill.getSkillType().getName().equalsIgnoreCase(skillName))
 					return skill.getLevel();
-				}
 			}
 		}
 		return 0;
@@ -688,8 +715,9 @@ public class Teacher {
 		}
 		for (SUnit student : result) {
 			for (SUnit teacher : result) {
-				if (valid(student, teacher))
+				if (valid(student, teacher)) {
 					student.addTeacher(teacher.getIndex());
+				}
 			}
 		}
 		return result;
@@ -707,8 +735,8 @@ public class Teacher {
 
 			if (student.getTarget(talent) > 0 && diff != 1
 			// && getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent)
-					// <=diff
-					&& getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent) >= 2) {
+			// <=diff
+					&& getLevel(teacher.getUnit(), talent) - getLevel(student.getUnit(), talent) >= TEACH_DIFF) {
 				result = true;
 				break;
 			}
@@ -739,11 +767,13 @@ public class Teacher {
 					String talent = order.getTalent();
 					if (order.isTeachOrder()) {
 						int diff = order.getDiff();
-						if (su == null)
+						if (su == null) {
 							su = new SUnit(this, u);
+						}
 						if (talent.equals(Order.ALL)) {
-							if (u.getModifiedSkills().isEmpty())
+							if (u.getModifiedSkills().isEmpty()) {
 								continue;
+							}
 
 							// add all skills weighted by their level
 							for (Skill s : u.getModifiedSkills()) {
@@ -755,11 +785,12 @@ public class Teacher {
 					} else {
 						int target = order.getTarget();
 						int max = order.getMax();
-						if (su == null)
+						if (su == null) {
 							su = new SUnit(this, u);
-						if (talent.equals(Order.ALL)) {
+						}
+						if (talent.equals(Order.ALL))
 							throw new IllegalArgumentException("L ALL not supported");
-						} else {
+						else {
 							su.addLearn(getSkillIndex(talent), target, max);
 							su.setPrio(orderList.getPrio());
 						}
@@ -774,8 +805,9 @@ public class Teacher {
 
 		if (errorFlag || (su != null && su.getLearnTalents().isEmpty())) {
 			u.setOrdersConfirmed(false);
-			if (setTags)
+			if (setTags) {
 				u.putTag(LEARN_TAG, "error");
+			}
 			if (errorFlag) {
 				u.addOrder("; $$$ teach error: syntax error", false, 0);
 			} else {
@@ -784,8 +816,9 @@ public class Teacher {
 			return null;
 		}
 
-		if (setTags && su != null)
+		if (setTags && su != null) {
 			su.attachTags();
+		}
 		return su;
 	}
 
@@ -824,9 +857,8 @@ public class Teacher {
 						StringTokenizer st = new StringTokenizer(
 								orderLine.substring(start + teachTag.length()), delim, false);
 						// try to read priority
-						if (!st.hasMoreElements()) {
+						if (!st.hasMoreElements())
 							return result;
-						}
 						String first = st.nextToken();
 						double prio = -1;
 						try {
@@ -846,8 +878,9 @@ public class Teacher {
 							// no priority ==> old format
 							while (st.hasMoreElements()) {
 								String talent = first;
-								if (talent == null)
+								if (talent == null) {
 									talent = st.nextToken();
+								}
 								first = null;
 								double talentPrio = Double.parseDouble(st.nextToken());
 								if (Order.ALL.equals(talent)) {
@@ -885,8 +918,9 @@ public class Teacher {
 
 		public void addOrder(Order o) {
 			orders.add(o);
-			if (type.equals(Order.LEARN))
+			if (type.equals(Order.LEARN)) {
 				setPrio(Math.max(getPrio(), o.getPrio()));
+			}
 		}
 
 		/**
@@ -897,12 +931,14 @@ public class Teacher {
 		}
 
 		public void setPrio(double prio) {
-			for (Order o : orders)
+			for (Order o : orders) {
 				o.setPrio(prio);
+			}
 			this.prio = prio;
 
 		}
 
+		@Override
 		public String toString() {
 			return getName();
 		}
@@ -916,8 +952,9 @@ public class Teacher {
 
 		/**
 		 * Returns an order string for this order list like
-		 * <code>"// $stm$L 100 Stangenwaffen 10 99 Ausdauer 5 99</code> for learn orders and <code>"// $stm$T Hiebwaffen 2</code> for
-		 * teach orders. Here, <code>stm</code> is the namespace.
+		 * <code>"// $stm$L 100 Stangenwaffen 10 99 Ausdauer 5 99</code> for learn orders and
+		 * <code>"// $stm$T Hiebwaffen 2</code> for teach orders. Here, <code>stm</code> is the
+		 * namespace.
 		 * 
 		 * @param namespace
 		 * @return
@@ -925,9 +962,9 @@ public class Teacher {
 		public String getName() {
 			StringBuffer sb = new StringBuffer();
 			sb.append("// ");
-			if (type.equals(Order.TEACH))
+			if (type.equals(Order.TEACH)) {
 				sb.append(getTeachTag(namespace));
-			else {
+			} else {
 				sb.append(getLearnTag(namespace));
 				sb.append(" ");
 				sb.append(getPrio());
@@ -954,8 +991,9 @@ public class Teacher {
 	 * @param result
 	 */
 	private static void convertOrder(Unit unit, String talent, double talentPrio, OrderList result) {
-		if (result.getPrio() < talentPrio)
+		if (result.getPrio() < talentPrio) {
 			result.setPrio(talentPrio);
+		}
 
 		result.addOrder(new Order(talent, talentPrio, Math.max(1, getLevel(unit, talent)), 999));
 	}
@@ -978,10 +1016,12 @@ public class Teacher {
 		int maxSkill = 1, minSkill = Integer.MAX_VALUE;
 		for (Skill s : unit.getModifiedSkills()) {
 			int l = s.getLevel();
-			if (l > maxSkill)
+			if (l > maxSkill) {
 				maxSkill = l;
-			if (l < minSkill)
+			}
+			if (l < minSkill) {
 				minSkill = l;
+			}
 		}
 		// add all skills weighted by their level
 		for (Skill s : unit.getModifiedSkills()) {
@@ -1036,17 +1076,19 @@ public class Teacher {
 	 * @return The value of the best solution
 	 */
 	public double mainrun() {
-		sUnits = (SUnit[]) getUnits(false).toArray(new SUnit[0]);
+		sUnits = getUnits(false).toArray(new SUnit[0]);
 		if (sUnits.length == 0)
 			return 0;
 
 		log.info("teaching " + sUnits.length + " units in namespace \"" + namespaces.toString() + "\"");
 
-		final int minRounds = Math.max(40, (int) (sUnits.length));
-		final int maxRounds = Math.max(120, (int) (sUnits.length) * 6);
-		final int popSize = minRounds * 5 / 4;
+		final int minRounds = (int) Math.max(2,
+				Math.round(getQuality() * Math.max(40, (sUnits.length * 3 / 2))));
+		final int maxRounds = (int) Math.max(4,
+				Math.round(getQuality() * Math.max(120, (sUnits.length) * 6)));
+		final int popSize = Math.max(10, minRounds * 5 / 4);
 		final int numMetaRounds = 3;
-		final int numPreSolvedRounds = 3;
+		final int numPreSolvedRounds = 2;
 		final int select = 5;
 
 		ui.setMaximum(numMetaRounds * maxRounds + minRounds + minRounds / 10 + 1);
@@ -1054,8 +1096,9 @@ public class Teacher {
 
 		// the best solution of all runs are collected here
 		Solution[] veryBest = new Solution[numMetaRounds * select * 3 / 2];
-		if (veryBest.length == 0)
+		if (veryBest.length == 0) {
 			veryBest = new Solution[1];
+		}
 		init(veryBest, sUnits, true);
 
 		// do numMetaRounds runs of the evolutionary algorithm
@@ -1072,45 +1115,49 @@ public class Teacher {
 			// do one run of the evol. algo; terminate if max number of rounds is reached or if minimum
 			// number of rounds is reached and the solution quality does not increase any more
 			int round = 0;
-			for (; (round < minRounds || (round < maxRounds && notImproved <= minRounds / 5))
+			for (; (round < minRounds || (round < maxRounds && notImproved <= Math.max(3, minRounds / 5)))
 					&& !stopFlag; ++round) {
-				if (population[0].evaluate() > oldBest)
+				if (population[0].evaluate() > oldBest) {
 					notImproved = 0;
-				else
+				} else {
 					notImproved++;
-				if (best[0] != null)
+				}
+				if (best[0] != null) {
 					oldBest = best[0].evaluate();
-				
-				///////// mutate (sometimes more, sometimes less)
-				if (round % Math.ceil(minRounds / 10) == 0) {
-					mutate(population, Math.min(1 / Math.log(round + 1), .2), numMetaRounds - metaRound - 1);
-				} else
-					mutate(population, Math.min(.3 / Math.log(round + 1), .2), numMetaRounds - metaRound - 1);
+				}
 
-				//////// recombine
+				// /////// mutate (sometimes more, sometimes less)
+				if (round % Math.ceil(minRounds / 10.) == 0) {
+					mutate(population, Math.min(1 / Math.log(round + 1), .2), numMetaRounds - metaRound - 1);
+				} else {
+					mutate(population, Math.min(.3 / Math.log(round + 1), .2), numMetaRounds - metaRound - 1);
+				}
+
+				// ////// recombine
 				recombine(population);
 
-				//////// select
+				// ////// select
 				select(population);
-				
-				/////// fix some solutions (not all, to preserve randomness...)
-				for (int fixed = 0; fixed < population.length; fixed += 2)
+
+				// ///// fix some solutions (not all, to preserve randomness...)
+				for (int fixed = 0; fixed < population.length; fixed += 2) {
 					population[fixed].fix();
-				
+				}
+
 				// remember best solutions
 				best[best.length - 1] = population[0].clone();
 				select(best);
-				if (round == 1 || round % Math.ceil(minRounds / 6) == 0) {
-					log.info(round + " best: " + best[0].evaluate() + " 0: " + population[0].evaluate() + " "
-							+ population.length / 10 + ": " + population[population.length / 10].evaluate() + " "
-							+ (population.length / 10 * 9) + ": "
-							+ population[population.length / 10 * 9].evaluate() + " " + (population.length - 1)
-							+ ": " + population[population.length - 1].evaluate());
+				if (round == 1 || round % Math.ceil(minRounds / 6.) == 0) {
+					log.info(round + "/" + minRounds + " best: " + best[0].evaluate() + " 0: "
+							+ population[0].evaluate() + " " + population.length / 10 + ": "
+							+ population[population.length / 10].evaluate() + " " + (population.length / 10 * 9)
+							+ ": " + population[population.length / 10 * 9].evaluate() + " "
+							+ (population.length - 1) + ": " + population[population.length - 1].evaluate());
 					ui.setProgress((metaRound > 0 ? best[metaRound - 1].evaluate() : "0") + " - "
 							+ population[0].evaluate(), metaRound * maxRounds + round);
 				}
 			}
-			
+
 			// collect best solutions
 			for (int i = 0; i < select - 1; ++i) {
 				veryBest[veryBest.length - 1 - metaRound * select - i] = population[i];
@@ -1132,12 +1179,20 @@ public class Teacher {
 				+ " " + (veryBest.length - 1) + ": " + veryBest[veryBest.length - 1].evaluate());
 		stopFlag = false;
 		for (int round = 0; round < minRounds * 8 && !stopFlag; ++round) {
+			if (round % (2 * minRounds) == 0) {
+				log.info(round + "/" + minRounds * 8 + ": " + veryBest[0].evaluate() + " l/3: "
+						+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
+						+ veryBest[veryBest.length - 1].evaluate());
+			}
+			if (round > 0 && round % (minRounds * 4) == 0) {
+				log.info(fix(veryBest) + " fixes ");
+			}
 			ui.setProgress("" + veryBest[0].evaluate(), numMetaRounds * maxRounds + round);
-			mutate(veryBest, .1, 1);
+			mutate(veryBest, .05 + .1 * (1 - Math.min(1, .2 * round / minRounds)), 1);
 			recombine(veryBest);
 			select(veryBest);
 		}
-		
+
 		// select and return winner
 		select(veryBest);
 		log.info("***** 0: " + veryBest[0].evaluate() + " l/3: "
@@ -1163,7 +1218,7 @@ public class Teacher {
 		for (Unit u : units) {
 			Collection<String> orders = new ArrayList<String>(u.getOrders());
 			for (Iterator<String> it = orders.iterator(); it.hasNext();) {
-				String o = (String) it.next();
+				String o = it.next();
 				int start = o.indexOf("$$$");
 				if (start != -1) {
 					it.remove();
@@ -1174,7 +1229,7 @@ public class Teacher {
 	}
 
 	/**
-	 * Initialize the population with random solutions. If <code>current == true</code> one solution
+	 * Initialize the population with random solutions. If <code>current == true</code> some solutions
 	 * will be the solution implied by the current orders of the units.
 	 * 
 	 * @param population
@@ -1182,13 +1237,16 @@ public class Teacher {
 	 * @param current
 	 */
 	private void init(Solution[] population, SUnit[] units, boolean current) {
+		// log.info(population.length + " " + units.length + " " + current);
 		for (int i = 0; i < population.length; ++i) {
 			population[i] = new Solution(units);
 		}
 		try {
-			if (current)
-				for (int i = 0; i < population.length && i < Math.max(1, Math.log(population.length) - 3); ++i)
+			if (current) {
+				for (int i = 0; i < population.length && i < Math.max(1, Math.log(population.length) - 3); ++i) {
 					population[i] = new Solution(units, true);
+				}
+			}
 		} catch (Exception e) {
 			log.error("orders foul: " + e);
 			e.printStackTrace();
@@ -1199,10 +1257,10 @@ public class Teacher {
 		Arrays.sort(population);
 	}
 
-	private void mutate(Solution[] population, double d, int keepFirst) {
+	private void mutate(Solution[] population, double prob, int keepFirst) {
 		// keep first individual?
 		for (int i = keepFirst; i < population.length / 2; ++i) {
-			population[i].mutate(d);
+			population[i].mutate(prob);
 		}
 
 	}
@@ -1228,8 +1286,9 @@ public class Teacher {
 
 	private int fix(Solution[] veryBest) {
 		int fixes = 0;
-		for (Solution s : veryBest)
+		for (Solution s : veryBest) {
 			fixes += s.fix();
+		}
 		return fixes;
 	}
 
@@ -1245,27 +1304,27 @@ public class Teacher {
 	public static Order getCurrentOrder(Unit u) {
 		List<String> orders = new ArrayList<String>(u.getOrders());
 		Order value = null;
-		for (Iterator<String> it = orders.iterator(); it.hasNext();) {
-			String o = (String) it.next().trim();
-			if (isTeachOrder(o, u)){
-				if (value != null) {
+		for (String string : orders) {
+			String o = string.trim();
+			if (isTeachOrder(o, u)) {
+				if (value != null)
 					return null;
-				}
 				if (o.indexOf(" ") >= 0) {
 					String argument = o.substring(o.indexOf(" ")).trim().toLowerCase();
-					if (argument.trim().length() > 0)
+					if (argument.trim().length() > 0) {
 						value = new Order(argument, 0, true);
+					}
 				}
 
 			}
-			if (isLearnOrder(o, u)){
-				if (value != null) {
+			if (isLearnOrder(o, u)) {
+				if (value != null)
 					return null;
-				}
 				if (o.indexOf(" ") >= 0) {
 					String argument = o.substring(o.indexOf(" ")).trim().toLowerCase();
-					if (argument.trim().length() > 0)
+					if (argument.trim().length() > 0) {
 						value = new Order(o.substring(o.indexOf(" ")).trim().toLowerCase(), 1, 1, 0);
+					}
 				}
 			}
 		}
@@ -1287,12 +1346,14 @@ public class Teacher {
 
 	private static boolean isLearnOrder(String o, Unit u) {
 		Locale locale = u.getFaction().getLocale();
-		return (o.toLowerCase(locale).trim().startsWith(Resources.getOrderTranslation(EresseaConstants.O_LEARN, locale).toLowerCase(locale)));
+		return (o.toLowerCase(locale).trim().startsWith(Resources.getOrderTranslation(
+				EresseaConstants.O_LEARN, locale).toLowerCase(locale)));
 	}
 
 	private static boolean isTeachOrder(String o, Unit u) {
 		Locale locale = u.getFaction().getLocale();
-		return (o.toLowerCase(locale).trim().startsWith(Resources.getOrderTranslation(EresseaConstants.O_TEACH, locale).toLowerCase(locale)));
+		return (o.toLowerCase(locale).trim().startsWith(Resources.getOrderTranslation(
+				EresseaConstants.O_TEACH, locale).toLowerCase(locale)));
 	}
 
 	private Object getLocalizedSkillName(Integer learning, Unit u) {
@@ -1302,7 +1363,6 @@ public class Teacher {
 		skill.insert(0, "rules.skill.");
 		return Resources.get(skill.toString(), locale, true);
 	}
-
 
 	/**
 	 * Returns the type of order of the unit.
@@ -1316,19 +1376,17 @@ public class Teacher {
 	public static String getCurrentOrder(Unit u, boolean flag) {
 		List<String> orders = new ArrayList<String>(u.getOrders());
 		String value = null;
-		for (Iterator<String> it = orders.iterator(); it.hasNext();) {
-			String o = (String) it.next().trim();
-			if (isTeachOrder(o, u)){
-				if (value != null) {
+		for (String string : orders) {
+			String o = string.trim();
+			if (isTeachOrder(o, u)) {
+				if (value != null)
 					return null;
-				}
 				// FIXME syntax error gets OutOfBoundsException if Befehl.equals("LEHRE")
 				value = o;
 			}
-			if (isLearnOrder(o, u)){
-				if (value != null) {
+			if (isLearnOrder(o, u)) {
+				if (value != null)
 					return null;
-				}
 				value = o;
 			}
 		}
@@ -1348,14 +1406,15 @@ public class Teacher {
 			List<String> orders = new ArrayList<String>(info.getUnit().getOrders());
 			List<String> toAdd = new ArrayList<String>();
 			for (Iterator<String> it = orders.iterator(); it.hasNext();) {
-				String o = (String) it.next().trim();
+				String o = it.next().trim();
 				if (isTeachOrder(o, info.getUnit()) || isLearnOrder(o, info.getUnit())) {
 					toAdd.add("; $$$ " + o);
 					it.remove();
 				}
 			}
-			for (String newOrder : toAdd)
+			for (String newOrder : toAdd) {
 				orders.add(newOrder);
+			}
 			info.getUnit().setOrders(orders);
 		}
 
@@ -1363,17 +1422,18 @@ public class Teacher {
 		StringBuffer[] orders = new StringBuffer[best.units.length];
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
-			if (info.getLearning() != null){
+			if (info.getLearning() != null) {
 				orders[i] = new StringBuffer(getLearnOrder(info.getUnit()));
 				orders[i].append(" ");
 				orders[i].append(getLocalizedSkillName(info.getLearning(), info.getUnit()));
 			}
 			if (info.getTeacher() != -1)
-				if (orders[info.getTeacher()] == null){
-					orders[info.getTeacher()] = new StringBuffer(getTeachOrder(best.infos[info.getTeacher()].getUnit()));
+				if (orders[info.getTeacher()] == null) {
+					orders[info.getTeacher()] = new StringBuffer(
+							getTeachOrder(best.infos[info.getTeacher()].getUnit()));
 					orders[info.getTeacher()].append(" ");
 					orders[info.getTeacher()].append(info.getUnit().getID());
-				}else{
+				} else {
 					orders[info.getTeacher()].append(" " + info.getUnit().getID());
 				}
 		}
@@ -1381,22 +1441,24 @@ public class Teacher {
 		// add debug information
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
-			if (info.getLearning() == null)
+			if (info.getLearning() == null) {
 				info.getUnit().addOrder("; $$$ T " + info.students, false, 0);
-			else
+			} else {
 				info.getUnit().addOrder("; $$$ L " + info.getTeacherSet().size(), false, 0);
-			if (orders[i] == null)
+			}
+			if (orders[i] == null) {
 				info.getUnit().addOrder("; $$$ teaching error", false, 0);
-			else {
+			} else {
 				info.getUnit().addOrder(orders[i].toString(), false, 0);
 				if (info.getLearning() == null) {
 					// confirm according to settings
 					if (info.students == info.getUnit().getModifiedPersons() * 10) {
 						// full teacher
-						if (isConfirmFullTeachers())
+						if (isConfirmFullTeachers()) {
 							info.getUnit().setOrdersConfirmed(true);
-						else if (isUnconfirm())
+						} else if (isUnconfirm()) {
 							info.getUnit().setOrdersConfirmed(false);
+						}
 					} else if (isConfirmEmptyTeachers()
 							&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
 									/ 100.) {
@@ -1406,21 +1468,21 @@ public class Teacher {
 						info.getUnit().setOrdersConfirmed(false);
 					}
 				} else {
-					if (info.getTeacher() != -1 && isConfirmTaughtStudents())
+					if (info.getTeacher() != -1 && isConfirmTaughtStudents()) {
 						// student with teacher
 						info.getUnit().setOrdersConfirmed(true);
-					else if (info.getTeacher() == -1 && isConfirmUntaughtStudents())
+					} else if (info.getTeacher() == -1 && isConfirmUntaughtStudents()) {
 						// student without teacher
 						info.getUnit().setOrdersConfirmed(true);
-					else if (isUnconfirm())
+					} else if (isUnconfirm()) {
 						info.getUnit().setOrdersConfirmed(false);
+					}
 				}
 			}
 		}
 
 		return best.evaluate();
 	}
-
 
 	public static void clear(Collection<Unit> units, Collection<String> namespaces) {
 		(new Teacher(units, namespaces, new NullUserInterface())).clear();
@@ -1501,8 +1563,9 @@ public class Teacher {
 					newOrders.add(line);
 				} else {
 					// change priority of order
-					if (orderList.getType().equals(Order.LEARN))
+					if (orderList.getType().equals(Order.LEARN)) {
 						orderList.setPrio(newPrio);
+					}
 					newOrders.add(orderList.getName());
 				}
 			}
@@ -1536,10 +1599,10 @@ public class Teacher {
 					// no order: just keep the old line
 					newOrders.add(line);
 				} else if (newOrder == null) {
-					if (!safety) {
+					if (!safety)
 						throw new IllegalArgumentException(
 								"you didn't intend to delete all meta orders, did you?");
-					} else {
+					else {
 						// delete this line
 					}
 				} else {
@@ -1563,19 +1626,17 @@ public class Teacher {
 	}
 
 	private static String getLearnTag(String namespace) {
-		if (namespace == null) {
+		if (namespace == null)
 			return "$L";
-		} else {
+		else
 			return "$" + namespace + "$L";
-		}
 	}
 
 	private static String getTeachTag(String namespace) {
-		if (namespace == null) {
+		if (namespace == null)
 			return "$T";
-		} else {
+		else
 			return "$" + namespace + "$T";
-		}
 	}
 
 	public boolean isConfirmFullTeachers() {
@@ -1628,6 +1689,29 @@ public class Teacher {
 
 	public void setUnconfirm(boolean unconfirm) {
 		this.unconfirm = unconfirm;
+	}
+
+	public void setMinDist(int minDist) {
+		this.minDist = minDist;
+	}
+
+	public int getMinDist() {
+		return minDist;
+	}
+
+	/**
+	 * @param quality
+	 *          the quality to set
+	 */
+	public void setQuality(double quality) {
+		this.quality = quality;
+	}
+
+	/**
+	 * @return the quality
+	 */
+	public double getQuality() {
+		return quality;
 	}
 
 }
