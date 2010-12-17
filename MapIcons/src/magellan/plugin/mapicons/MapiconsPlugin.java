@@ -47,7 +47,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	
 
-	public static final String version="0.6";
+	public static final String version="0.7";
 	
 	private Client client = null;
 	
@@ -95,6 +95,10 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
             add("Untote");
             add("Wyrme");
             add("Zombies");
+            add("Juju-Zombies"); //pbem-spiele, 21.11.20010
+            add("Juju-Ghaste"); // unbestätigt...
+            add("Juju-Drachen"); // unbestätigt...
+            
         }
     };
 
@@ -638,6 +642,61 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		}
 	}
 	
+	/**
+	 * durchsucht die Events einer Faction und ergänzt die Liste der Regionen
+	 * @param f
+	 * @param regionsHunger
+	 * @return
+	 */
+	private void searchVulcanoEventsForFaction(Faction f, List<Region> regionsSE){
+		
+		if (f.getMessages()!=null && f.getMessages().size()>0){
+			for (Message m : f.getMessages()){
+				MagellanMessageImpl msg = (MagellanMessageImpl)m;
+				if (msg.getAttributes() != null) {
+		           
+	            	boolean isVulcanoMessage = false;  
+	            	// MESSAGETYPE 745563751
+	            	// "\"Der Vulkan in $region($regionv) bricht aus. Die Lavamassen verwüsten $region($regionn).\"";text
+	            	
+	          		if (msg.getMessageType().getID().intValue()==745563751){
+	          			isVulcanoMessage=true;
+	          		}
+
+	          		if (isVulcanoMessage){
+	          			// yep, dies ist eine isVulcanoMessage Message und wir
+	          			// haben regionskoords dafür ?
+	          			String regionCoordinate = msg.getAttributes().get("regionv");
+	          			CoordinateID coordinate = CoordinateID.parse(regionCoordinate, " ");
+	          			Region r = gd.getRegion(coordinate);
+	          			if (r==null){
+	          				// region with SE disappeared from game data
+	          				log.info(getName() + " cannot display message (missing region):" + msg.getText());
+	          			} else {
+		          			if (!(regionsSE.contains(r))){
+		          				// log.info("Debug: added hunger region: " + r.toString());
+		          				regionsSE.add(r);
+		          			}
+	          			}
+	          			regionCoordinate = msg.getAttributes().get("regionn");
+	          			coordinate = CoordinateID.parse(regionCoordinate, " ");
+	          			r = gd.getRegion(coordinate);
+	          			if (r==null){
+	          				// region with SE disappeared from game data
+	          				log.info(getName() + " cannot display message (missing region):" + msg.getText());
+	          			} else {
+		          			if (!(regionsSE.contains(r))){
+		          				// log.info("Debug: added hunger region: " + r.toString());
+		          				regionsSE.add(r);
+		          			}
+	          			}
+	          		}   
+				}
+			}
+		}
+	}
+	
+	
 	
 	
 	/**
@@ -652,6 +711,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 				searchSpecialEventsForRegion(r,regionsSpecialEvents);
 			}
 		}
+		
+		for (Faction f:gd.factions().values()){
+			if (f.getMessages()!=null && f.getMessages().size()>0){
+				searchVulcanoEventsForFaction(f,regionsSpecialEvents);
+			}
+		}
+		
 		// Tags setzen
 		for (Region r:regionsSpecialEvents){
 			setRegionIcon(MAPICON_SPECIALEVENT,r);
@@ -661,7 +727,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	}
 	
 	/**
-	 * durchsucht die Battles einer Faction und ergänzt die Liste der Regionen
+	 * durchsucht die Events der Region und ergänzt die Liste der specialEvents-Regionen
 	 * @param f
 	 * @param regionsSpecialEvents
 	 * @return
