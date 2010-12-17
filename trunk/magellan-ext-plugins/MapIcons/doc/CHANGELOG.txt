@@ -1,3 +1,8 @@
+2010-12-17 - Fiete <sf@fietefietz.de>
+	* release 0.7
+	* added Juju-Zombies to monster-List
+	* added Vulcanos to special event messages
+
 2010-11-05 - Fiete <sf@fietefietz.de>
 	* release 0.4
 	* changed shortcut to CTRL+L
