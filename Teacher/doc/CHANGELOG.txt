@@ -1,3 +1,6 @@
+2011-02-2 (Build 64)- stm (stm_@users.sourceforge.net)
+    * fix to teaching of TEMP units and debug output
+    
 2010-09-28 (Build 58)- stm (stm_@users.sourceforge.net)
     * minimum skill distance between teachers and students now configurable in options
 

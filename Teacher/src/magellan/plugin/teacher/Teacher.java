@@ -38,6 +38,7 @@ import java.util.StringTokenizer;
 
 import magellan.client.swing.ProgressBarUI;
 import magellan.library.Skill;
+import magellan.library.TempUnit;
 import magellan.library.Unit;
 import magellan.library.gamebinding.EresseaConstants;
 import magellan.library.utils.NullUserInterface;
@@ -1431,21 +1432,42 @@ public class Teacher {
 				if (orders[info.getTeacher()] == null) {
 					orders[info.getTeacher()] = new StringBuffer(
 							getTeachOrder(best.infos[info.getTeacher()].getUnit()));
+					if (info.getUnit() instanceof TempUnit) {
+						orders[info.getTeacher()].append(" ").append(
+								Resources.getOrderTranslation(EresseaConstants.O_TEMP));
+					}
 					orders[info.getTeacher()].append(" ");
 					orders[info.getTeacher()].append(info.getUnit().getID());
 				} else {
-					orders[info.getTeacher()].append(" " + info.getUnit().getID());
+					if (info.getUnit() instanceof TempUnit) {
+						orders[info.getTeacher()].append(" ").append(
+								Resources.getOrderTranslation(EresseaConstants.O_TEMP));
+					}
+					orders[info.getTeacher()].append(" ").append(info.getUnit().getID().toString());
 				}
 		}
 
 		// add debug information
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
+			StringBuilder debug = new StringBuilder();
 			if (info.getLearning() == null) {
-				info.getUnit().addOrder("; $$$ T " + info.students, false, 0);
+				debug.append("; $$$ T ").append(info.students);
 			} else {
-				info.getUnit().addOrder("; $$$ L " + info.getTeacherSet().size(), false, 0);
+				debug.append("; $$$ L ").append(info.getTeacherSet().size());
 			}
+			for (Integer skill : info.getSUnit().getLearnTalents()) {
+				if (debug.length() > 79) {
+					info.getUnit().addOrder(debug.toString());
+					debug.delete(0, debug.length());
+					debug.append("; $$$   ");
+				} else {
+					debug.append(" ");
+				}
+				debug.append(getSkillName(skill)).append(" ").append(info.getSUnit().calcWeight(skill));
+			}
+
+			info.getUnit().addOrder(debug.toString());
 			if (orders[i] == null) {
 				info.getUnit().addOrder("; $$$ teaching error", false, 0);
 			} else {

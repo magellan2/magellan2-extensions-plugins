@@ -34,7 +34,7 @@ public class SUnit implements Named {
 	private Map<Integer, Integer> targets = new HashMap<Integer, Integer>();
 	// a talent / int map if maximum skill levels
 	private Map<Integer, Integer> maxs = new HashMap<Integer, Integer>();
-	
+
 	/** calculated priorities */
 	private Map<Integer, Double> weights = new HashMap<Integer, Double>();
 
@@ -47,12 +47,12 @@ public class SUnit implements Named {
 	SUnit(Teacher teacher, Unit unit) {
 		this.teacher = teacher;
 		this.unit = unit;
-		this.prio = 1;
+		prio = 1;
 	}
 
 	public void addTeach(Integer talent, Integer diff) {
 		teach.put(talent, diff);
-		talentLevels.put(talent, this.teacher.getLevel(getUnit(), talent));
+		talentLevels.put(talent, teacher.getLevel(getUnit(), talent));
 		weights.clear();
 	}
 
@@ -61,7 +61,7 @@ public class SUnit implements Named {
 			throw new IllegalArgumentException("target must be > 0");
 		targets.put(talent, target);
 		maxs.put(talent, max);
-		talentLevels.put(talent, this.teacher.getLevel(getUnit(), talent));
+		talentLevels.put(talent, teacher.getLevel(getUnit(), talent));
 		weights.clear();
 	}
 
@@ -80,8 +80,9 @@ public class SUnit implements Named {
 				int lev = Math.max(1, getSkillLevel(skill2));
 				if (lev < getMax(skill2)) {
 					double mult = lev / (double) getTarget(skill2);
-					if (maxMult < mult)
+					if (maxMult < mult) {
 						maxMult = mult;
+					}
 				}
 			}
 			if (maxMult == 0) {
@@ -96,22 +97,25 @@ public class SUnit implements Named {
 					if (lev < getMax(skill2)) {
 						double weeks = getTarget(skill2) - lev / maxMult + 2;
 						// double weeks = getWeeks(getTarget(skill2)) - getWeeks(lev/maxMult) +2;
-						if (maxWeeks < weeks)
+						if (maxWeeks < weeks) {
 							maxWeeks = weeks;
+						}
 					}
 				}
 				int level = Math.max(1, getSkillLevel(skill));
-				if (level >= getMax(skill))
+				if (level >= getMax(skill)) {
 					prio = 0d;
-				else
+				} else {
 					// prio should be between .4 and 1
 					prio = .4 + .6 * (getTarget(skill) - level / maxMult + 2) / maxWeeks;
+				}
 				// prio = (getWeeks(getTarget(skill)) - getWeeks(level/maxMult) + 2)/maxWeeks;
-				if (prio < 0)
+				if (prio < 0) {
 					prio = prio * 1.000001;
+				}
 				weights.put(skill, prio);
 			}
-			getUnit().addOrder("; $$$" + teacher.getSkillName(skill) + " " + prio, false, 0);
+			// getUnit().addOrder("; $$$" + teacher.getSkillName(skill) + " " + prio, false, 0);
 		}
 		return prio;
 	}
@@ -129,7 +133,7 @@ public class SUnit implements Named {
 	public int getTarget(String skill) {
 		return getTarget(teacher.getSkillIndex(skill));
 	}
-	
+
 	public int getMax(Integer skill) {
 		if (skill == null)
 			return 0;
@@ -139,7 +143,7 @@ public class SUnit implements Named {
 	public int getMax(String skill) {
 		return getMax(teacher.getSkillIndex(skill));
 	}
-	
+
 	public double getPrio() {
 		return prio;
 	}
@@ -157,14 +161,14 @@ public class SUnit implements Named {
 	public int getMaximumDifference(String skill) {
 		return getMaximumDifference(teacher.getSkillIndex(skill));
 	}
-	
+
 	public Collection<Integer> getLearnTalents() {
 		return targets.keySet();
 	}
 
 	public Collection<String> getLearnTalentsAsString() {
 		Collection<String> result = new HashSet<String>();
-		for (Integer t : getLearnTalents()){
+		for (Integer t : getLearnTalents()) {
 			result.add(teacher.getSkillName(t));
 		}
 		return result;
@@ -176,7 +180,7 @@ public class SUnit implements Named {
 
 	public Collection<String> getTeachTalentsAsString() {
 		Collection<String> result = new HashSet<String>();
-		for (Integer t : getTeachTalents()){
+		for (Integer t : getTeachTalents()) {
 			result.add(teacher.getSkillName(t));
 		}
 		return result;
@@ -198,6 +202,7 @@ public class SUnit implements Named {
 		return teachers;
 	}
 
+	@Override
 	public String toString() {
 		return index + ":" + getUnit().toString();
 	}
@@ -216,17 +221,17 @@ public class SUnit implements Named {
 		}
 		int maxTalent = 0;
 		for (Integer t : getTeachTalents()) {
-			if (this.teacher.getLevel(u, t) > maxTalent) {
-				maxTalent = this.teacher.getLevel(u, t);
+			if (teacher.getLevel(u, t) > maxTalent) {
+				maxTalent = teacher.getLevel(u, t);
 				maxTeaching = t;
 			}
 
 		}
 		if (maxLearning != null) {
-			u.putTag(Teacher.LEARN_TAG, this.teacher.getSkillName(maxLearning));
+			u.putTag(Teacher.LEARN_TAG, teacher.getSkillName(maxLearning));
 		}
 		if (maxTeaching != null) {
-			u.putTag(Teacher.TEACH_TAG, this.teacher.getSkillName(maxTeaching));
+			u.putTag(Teacher.TEACH_TAG, teacher.getSkillName(maxTeaching));
 		}
 
 	}
@@ -244,9 +249,8 @@ public class SUnit implements Named {
 	}
 
 	public int compareTo(Object o) {
-		if (o instanceof SUnit) {
+		if (o instanceof SUnit)
 			return getUnit().compareTo(((SUnit) o).getUnit());
-		}
 		return 1;
 	}
 
@@ -254,13 +258,16 @@ public class SUnit implements Named {
 		return getUnit().getID();
 	}
 
+	@Override
 	public Object clone() throws CloneNotSupportedException {
 		throw new CloneNotSupportedException();
 	}
 
-	public int hashCode(){
+	@Override
+	public int hashCode() {
 		return getUnit().hashCode();
 	}
+
 	/**
 	 * More efficient variant of getLevel(SUnig, String).
 	 * 
@@ -268,17 +275,16 @@ public class SUnit implements Named {
 	 * @return
 	 * @deprecated now as efficient as getLevel?
 	 */
+	@Deprecated
 	public int getSkillLevel(Integer skill) {
 		if (talentLevels != null) {
 			Integer result = talentLevels.get(skill);
-			if (result != null) {
+			if (result != null)
 				return result;
-			}
 		}
-		int level = this.teacher.getLevel(getUnit(), skill);
+		int level = teacher.getLevel(getUnit(), skill);
 		talentLevels.put(skill, level);
 		return level;
 	}
-
 
 }
