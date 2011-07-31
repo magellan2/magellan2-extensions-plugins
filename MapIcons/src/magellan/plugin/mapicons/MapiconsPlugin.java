@@ -5,6 +5,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,8 +50,8 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		
 	
 	
-
-	public static final String version="0.7";
+	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
+	public static final String version="0.8";
 	
 	private Client client = null;
 	
@@ -68,11 +72,15 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	private static final String MAPICON_EMPTY_TOWER = "empty_tower.gif";
 	
+	private static final String MAPICON_ENEMY_PRESENCE = "enemy_present.gif";
+	
 	private static final String MONSTER_FACTION = "ii";
 	
 	private boolean mapIcons_showing_all = true;
 	private boolean mapIcons_showing_Guarding = false;
 	private boolean mapIcons_showing_Empty_Towers = false;
+	private boolean mapIcons_showing_enemyPresence = false;
+	private boolean enemy_faction_list_exists = false;
 	
 	private JCheckBoxMenuItem showGuardMenu;
 	private JCheckBoxMenuItem showEmptyTowersMenu;
@@ -102,6 +110,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
         }
     };
 
+    private List<String> enemyFactionList = new ArrayList<String>();
 	
     /* (non-Javadoc)
 	 * @see magellan.client.desktop.ShortcutListener#getListenerDescription()
@@ -162,8 +171,19 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 					}
 				}).start(); 
 	      }
-
+	      
 	      break;
+	    case 1:
+	    	// toggle display of enemy presence
+	    	if (mapIcons_showing_enemyPresence) {
+	    		mapIcons_showing_enemyPresence = false;
+				removeMyRegionIcons();
+	    	} else {
+	    		// Only ever activate if a list of enemy factions exists
+	    		if (enemy_faction_list_exists) mapIcons_showing_enemyPresence = true;
+	    	}
+    		processGameData();
+			client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 	    }
 	}
     
@@ -324,6 +344,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		
 		log.info(getName() + " initialized (Client)...");
 		
+		// init list of enemies, if .ini file is present
+		try {
+		loadEnemyFactions(_client);
+	    } catch (Exception e) {
+	    	// TODO: Machen wir das Feature öffentlich? Falls ja, Logeintrag schreiben
+	    	// 	    	System.err.println("Error while reading enemy faction file! Check if MIPlugin_Enemies.ini is present in Magellan directory. \n");
+	    }
 	}
 	
 	
@@ -334,6 +361,8 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		shortcuts = new ArrayList<KeyStroke>();
 		// 0: toggle Map Icons
 	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
+	    // 1: toggle display of enemy presence
+	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_MASK));
 	    
 	    DesktopEnvironment.registerShortcutListener(this);
 	}
@@ -378,6 +407,9 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private void processGameData(){
 		if (gd == null) {return;}
 		// die einzelnen Bereiche aufrufen..
+		if (mapIcons_showing_enemyPresence) {
+			log.info(getName() +  " set " + this.searchEnemyPresence() + " regions with enemies present");
+		}
 		if (mapIcons_showing_Guarding){
 			log.info(getName() +  " set " + this.setGuarding() + " regions with guard information");
 		}
@@ -391,6 +423,44 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			log.info(getName() +  " found " + this.setEmptyTowers() + " regions with empty towers");
 		}
 		
+	}
+	
+	/**
+	 * Durchsucht alle Regionen nach Feinden
+	 * @return Anzahl der Regionen mit Feinden
+	 */
+	private int searchEnemyPresence(){
+		int erg = 0;
+		for (Region r:gd.regions().values()){
+			erg += searchEnemiesRegion(r);
+		}
+		return erg;
+	}
+
+	/**
+	 * Durchsucht die übergebene Region nach Einheiten der Partei aus der Feind-Liste
+	 * und erzeugt den entsprechenden Eintrag im regionicon-tag
+	 * @param r = zu durchsuchende Region
+	 */
+	private int searchEnemiesRegion(Region r){
+		int erg = 0;
+		for (Unit u:r.units()){
+			if (u.getFaction()!=null){
+				if (enemyFactionList.contains(u.getFaction().getID().toString())) {
+					setRegionIcon(MAPICON_ENEMY_PRESENCE,r);
+					return 1;
+				}
+				// Factions that don't show their name and don't have the necessary "HELP" status to us are dubious at best...
+				// but: How to figure out if it belongs to an allied faction? Until this is clear, don't count disguised factions as enemies
+				/**
+				if (u.isHideFaction()){
+					setRegionIcon(MAPICON_ENEMY_PRESENCE,r);
+					return 1;
+				}
+				*/
+			}
+		}
+		return erg;
 	}
 	
 	/**
@@ -1028,5 +1098,29 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		return false;
 	}
 	
+	// TH: Load all enemy factions from a parameter file; 
+	//		File name = MIPlugin_Enemies.ini
+	//		File format = List of faction IDs
+    private void loadEnemyFactions(Client client) throws Exception {
+    	try{
+            FileInputStream fstream = new FileInputStream(Client.getSettingsDirectory() +"/MIPlugin_Enemies.ini");
+            // Get the object of DataInputStream
+            DataInputStream in = new DataInputStream(fstream);
+                BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String strLine;
+            //Read File Line By Line
+            while ((strLine = br.readLine()) != null)   {
+              // Read the enemy faction into the list
+            	enemyFactionList.add(strLine);
+            }
+            //Close the input stream
+            in.close();
+            enemy_faction_list_exists = true;
+            }catch (Exception e){//Catch exception if any
+              System.err.println("Error: " + e.getMessage());
+            }
+    }
+
 	
 }
+
