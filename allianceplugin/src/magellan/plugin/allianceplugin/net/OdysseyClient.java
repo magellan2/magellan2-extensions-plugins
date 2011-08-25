@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
@@ -152,6 +154,7 @@ public class OdysseyClient {
       log.info("Downloading file");
       
       File tmpFile = File.createTempFile("map_"+version, ".cr.bz2");
+      tmpFile.deleteOnExit();
       FileOutputStream fos = new FileOutputStream(tmpFile);
       byte[] buffer = new byte[4096];
       long size = 0l;
@@ -195,14 +198,16 @@ public class OdysseyClient {
       log.info("Upload Map "+crFile.getName());
       
       client = new HTTPClient(Client.INSTANCE.getProperties());
-      Part[] parts = new Part[5];
-      int i=0;
-      parts[i++] = new StringPart("user",user);
-      parts[i++] = new StringPart("pass",pass);
-      parts[i++] = new StringPart("map",mapname);
-      parts[i++] = new StringPart("version",String.valueOf(version));
-      parts[i++] = new FilePart("crfile",new ObservableFilePartSource(observer,crFile,true));
-      HTTPResult result = client.post(uri,parts);
+//      Part[] parts = new Part[5];
+//      int i=0;
+      List<Part> parts = new ArrayList<Part>();
+      parts.add(new StringPart("user",user));
+      parts.add(new StringPart("pass",pass));
+      parts.add(new StringPart("map",mapname));
+      parts.add(new StringPart("partId",String.valueOf(mappart.getId())));
+      parts.add(new StringPart("version",String.valueOf(version)));
+      parts.add(new FilePart("crfile",new ObservableFilePartSource(observer,crFile,true)));
+      HTTPResult result = client.post(uri,parts.toArray( new Part[parts.size()]));
       
       if (result == null) {
         log.error("HTTP client returns no result");

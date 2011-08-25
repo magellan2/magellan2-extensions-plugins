@@ -84,7 +84,7 @@ public class AlliancePlugIn implements MagellanPlugIn, ActionListener {
     // init the report
     log.info(getName() + " initialized...(GameData)");
 
-    // hmm, do we need something to checks?
+    // hmm, do we need something to check?
   }
 
   /**

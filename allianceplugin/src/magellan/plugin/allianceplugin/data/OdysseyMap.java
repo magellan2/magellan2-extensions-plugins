@@ -21,9 +21,7 @@ public class OdysseyMap {
   private static final Logger log = Logger.getInstance(OdysseyMap.class);
   
   private String name = null;
-  private int version = 0;
   private Date lastchange = null;
-  private int round = 0;
   private List<OdysseyMapPart> parts = new ArrayList<OdysseyMapPart>();
   
 
@@ -37,9 +35,7 @@ public class OdysseyMap {
     if (!root.getNodeName().equals("map")) throw new IllegalArgumentException("This is not a map XML node.");
     
     name = root.getAttribute("name");
-    version = Integer.parseInt(root.getAttribute("version"));
     lastchange = Utils.toDate(root.getAttribute("lastchange"));
-    round = Integer.parseInt(root.getAttribute("round"));
     
     log.info(" - Found Map '"+name+"'");
     
@@ -107,46 +103,6 @@ public class OdysseyMap {
    */
   public void setParts(List<OdysseyMapPart> parts) {
     this.parts = parts;
-  }
-
-
-  /**
-   * This method returns the field round
-   *
-   * @return the round
-   */
-  public int getRound() {
-    return round;
-  }
-
-
-  /**
-   * This method sets the field round to round
-   *
-   * @param round the round to set
-   */
-  public void setRound(int round) {
-    this.round = round;
-  }
-
-
-  /**
-   * This method returns the field version
-   *
-   * @return the version
-   */
-  public int getVersion() {
-    return version;
-  }
-
-
-  /**
-   * This method sets the field version to version
-   *
-   * @param version the version to set
-   */
-  public void setVersion(int version) {
-    this.version = version;
   }
   
 

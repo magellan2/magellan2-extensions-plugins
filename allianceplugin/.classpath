@@ -4,9 +4,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Magellan2"/>
 	<classpathentry kind="lib" path="/Magellan2/lib/commons-codec-1.3.jar"/>
-	<classpathentry kind="lib" path="/Magellan2/lib/commons-httpclient-3.0.1.jar"/>
 	<classpathentry kind="lib" path="/Magellan2/lib/commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/pagelayout1.15.jar" sourcepath="C:/Users/thoralf/Downloads/pagelayout1.15.zip"/>
 	<classpathentry kind="lib" path="/Magellan2/lib/commons-email-1.1.jar" sourcepath="/Magellan2/lib/commons-email-1.1/commons-email-1.1-sources.jar"/>
+	<classpathentry kind="lib" path="/Magellan2/lib/commons-httpclient-3.1.jar" sourcepath="/Magellan2/libsrc/commons-httpclient-3.1-src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

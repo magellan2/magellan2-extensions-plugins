@@ -7,6 +7,7 @@ import java.util.Date;
 
 import magellan.library.utils.Utils;
 import magellan.library.utils.logging.Logger;
+import magellan.plugin.allianceplugin.AllianceUtilities;
 
 import org.w3c.dom.Element;
 
@@ -19,6 +20,7 @@ import org.w3c.dom.Element;
 public class OdysseyMapPart {
   private static final Logger log = Logger.getInstance(OdysseyMapPart.class);
 
+  private int id = 0;
   private String name = null;
   private int version = 0;
   private Date lastchange = null;
@@ -32,12 +34,31 @@ public class OdysseyMapPart {
     if (!root.getNodeName().equals("part")) throw new IllegalArgumentException("This is not a part XML node.");
     
     name = Utils.getCData(root);
-    version = Integer.parseInt(root.getAttribute("version"));
+    id = AllianceUtilities.getIntValue(root.getAttribute("id"),0);
+    version = AllianceUtilities.getIntValue(root.getAttribute("version"),0);
     lastchange = Utils.toDate(root.getAttribute("lastchange"));
-    round = Integer.parseInt(root.getAttribute("round"));
-    size = Long.parseLong(root.getAttribute("size"));
+    round = AllianceUtilities.getIntValue(root.getAttribute("round"),0);
+    size = AllianceUtilities.getLongValue(root.getAttribute("size"),0l);
 
     log.info("  - Found Part '"+name+"'");
+  }
+
+  /**
+   * This method returns the field id
+   *
+   * @return the id
+   */
+  public int getId() {
+    return id;
+  }
+
+  /**
+   * This method sets the field id to id
+   *
+   * @param id the id to set
+   */
+  public void setId(int id) {
+    this.id = id;
   }
 
   /**

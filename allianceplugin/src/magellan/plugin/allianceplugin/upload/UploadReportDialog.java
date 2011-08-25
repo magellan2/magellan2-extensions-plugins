@@ -1,6 +1,5 @@
 package magellan.plugin.allianceplugin.upload;
 
-import static pagelayout.EasyCell.center;
 import static pagelayout.EasyCell.column;
 import static pagelayout.EasyCell.none;
 import static pagelayout.EasyCell.right;
@@ -14,16 +13,14 @@ import java.awt.event.KeyListener;
 import java.io.File;
 
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-
-import pagelayout.Column;
 
 import magellan.client.Client;
-import magellan.client.swing.EresseaFileFilter;
+import magellan.client.utils.ErrorWindow;
+import magellan.library.io.cr.CRWriter;
+import magellan.library.io.file.FileBackup;
+import magellan.library.utils.NullUserInterface;
 import magellan.library.utils.Resources;
-import magellan.library.utils.Utils;
 import magellan.library.utils.logging.Logger;
 import magellan.plugin.allianceplugin.AbstractOdysseyConnectDialog;
 import magellan.plugin.allianceplugin.Constants;
@@ -33,6 +30,7 @@ import magellan.plugin.allianceplugin.data.OdysseyMapPart;
 import magellan.plugin.allianceplugin.net.Observer;
 import magellan.plugin.allianceplugin.net.OdysseyClient;
 import magellan.plugin.allianceplugin.net.OdysseyServerInformation;
+import pagelayout.Column;
 
 /**
  * This dialog shows a progress bar that uploads a report
@@ -46,8 +44,6 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
 
   private JButton cancelButton = null;
   private JButton uploadButton = null;
-  private JTextField filePathField = null;
-  private JButton fileChooserButton = null;
   
 
   /**
@@ -86,34 +82,38 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
   public void actionPerformed(ActionEvent e) {
     super.handleActionPerformed(e);
     if (e.getActionCommand() == null) return;
-    if (e.getActionCommand().equals("button.filechooser")) {
-      JFileChooser chooser = new JFileChooser();
-      chooser.addChoosableFileFilter(new EresseaFileFilter(EresseaFileFilter.ALLCR_COMPRESSED_FILTER));
-      
-      File file = new File(filePathField.getText());
-      File parent = file.getParentFile();
-      if (file.exists() || (parent != null && parent.exists())) chooser.setCurrentDirectory(parent);
-      
-      if (chooser.showOpenDialog(client) == JFileChooser.APPROVE_OPTION) {
-        filePathField.setText(chooser.getSelectedFile().getAbsolutePath());
-      }
-      
-      enableButtons();
-    } else if (e.getActionCommand().equals("button.cancel")) {
+    if (e.getActionCommand().equals("button.cancel")) {
       setVisible(false);
     } else if (e.getActionCommand().equals("button.upload")) {
-      // PROPERTY_LAST_UPLOADFILE setzen
-      File file = new File(filePathField.getText());
-      
-      client.getProperties().setProperty(Constants.PROPERTY_LAST_UPLOADFILE, file.getAbsolutePath());
-      
-      // get the informations from the dialog 
-      OdysseyAlliance alliance = (OdysseyAlliance)allianceChooser.getSelectedItem();
-      OdysseyMap map = (OdysseyMap)mapChooser.getSelectedItem();
-      OdysseyMapPart mappart = (OdysseyMapPart)mapPartChooser.getSelectedItem();
-      
-      UploadObserver observer = new UploadObserver(alliance,map,mappart,file);
-      observer.start();
+      try {
+        File file = client.getData().getFileType().getFile();
+        UploadUserInterface uui = new UploadUserInterface(this);
+        CRWriter crw = new CRWriter(
+            client.getData(), 
+            uui, 
+            client.getData().getFileType(), 
+            client.getData().getEncoding(), 
+            Integer.parseInt(client.getProperties().getProperty("Client.CRBackups.count", FileBackup.DEFAULT_BACKUP_LEVEL + "")));
+        crw.writeSynchronously();
+        crw.close();
+        
+        progressBar.setValue(0);
+        
+        // get the informations from the dialog 
+        OdysseyAlliance alliance = (OdysseyAlliance)allianceChooser.getSelectedItem();
+        OdysseyMap map = (OdysseyMap)mapChooser.getSelectedItem();
+        OdysseyMapPart mappart = (OdysseyMapPart)mapPartChooser.getSelectedItem();
+        
+        UploadObserver observer = new UploadObserver(alliance,map,mappart,file);
+        observer.start();
+
+      } catch (Exception exception) {
+        log.error("",exception);
+        ErrorWindow window = new ErrorWindow(Client.INSTANCE,Resources.get(Constants.RESOURCE_SERVER_CONNECT_FAILED_MESSAGE),exception.getMessage(),exception);
+        window.setShutdownOnCancel(false);
+        window.setVisible(true);
+
+      }
     }
     
   }
@@ -133,13 +133,6 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
   protected JPanel initSpecialGUIPanel() {
     JPanel buttonPanel = new JPanel();
     
-    filePathField = new JTextField();
-    filePathField.setText(client.getProperties().getProperty(Constants.PROPERTY_LAST_UPLOADFILE, ""));
-    filePathField.addKeyListener(this);
-    fileChooserButton = new JButton(Resources.get(Constants.RESOURCE_CHOOSE_FILE));
-    fileChooserButton.addActionListener(this);
-    fileChooserButton.setActionCommand("button.filechooser");
-    
     cancelButton = new JButton(Resources.get(Constants.RESOURCE_CANCEL));
     cancelButton.addActionListener(this);
     cancelButton.setActionCommand("button.cancel");
@@ -150,7 +143,6 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
     enableButtons();
 
     Column layout = column(
-                      row(none,center,label(Constants.RESOURCE_FILE_NAME),filePathField,fileChooserButton),
                       row(right,none,cancelButton,uploadButton)
                     );
     
@@ -165,10 +157,6 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
    */
   public void keyReleased(KeyEvent e) {
     super.keyReleased(e);
-    
-    if (e.getComponent().equals(filePathField)) {
-      enableButtons();
-    }
   }
   
   /**
@@ -179,23 +167,12 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
     Object map = mapChooser.getSelectedItem();
     Object mappart = mapPartChooser.getSelectedItem();
 
-    fileChooserButton.setEnabled(alliance!=null && map!=null && mappart!=null);
-    
-    String filePath = filePathField.getText();
-    boolean fileExists = !Utils.isEmpty(filePath);
-    if (fileExists) {
-      File f = new File(filePath);
-      fileExists = f.exists() && f.canRead() && f.isFile();
-    }
-    
     log.info("Alliance "+alliance);
     log.info("Map      "+map);
     log.info("Mappart  "+mappart);
-    log.info("Exists   "+fileExists);
     log.info("Chooser  "+(alliance!=null && map!=null && mappart!=null));
-    log.info("Sum      "+(alliance!=null && map!=null && mappart!=null && fileExists));
     
-    uploadButton.setEnabled(alliance!=null && map!=null && mappart!=null && fileExists);
+    uploadButton.setEnabled(alliance!=null && map!=null && mappart!=null);
   }
 
   class UploadObserver extends Thread implements Observer {
@@ -218,8 +195,6 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
       connectButton.setEnabled(false);
       uploadButton.setEnabled(false);
       cancelButton.setEnabled(false);
-      fileChooserButton.setEnabled(false);
-      filePathField.setEnabled(false);
       autoConnectBox.setEnabled(false);
     }
     
@@ -253,8 +228,8 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
         cancelButton.setEnabled(true);
         connectButton.setEnabled(true);
         uploadButton.setEnabled(true);
-        fileChooserButton.setEnabled(true);
-        filePathField.setEnabled(true);
+//        fileChooserButton.setEnabled(true);
+//        filePathField.setEnabled(true);
         autoConnectBox.setEnabled(true);
       }
     }
@@ -290,5 +265,25 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
         OdysseyClient.getInstance().sendMap(observer,alliance,map,mappart,crFile);
       }
     }
+  }
+  
+  class UploadUserInterface extends NullUserInterface {
+    private UploadReportDialog dialog = null;
+    
+    public UploadUserInterface(UploadReportDialog dialog) {
+      super();
+      this.dialog = dialog;
+    }
+
+    /**
+     * @see magellan.library.utils.NullUserInterface#setProgress(java.lang.String, int)
+     */
+    @Override
+    public void setProgress(String strMessage, int progress) {
+      super.setProgress(strMessage, progress);
+      dialog.progressBar.setValue(progress);
+    }
+    
+    
   }
 }
