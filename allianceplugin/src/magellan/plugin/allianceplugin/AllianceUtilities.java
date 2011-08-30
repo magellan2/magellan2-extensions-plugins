@@ -2,6 +2,9 @@
 //
 package magellan.plugin.allianceplugin;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class AllianceUtilities {
   public static Integer getIntValue(String value, Integer defaultValue) {
     if (value == null)
@@ -21,5 +24,11 @@ public class AllianceUtilities {
     } catch (Exception exception) {
       return defaultValue;
     }
+  }
+  
+  public static String toString(Date date) {
+    if(date == null) return "-";
+    SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    return format.format(date);
   }
 }

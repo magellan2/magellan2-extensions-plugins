@@ -156,7 +156,7 @@ public class OdysseyMapPart {
    * @see java.lang.Object#toString()
    */
   public String toString() {
-    return getName()+" ("+toKBytes(getSize())+" KB)";
+    return getName()+" "+getRound()+" ("+AllianceUtilities.toString(lastchange)+")";
   }
   
   private String toKBytes(long value) {

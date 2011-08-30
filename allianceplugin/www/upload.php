@@ -9,6 +9,7 @@
  $mapname = urldecode($_POST["map"]);
  $version = $_POST["version"];
  $partId = $_POST["partId"];
+ $round = $_POST["round"];
 
  $query = "SELECT map_part.* FROM map_part WHERE id=$partId LIMIT 0,1";
  $result = @mysql_query($query) or die("Query $query failed:\n".mysql_error());
@@ -55,7 +56,9 @@
  echo "des: ".$destinationFile."\n";
  echo "OK\n";
 
- $query = "UPDATE map_part SET version=version+1, lastchange=now() WHERE id=$partId";
+if ($round == 0) $round = $map_part[round];
+
+ $query = "UPDATE map_part SET version=version+1, lastchange=now(), round=$round WHERE id=$partId";
  $result = @mysql_query($query) or die("Query $query failed:\n".mysql_error());
 
  $query = "UPDATE map SET lastchange=now() WHERE id=$map_part[map_id]";
