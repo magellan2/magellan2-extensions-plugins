@@ -198,14 +198,13 @@ public class OdysseyClient {
       log.info("Upload Map "+crFile.getName());
       
       client = new HTTPClient(Client.INSTANCE.getProperties());
-//      Part[] parts = new Part[5];
-//      int i=0;
       List<Part> parts = new ArrayList<Part>();
       parts.add(new StringPart("user",user));
       parts.add(new StringPart("pass",pass));
       parts.add(new StringPart("map",mapname));
       parts.add(new StringPart("partId",String.valueOf(mappart.getId())));
       parts.add(new StringPart("version",String.valueOf(version)));
+      parts.add(new StringPart("round",String.valueOf(Client.INSTANCE.getData().getDate().getDate())));
       parts.add(new FilePart("crfile",new ObservableFilePartSource(observer,crFile,true)));
       HTTPResult result = client.post(uri,parts.toArray( new Part[parts.size()]));
       
