@@ -51,7 +51,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
-	public static final String version="0.8";
+	public static final String version="0.92";
 	
 	private Client client = null;
 	
@@ -73,6 +73,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private static final String MAPICON_EMPTY_TOWER = "empty_tower.gif";
 	
 	private static final String MAPICON_ENEMY_PRESENCE = "enemy_present.gif";
+	private static final String ENEMY_FACTION_LIST_IDENTIFIER = "// EnemyFaction=";
 	private static final String MAPICON_MESSAGE = "message.gif";
 	
 	private static final String MONSTER_FACTION = "ii";
@@ -81,10 +82,14 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private boolean mapIcons_showing_Guarding = false;
 	private boolean mapIcons_showing_Empty_Towers = false;
 	private boolean mapIcons_showing_enemyPresence = false;
+	
 	private boolean enemy_faction_list_exists = false;
 	
 	private JCheckBoxMenuItem showGuardMenu;
 	private JCheckBoxMenuItem showEmptyTowersMenu;
+	// showEnemyPresenceMenu
+	private JCheckBoxMenuItem showEnemyPresenceMenu;
+	
 	
 	// shortcuts
 	private List<KeyStroke> shortcuts;
@@ -176,19 +181,29 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	      break;
 	    case 1:
 	    	// toggle display of enemy presence
-	    	if (mapIcons_showing_enemyPresence) {
-	    		mapIcons_showing_enemyPresence = false;
-				removeMyRegionIcons();
-	    	} else {
-	    		// Only ever activate if a list of enemy factions exists
-	    		if (enemy_faction_list_exists) mapIcons_showing_enemyPresence = true;
-	    	}
-    		processGameData();
-			client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+	    	toogleEnemyPresence();
 	    }
 	}
     
-	
+	private void toogleEnemyPresence(){
+		if (mapIcons_showing_enemyPresence) {
+    		mapIcons_showing_enemyPresence = false;
+			removeMyRegionIcons();
+    	} else {
+    		// Only ever activate if a list of enemy factions exists
+    		if (enemy_faction_list_exists) {
+    			mapIcons_showing_enemyPresence = true;
+    		} else {
+    			// Info Msg wen keine Feinde angezeigt werden können
+    			
+    			String m = "No enemies known! (No ini-File, no info in orders)";
+    			mapIcons_showing_enemyPresence=false;
+    			new MsgBox(client,m,"Impossible",false);
+    		}
+    	}
+		processGameData();
+		client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+	}
 	
 	/* (non-Javadoc)
 	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
@@ -254,6 +269,16 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			}).start();
 		}
 		
+		// toogleEnemyPresence
+		if (e.getActionCommand().equalsIgnoreCase("EnemeyPresence")){
+			new Thread(new Runnable() {
+				public void run() {
+					toogleEnemyPresence();
+				}
+			}).start();
+		}
+		
+		
 		// showInfo
 		if (e.getActionCommand().equalsIgnoreCase("showInfo")){
 			new Thread(new Runnable() {
@@ -304,6 +329,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		showEmptyTowersMenu.addActionListener(this);
 		menu.add(showEmptyTowersMenu);
 		
+		showEnemyPresenceMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showEnemyPresence"));
+		showEnemyPresenceMenu.setActionCommand("EnemeyPresence");
+		showEnemyPresenceMenu.setSelected(mapIcons_showing_enemyPresence);
+		showEnemyPresenceMenu.addActionListener(this);
+		menu.add(showEnemyPresenceMenu);
+		
 		menu.addSeparator();
 		
 		JMenuItem showInfo = new JMenuItem(getString("plugin.mapicons.menu.showInfo"));
@@ -347,11 +378,14 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		
 		// init list of enemies, if .ini file is present
 		try {
-		loadEnemyFactions(_client);
+			loadEnemyFactions(_client);
 	    } catch (Exception e) {
 	    	// TODO: Machen wir das Feature öffentlich? Falls ja, Logeintrag schreiben
 	    	// 	    	System.err.println("Error while reading enemy faction file! Check if MIPlugin_Enemies.ini is present in Magellan directory. \n");
+	    	log.info(getName() + ": No enemy faction file. Check if MIPlugin_Enemies.ini is present in Magellan directory.");
 	    }
+		
+		
 	}
 	
 	
@@ -377,6 +411,11 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		gd = data;
 		log.info(getName() + " initialized with new GameData...");
 		removeMyRegionIcons();
+		
+		
+				
+		
+		
 		processGameData();
 		
 	}
@@ -407,6 +446,11 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 */
 	private void processGameData(){
 		if (gd == null) {return;}
+		
+		// init list of enemies from orders from trusted units
+		// trusted...from which we know the orders 
+		getEnemyFactionsFromOrders();		
+		
 		// die einzelnen Bereiche aufrufen..
 		if (mapIcons_showing_enemyPresence) {
 			log.info(getName() +  " set " + this.searchEnemyPresence() + " regions with enemies present");
@@ -1225,16 +1269,51 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
             //Read File Line By Line
             while ((strLine = br.readLine()) != null)   {
               // Read the enemy faction into the list
+              // Fiete added simple redundancy check
+              if (!enemyFactionList.contains(strLine)){
             	enemyFactionList.add(strLine);
+              }
             }
             //Close the input stream
             in.close();
             enemy_faction_list_exists = true;
-            }catch (Exception e){//Catch exception if any
-              System.err.println("Error: " + e.getMessage());
-            }
+        }catch (Exception e){//Catch exception if any
+             log.info(getName() + " Error: " + e.getMessage());
+        }
     }
 
+    // Fiete: Load all enemy factions from orders 
+    // order format: // EnemyFaction:abcd
+    // not case sencitive, abcd is added
+    private void getEnemyFactionsFromOrders(){
+    	int cnt = 0;
+    	if (gd.units()!=null && gd.units().size()>0){
+    		for (Unit u:gd.units().values()){
+    			if (u.getOrders()!=null && u.getOrders().size()>0){
+    				for (String orderString:u.getOrders()){
+    					if (orderString.toUpperCase().startsWith(ENEMY_FACTION_LIST_IDENTIFIER.toUpperCase())){
+    						// Treffer...
+    						// faction number extrahieren
+    						String f_number=orderString.substring(ENEMY_FACTION_LIST_IDENTIFIER.length());
+    						if (f_number.length()>0){
+    							if (!enemyFactionList.contains(f_number)){
+	    							enemyFactionList.add(f_number);
+	    							log.info(getName() + " added a enemy Faction from orders of " + u.toString() + ": " + f_number);
+	    							cnt++;
+	    							enemy_faction_list_exists=true;
+    							} else {
+    								log.info(getName() + " enemy Faction from orders of " + u.toString() + ": " + f_number +  " -> already on list");
+    							}
+    						} else {
+    							log.info(getName() + " Error while expecting orders of " + u.toString());
+    						}
+    					}
+    				}
+    			}
+    		}
+    	}
+    	log.info(getName() + " read " + cnt + " enemy factions from orders");
+    }
 	
 }
 
