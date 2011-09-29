@@ -73,6 +73,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private static final String MAPICON_EMPTY_TOWER = "empty_tower.gif";
 	
 	private static final String MAPICON_ENEMY_PRESENCE = "enemy_present.gif";
+	private static final String MAPICON_MESSAGE = "message.gif";
 	
 	private static final String MONSTER_FACTION = "ii";
 	
@@ -418,6 +419,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		log.info(getName() +  " found " + this.searchHunger() + " regions with hunger");
 		log.info(getName() +  " found " + this.searchSpecialEvents() + " regions with special events");
 		log.info(getName() +  " found " + this.searchThiefs() + " regions with thief-events");
+		log.info(getName() +  " found " + this.searchBotschaften() + " regions with Messages(Botschaften)");
 		
 		if (mapIcons_showing_Empty_Towers){
 			log.info(getName() +  " found " + this.setEmptyTowers() + " regions with empty towers");
@@ -711,6 +713,118 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			}
 		}
 	}
+	
+	
+	/**
+	 * Durchsucht alle Factions und Regionen in GameData nach Botschaften
+	 * @return
+	 */
+	private int searchBotschaften(){
+		
+		// in den Messages der Factions suchen
+		List<Region> regionsBotschaften = new ArrayList<Region>(0); 
+		for (Faction f:gd.factions().values()){
+			if (f.getMessages()!=null && f.getMessages().size()>0){
+				searchBotschaftForFaction(f,regionsBotschaften);
+			}
+		}
+		
+		// in den Messages der Regionen suchen
+		 
+		for (Region r:gd.regions().values()){
+			boolean hasBotschaftsMessage = false;
+			if (r.getMessages()!=null && r.getMessages().size()>0){
+				if (r.getMessages()!=null && r.getMessages().size()>0){
+					for (Message m : r.getMessages()){
+						MagellanMessageImpl msg = (MagellanMessageImpl)m;
+						if (msg.getAttributes() != null) {
+			            	 boolean isBotschaftsMessage = false;   
+			            	// Message an Region
+			          		if (msg.getMessageType().getID().intValue()==2110306401){
+			          			isBotschaftsMessage=true;
+			          		}
+			          		if (isBotschaftsMessage){
+			          			hasBotschaftsMessage=true;
+			          			break;
+			          		}
+						}
+					}
+				}
+			}
+			if (hasBotschaftsMessage){
+				if (!regionsBotschaften.contains(r)){
+					regionsBotschaften.add(r);
+				}
+			}
+			
+		}
+		
+		// Tags setzen
+		
+		for (Region r:regionsBotschaften){
+			setRegionIcon(MAPICON_MESSAGE,r);
+		}
+		
+		return regionsBotschaften.size();
+	}
+	
+	/**
+	 * durchsucht die Msg einer Faction und ergänzt die Liste der Regionen
+	 * @param f
+	 * @param regionsHunger
+	 * @return
+	 */
+	private void searchBotschaftForFaction(Faction f, List<Region> regionsBotschaften){
+		
+		if (f.getMessages()!=null && f.getMessages().size()>0){
+			for (Message m : f.getMessages()){
+				MagellanMessageImpl msg = (MagellanMessageImpl)m;
+				if (msg.getAttributes() != null) {
+		            String regionCoordinate = msg.getAttributes().get("region");
+
+		            if (regionCoordinate != null) {
+		            	CoordinateID coordinate = CoordinateID.parse(regionCoordinate, ",");
+
+		              if (coordinate == null) {
+		                coordinate = CoordinateID.parse(regionCoordinate, " ");
+		              }
+		              
+		              if (coordinate!=null){
+		            	  boolean isBotschaftMessage = false;   
+		            	// Botschaft an Einheit 424720393
+		          		if (msg.getMessageType().getID().intValue()==424720393){
+		          			isBotschaftMessage=true;
+		          		}
+		          		
+		          		// Botschaft an Partei 1216545701
+		          		if (msg.getMessageType().getID().intValue()==1216545701){
+		          			isBotschaftMessage=true;
+		          		}
+		          		
+		          		if (isBotschaftMessage){
+		          			// yep, dies ist eine Hunger Message und wir
+		          			// haben regionskoords dafür
+		          			Region r = gd.getRegion(coordinate);
+		          			
+		          			if (r==null){
+		          				// region with hunger disappeared from game data
+		          				log.info(getName() + " cannot display message (missing region):" + msg.getText());
+		          			} else {
+			          			if (!(regionsBotschaften.contains(r))){
+			          				regionsBotschaften.add(r);
+			          			}
+		          			}
+		          		}
+		          		
+		          		
+		              }
+		              
+		           }
+				}
+			}
+		}
+	}
+	
 	
 	/**
 	 * durchsucht die Events einer Faction und ergänzt die Liste der Regionen
