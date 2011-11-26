@@ -34,14 +34,20 @@ import magellan.library.Building;
 import magellan.library.CoordinateID;
 import magellan.library.Faction;
 import magellan.library.GameData;
+import magellan.library.Item;
+import magellan.library.LuxuryPrice;
 import magellan.library.Message;
 import magellan.library.Region;
-import magellan.library.Unit;
 import magellan.library.Region.Visibility;
+import magellan.library.Skill;
+import magellan.library.StringID;
+import magellan.library.Unit;
 import magellan.library.event.GameDataEvent;
 import magellan.library.impl.MagellanMessageImpl;
 import magellan.library.rules.CastleType;
+import magellan.library.rules.ItemType;
 import magellan.library.rules.Race;
+import magellan.library.rules.SkillType;
 import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
 
@@ -51,7 +57,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
-	public static final String version="0.92";
+	public static final String version="0.93";
 	
 	private Client client = null;
 	
@@ -63,9 +69,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	private static final String MAPICON_BATTLE = "battle.gif";
 	private static final String MAPICON_MONSTER = "monster.gif";
+	private static final String MAPICON_BADMONSTER = "badmonster.gif";
 	private static final String MAPICON_HUNGER = "hunger.gif";
 	private static final String MAPICON_SPECIALEVENT = "specialevents.gif";
 	private static final String MAPICON_THIEF = "dieb.gif";
+	private static final String MAPICON_NOTRADE_CASTLE = "notrade_castle.gif";
+	private static final String MAPICON_NOTRADE_TRADER = "notrade_trader.gif";
+	private static final String MAPICON_NOTRADE_ITEMS = "notrade_items.gif";
 	
 	private static final String MAPICON_GUARD_FRIEND = "guard_friend.gif";
 	private static final String MAPICON_GUARD_ENEMY = "guard_enemy.gif";
@@ -82,11 +92,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private boolean mapIcons_showing_Guarding = false;
 	private boolean mapIcons_showing_Empty_Towers = false;
 	private boolean mapIcons_showing_enemyPresence = false;
+	private boolean mapIcons_showing_noTrade = false;
 	
 	private boolean enemy_faction_list_exists = false;
 	
 	private JCheckBoxMenuItem showGuardMenu;
 	private JCheckBoxMenuItem showEmptyTowersMenu;
+	private JCheckBoxMenuItem showTradeWarningsMenu;
 	// showEnemyPresenceMenu
 	private JCheckBoxMenuItem showEnemyPresenceMenu;
 	
@@ -112,7 +124,18 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
             add("Juju-Zombies"); //pbem-spiele, 21.11.20010
             add("Juju-Ghaste"); // unbestätigt...
             add("Juju-Drachen"); // unbestätigt...
-            
+        }
+    };
+    
+    // Mail Thoralf vom 31.10.2011
+    // wirklich böse Monster müssen auch auf der normalen Monsterliste stehen (monsterTypeList) !
+    final private static List<String> realBadMonsterTypeList = new ArrayList<String>() {
+		private static final long serialVersionUID = 4711L;
+		{
+            add("Wyrme");
+            add("Juju-Drachen"); // unbestätigt...
+            add("Drachen");
+            add("Hirntöter");
         }
     };
 
@@ -269,6 +292,24 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			}).start();
 		}
 		
+		// TradeWarnings
+				if (e.getActionCommand().equalsIgnoreCase("tradeWarnings")){
+					new Thread(new Runnable() {
+						public void run() {
+							mapIcons_showing_noTrade = !mapIcons_showing_noTrade;
+							showTradeWarningsMenu.setSelected(mapIcons_showing_noTrade);
+							log.info(getName() + ": switching showing tradewarnings info to " + mapIcons_showing_noTrade);
+							if (mapIcons_showing_all){
+								if (!mapIcons_showing_noTrade){
+									removeMyRegionIcons();
+								}
+								processGameData();
+								client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+							}
+						}
+					}).start();
+				}
+		
 		// toogleEnemyPresence
 		if (e.getActionCommand().equalsIgnoreCase("EnemeyPresence")){
 			new Thread(new Runnable() {
@@ -334,6 +375,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		showEnemyPresenceMenu.setSelected(mapIcons_showing_enemyPresence);
 		showEnemyPresenceMenu.addActionListener(this);
 		menu.add(showEnemyPresenceMenu);
+		
+		showTradeWarningsMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showTradeWarnings"));
+		showTradeWarningsMenu.setActionCommand("tradeWarnings");
+		showTradeWarningsMenu.setSelected(mapIcons_showing_noTrade);
+		showTradeWarningsMenu.addActionListener(this);
+		menu.add(showTradeWarningsMenu);
 		
 		menu.addSeparator();
 		
@@ -411,11 +458,6 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		gd = data;
 		log.info(getName() + " initialized with new GameData...");
 		removeMyRegionIcons();
-		
-		
-				
-		
-		
 		processGameData();
 		
 	}
@@ -468,6 +510,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		if (mapIcons_showing_Empty_Towers){
 			log.info(getName() +  " found " + this.setEmptyTowers() + " regions with empty towers");
 		}
+		
+		if (mapIcons_showing_noTrade){
+			// 
+			log.info(getName() +  " found " + this.search_NoTRade() + " regions with trade warnings");
+			
+		}
+		
 		
 	}
 	
@@ -574,13 +623,21 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		int erg = 0;
 		for (Unit u:r.units()){
 			if (u.getFaction()!=null && u.getFaction().getID().toString().equals(MONSTER_FACTION)){
-				setRegionIcon(MAPICON_MONSTER,r);
+				if (realBadMonsterTypeList.contains(u.getRace().getName())){
+					setRegionIcon(MAPICON_BADMONSTER,r);
+				} else {
+					setRegionIcon(MAPICON_MONSTER,r);
+				}
 				return 1;
 			}
 			if (u.isHideFaction()){
 				Race race = u.getRace();
 				if (monsterTypeList.contains(race.getName())){
-					setRegionIcon(MAPICON_MONSTER,r);
+					if (realBadMonsterTypeList.contains(race.getName())){
+						setRegionIcon(MAPICON_BADMONSTER,r);
+					} else {
+						setRegionIcon(MAPICON_MONSTER,r);
+					}
 					return 1;
 				}
 			}
@@ -680,6 +737,128 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	
 	/**
+	 * Durchsucht alle Regionen auf Handelsbeschränkunge....
+	 * @return
+	 */
+	private int search_NoTRade(){
+		int erg=0;
+		for (Region r:gd.regions().values()){
+			erg += search_NoTrade_Region(r);
+		}
+		return erg;
+	}
+	
+	
+	/**
+	 * Durchsucht eine Region auf Handelsbeschränkungen
+	 * @param r
+	 * @return
+	 */
+	private int search_NoTrade_Region(Region r){
+		int erg=0;
+		// Regionen ohne Bauern raussuchen
+		if (r.getModifiedPeasants()<100){
+			return 0;
+		}
+		
+		// Nur Regionen, in welcher wir eine Einheit "haben"
+		boolean seeRegion=false;
+		for (Unit u:r.units()){
+			if (u.getCombatStatus()!=-1){
+				seeRegion=true;
+				break;
+			}
+		}
+		// Verlassen, wenn wir die Region gerade nicht "sehen"
+		if (!seeRegion){
+			return 0;
+		}
+		
+		// ab hier Probleme
+		// Problem 1:keine Burg >=2
+		boolean hasCastle=false;
+		for (Building b:r.buildings()){
+			if (b.getBuildingType() instanceof CastleType){
+				if (b.getSize()>=2){
+					hasCastle=true;
+					break;
+				}
+			}
+		}
+		if (!hasCastle){
+			this.setRegionIcon(MAPICON_NOTRADE_CASTLE, r);
+			return 1;
+		}
+		
+		
+		// Problem 2: kein Händler
+		boolean hasTrader=false;
+		SkillType handelsSkillType = gd.rules.getSkillType("Handeln");
+		if (handelsSkillType!=null){
+			for (Unit u:r.units()){
+				if (u.getCombatStatus()!=-1){
+					// Talentcheck
+					int actTalent = 0;
+					Skill handelsSkill = u.getModifiedSkill(handelsSkillType);
+					if (handelsSkill!=null){
+						actTalent = handelsSkill.getLevel();
+					}
+					if (actTalent>0){
+						hasTrader=true;
+						break;
+					}
+				}
+			}
+		} else {
+			// Keine Handelstalent in den rules...nicht weiter machen
+			return 0;
+		}
+		
+		if (!hasTrader){
+			this.setRegionIcon(MAPICON_NOTRADE_TRADER, r);
+			return 1;
+		}
+		
+		
+		// Problem 3: nix zu verkaufen
+		// Gesamte Region auf Waren checken, die verkauft werden könnten, also die
+		// hier nicht *gekauft* werden können
+		
+		ArrayList<ItemType> sellItems = new ArrayList<ItemType>(); 
+		Map<StringID, LuxuryPrice> priceMap = r.getPrices();
+		for (LuxuryPrice LP:priceMap.values()){
+			if (LP.getPrice()>0){
+				sellItems.add(LP.getItemType());
+			}
+		}
+		
+		// Sachen suchen
+		boolean sellItemExist = false;
+		for (Unit u:r.units()){
+			if (u.getCombatStatus()!=-1){
+				for (Item i:u.getItems()){
+					if (i.getItemType()!=null && sellItems.contains(i.getItemType())){
+						// Treffer
+						sellItemExist = true;
+						break;
+					}
+				}
+				if (sellItemExist){
+					break;
+				}
+			}
+		}
+		
+		if (!sellItemExist){
+			this.setRegionIcon(MAPICON_NOTRADE_ITEMS, r);
+			return 1;
+		}
+		
+		return erg;
+	}
+	
+	
+	/**
 	 * Durchsucht alle Factions in GameData nach Hunger
 	 * @return
 	 */
@@ -748,10 +927,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			          			}
 		          			}
 		          		}
-		          		
-		          		
 		              }
-		              
 		           }
 				}
 			}
@@ -785,6 +961,10 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			            	 boolean isBotschaftsMessage = false;   
 			            	// Message an Region
 			          		if (msg.getMessageType().getID().intValue()==2110306401){
+			          			isBotschaftsMessage=true;
+			          		}
+			          		// Uups, Quack, Quack: 621181552
+			          		if (msg.getMessageType().getID().intValue()==621181552){
 			          			isBotschaftsMessage=true;
 			          		}
 			          		if (isBotschaftsMessage){
