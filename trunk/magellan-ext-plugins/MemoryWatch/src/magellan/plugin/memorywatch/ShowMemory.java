@@ -41,7 +41,7 @@ public class ShowMemory implements MemoryWatchAction, Runnable {
 	 * @return
 	 */
 	public String getName() {
-		return "actual memory status";
+		return "current memory status";
 	}
 
 	/**
