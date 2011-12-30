@@ -307,7 +307,8 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		JMenu menu = new JMenu(getString("plugin.teacher.contextmenu.title", container));
 
 		// do teaching for this unit container
-		JMenuItem editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.execute.title"));
+		JMenuItem editMenu = new JMenuItem(getString("plugin.teacher.contextmenu.execute.title",
+				container.getName()));
 		editMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				new Thread(new Runnable() {
