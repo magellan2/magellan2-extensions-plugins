@@ -1067,7 +1067,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	            	// MESSAGETYPE 745563751
 	            	// "\"Der Vulkan in $region($regionv) bricht aus. Die Lavamassen verwüsten $region($regionn).\"";text
 	            	
-	          		if (msg.getMessageType().getID().intValue()==745563751){
+	          		if (msg.getMessageType()!=null && msg.getMessageType().getID()!=null && msg.getMessageType().getID().intValue()==745563751){
 	          			isVulcanoMessage=true;
 	          		}
 
