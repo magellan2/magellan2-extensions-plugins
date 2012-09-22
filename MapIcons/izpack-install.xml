@@ -9,7 +9,7 @@
     </authors>
     <url>http://magellan-client.sourceforge.net/</url>
     <uninstaller write="no"/>
-    <javaversion>1.6</javaversion>
+    <javaversion>1.5</javaversion>
   </info>
   
   <guiprefs width="640" height="480" resizable="no"/>
