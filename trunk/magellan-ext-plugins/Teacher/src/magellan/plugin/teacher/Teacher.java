@@ -96,6 +96,11 @@ public class Teacher {
 	ArrayList<String> skillNames = new ArrayList<String>();
 	Map<Unit, Map<Integer, Integer>> skillMaps = new HashMap<Unit, Map<Integer, Integer>>();
 
+	// map skill -> map level -> weight
+	private Map<Integer, Map<Integer, Double>> globalWeights;
+
+	private double minGlobalWeight = .7d;
+
 	/**
 	 * Create a new Teacher object.
 	 * 
@@ -203,16 +208,18 @@ public class Teacher {
 			}
 
 			public int getNumTeachers() {
-				if (teacher == -1)
+				if (teacher == -1) {
 					return 0;
+				}
 				return infos[teacher].getUnit().getModifiedPersons();
 			}
 
 			public Collection<Integer> getTeacherSet() {
-				if (teacher == -1)
+				if (teacher == -1) {
 					return Collections.emptySet();
-				else
+				} else {
 					return Collections.singleton(teacher);
+				}
 			}
 
 			public int getTeacher() {
@@ -221,19 +228,22 @@ public class Teacher {
 
 			public int getRandomTeacher() {
 				List<Integer> teachers = getSUnit().getTeachers();
-				if (teachers.size() == 0)
+				if (teachers.size() == 0) {
 					return -1;
+				}
 				return teachers.get(random.nextInt(teachers.size()));
 			}
 
 			public int getFreeTeacher() {
 				List<Integer> teachers = getSUnit().getTeachers();
-				if (teachers.size() == 0)
+				if (teachers.size() == 0) {
 					return -1;
+				}
 				int firstTeacher = random.nextInt(teachers.size());
 				for (int i = 0; i < teachers.size(); ++i) {
-					if (validTeacher(this, teachers.get((firstTeacher + i) % teachers.size())))
+					if (validTeacher(this, teachers.get((firstTeacher + i) % teachers.size()))) {
 						return teachers.get((firstTeacher + i) % teachers.size());
+					}
 				}
 
 				return -1;
@@ -358,8 +368,9 @@ public class Teacher {
 		 * @return The value of this solution
 		 */
 		public double evaluate() {
-			if (!changed)
+			if (!changed) {
 				return result;
+			}
 			result = 0;
 			for (int i = 0; i < infos.length; ++i) {
 				Info info = infos[i];
@@ -373,6 +384,8 @@ public class Teacher {
 			SUnit su = info.getSUnit();
 			double value = 0;
 			if (info.getLearning() != null) {
+				// TODO modify value based on potential teachers in the region; a skill with many teachers
+				// should only be learned with a teacher, otherwise a secondary skill should be learned
 				value = su.calcWeight(info.getLearning());
 				value *= su.getUnit().getModifiedPersons();
 				value *= su.getPrio();
@@ -399,6 +412,8 @@ public class Teacher {
 					} else {
 						value *= 2;
 					}
+				} else {
+					value *= getGlobalWeight(info.getLearning(), sLevel);
 				}
 			}
 			return value;
@@ -519,8 +534,9 @@ public class Teacher {
 
 			}
 
-			if (teacherSet.size() <= 0)
+			if (teacherSet.size() <= 0) {
 				return;
+			}
 
 			// Integer[] teachers = (Integer[]) teacherSet.toArray(new Integer[0]);
 
@@ -576,8 +592,9 @@ public class Teacher {
 		 * @param solution2
 		 */
 		public void mate(Solution solution, Solution solution2) {
-			if (solution.units != solution2.units)
+			if (solution.units != solution2.units) {
 				throw new IllegalArgumentException("incompatible solutions");
+			}
 			init();
 
 			// int crossoverPoint1 = random.nextInt(infos.length-1);
@@ -655,8 +672,9 @@ public class Teacher {
 		Collection<Skill> skills = unit.getModifiedSkills();
 		if (skills != null) {
 			for (Skill skill : skills) {
-				if (skill.getSkillType().getName().equalsIgnoreCase(skillName))
+				if (skill.getSkillType().getName().equalsIgnoreCase(skillName)) {
 					return skill.getLevel();
+				}
 			}
 		}
 		return 0;
@@ -674,8 +692,9 @@ public class Teacher {
 	}
 
 	public String getSkillName(Integer skill) {
-		if (skill == null || skill >= skillNames.size())
+		if (skill == null || skill >= skillNames.size()) {
 			throw new IllegalArgumentException();
+		}
 		return skillNames.get(skill);
 	}
 
@@ -789,9 +808,9 @@ public class Teacher {
 						if (su == null) {
 							su = new SUnit(this, u);
 						}
-						if (talent.equals(Order.ALL))
+						if (talent.equals(Order.ALL)) {
 							throw new IllegalArgumentException("L ALL not supported");
-						else {
+						} else {
 							su.addLearn(getSkillIndex(talent), target, max);
 							su.setPrio(orderList.getPrio());
 						}
@@ -858,8 +877,9 @@ public class Teacher {
 						StringTokenizer st = new StringTokenizer(
 								orderLine.substring(start + teachTag.length()), delim, false);
 						// try to read priority
-						if (!st.hasMoreElements())
+						if (!st.hasMoreElements()) {
 							return result;
+						}
 						String first = st.nextToken();
 						double prio = -1;
 						try {
@@ -897,8 +917,9 @@ public class Teacher {
 			} catch (Exception e) {
 				// throw new OrderFormatException("parse error in line " + orderLine, e);
 			}
-			if (result != null && result.orders.size() > 0)
+			if (result != null && result.orders.size() > 0) {
 				return result;
+			}
 		}
 		return new OrderList(Order.LEARN, namespaces.iterator().next());
 	}
@@ -911,8 +932,9 @@ public class Teacher {
 		private double prio = 1;
 
 		public OrderList(String type, String namespace) {
-			if (type == null || namespace == null)
+			if (type == null || namespace == null) {
 				throw new NullPointerException();
+			}
 			this.type = type;
 			this.namespace = namespace;
 		}
@@ -1010,8 +1032,9 @@ public class Teacher {
 	 */
 	private static void convertOrder(Unit unit, String talent, double talentPrio, double prio2,
 			OrderList result) {
-		if (unit.getModifiedSkills().isEmpty())
+		if (unit.getModifiedSkills().isEmpty()) {
 			return;
+		}
 
 		// find min an max skill
 		int maxSkill = 1, minSkill = Integer.MAX_VALUE;
@@ -1078,8 +1101,9 @@ public class Teacher {
 	 */
 	public double mainrun() {
 		sUnits = getUnits(false).toArray(new SUnit[0]);
-		if (sUnits.length == 0)
+		if (sUnits.length == 0) {
 			return 0;
+		}
 
 		log.info("teaching " + sUnits.length + " units in namespace \"" + namespaces.toString() + "\"");
 
@@ -1205,8 +1229,9 @@ public class Teacher {
 				+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
 				+ veryBest[veryBest.length - 1].evaluate());
 
-		if (veryBest.length == 0)
+		if (veryBest.length == 0) {
 			return -1;
+		}
 
 		// output
 		return setResult(veryBest[0]);
@@ -1237,7 +1262,7 @@ public class Teacher {
 	 * @param units
 	 * @param current
 	 */
-	private void init(Solution[] population, SUnit[] units, boolean current) {
+	protected void init(Solution[] population, SUnit[] units, boolean current) {
 		// log.info(population.length + " " + units.length + " " + current);
 		for (int i = 0; i < population.length; ++i) {
 			population[i] = new Solution(units);
@@ -1252,6 +1277,7 @@ public class Teacher {
 			log.error("orders foul: " + e);
 			e.printStackTrace();
 		}
+		initGlobalWeight(units);
 	}
 
 	private void select(Solution[] population) {
@@ -1308,8 +1334,9 @@ public class Teacher {
 		for (String string : orders) {
 			String o = string.trim();
 			if (isTeachOrder(o, u)) {
-				if (value != null)
+				if (value != null) {
 					return null;
+				}
 				if (o.indexOf(" ") >= 0) {
 					String argument = o.substring(o.indexOf(" ")).trim().toLowerCase();
 					if (argument.trim().length() > 0) {
@@ -1319,8 +1346,9 @@ public class Teacher {
 
 			}
 			if (isLearnOrder(o, u)) {
-				if (value != null)
+				if (value != null) {
 					return null;
+				}
 				if (o.indexOf(" ") >= 0) {
 					String argument = o.substring(o.indexOf(" ")).trim().toLowerCase();
 					if (argument.trim().length() > 0) {
@@ -1329,8 +1357,9 @@ public class Teacher {
 				}
 			}
 		}
-		if (value == null)
+		if (value == null) {
 			return new Order(0);
+		}
 
 		return value;
 	}
@@ -1380,14 +1409,16 @@ public class Teacher {
 		for (String string : orders) {
 			String o = string.trim();
 			if (isTeachOrder(o, u)) {
-				if (value != null)
+				if (value != null) {
 					return null;
+				}
 				// FIXME syntax error gets OutOfBoundsException if Befehl.equals("LEHRE")
 				value = o;
 			}
 			if (isLearnOrder(o, u)) {
-				if (value != null)
+				if (value != null) {
 					return null;
+				}
 				value = o;
 			}
 		}
@@ -1428,7 +1459,7 @@ public class Teacher {
 				orders[i].append(" ");
 				orders[i].append(getLocalizedSkillName(info.getLearning(), info.getUnit()));
 			}
-			if (info.getTeacher() != -1)
+			if (info.getTeacher() != -1) {
 				if (orders[info.getTeacher()] == null) {
 					orders[info.getTeacher()] = new StringBuffer(
 							getTeachOrder(best.infos[info.getTeacher()].getUnit()));
@@ -1445,12 +1476,15 @@ public class Teacher {
 					}
 					orders[info.getTeacher()].append(" ").append(info.getUnit().getID().toString());
 				}
+			}
 		}
 
 		// add debug information
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
 			StringBuilder debug = new StringBuilder();
+			Integer learning = info.getLearning();
+			int teacher = info.teacher;
 			if (info.getLearning() == null) {
 				debug.append("; $$$ T ").append(info.students);
 			} else {
@@ -1464,40 +1498,55 @@ public class Teacher {
 				} else {
 					debug.append(" ");
 				}
-				debug.append(getSkillName(skill)).append(" ").append(info.getSUnit().calcWeight(skill));
+				debug.append(getSkillName(skill)).append(" ")
+						.append(String.format("%.3f", info.getSUnit().calcWeight(skill)));
+				// info.setLearning(skill);
+				// info.teacher = -1;
+				// debug.append(" ").append(
+				// String.format("%.3f", best.evaluate(info) / info.getUnit().getPersons()));
+				// info.setLearning(learning);
+				// info.teacher = teacher;
+				debug.append(" ").append(
+						String.format("%.3f", getGlobalWeight(skill, getLevel(info.getUnit(), skill))));
 			}
+			debug.append(" ").append(
+					String.format("%.3f", best.evaluate(info) / info.getUnit().getPersons()));
 
 			info.getUnit().addOrder(debug.toString());
 			if (orders[i] == null) {
 				info.getUnit().addOrder("; $$$ teaching error", false, 0);
 			} else {
 				info.getUnit().addOrder(orders[i].toString(), false, 0);
-				if (info.getLearning() == null) {
-					// confirm according to settings
-					if (info.students == info.getUnit().getModifiedPersons() * 10) {
-						// full teacher
-						if (isConfirmFullTeachers()) {
+				// don't confirm units which were set to unconfirm by E3CommandParser
+				if (info.getUnit().getTag("$cript.confirm") == null
+						|| info.getUnit().getTag("$cript.confirm").equals("1")) {
+					if (info.getLearning() == null) {
+						// confirm according to settings
+						if (info.students == info.getUnit().getModifiedPersons() * 10) {
+							// full teacher
+							if (isConfirmFullTeachers()) {
+								info.getUnit().setOrdersConfirmed(true);
+							} else if (isUnconfirm()) {
+								info.getUnit().setOrdersConfirmed(false);
+							}
+						} else if (isConfirmEmptyTeachers()
+								&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
+										/ 100.) {
+							// partially full teacher
 							info.getUnit().setOrdersConfirmed(true);
 						} else if (isUnconfirm()) {
 							info.getUnit().setOrdersConfirmed(false);
 						}
-					} else if (isConfirmEmptyTeachers()
-							&& info.students >= info.getUnit().getModifiedPersons() * 10 * getPercentFull()
-									/ 100.) {
-						// partially full teacher
-						info.getUnit().setOrdersConfirmed(true);
-					} else if (isUnconfirm()) {
-						info.getUnit().setOrdersConfirmed(false);
-					}
-				} else {
-					if (info.getTeacher() != -1 && isConfirmTaughtStudents()) {
-						// student with teacher
-						info.getUnit().setOrdersConfirmed(true);
-					} else if (info.getTeacher() == -1 && isConfirmUntaughtStudents()) {
-						// student without teacher
-						info.getUnit().setOrdersConfirmed(true);
-					} else if (isUnconfirm()) {
-						info.getUnit().setOrdersConfirmed(false);
+					} else {
+						if (info.getTeacher() != -1 && isConfirmTaughtStudents()) {
+							// student with teacher
+							info.getUnit().setOrdersConfirmed(true);
+						} else if (info.getTeacher() == -1 && isConfirmUntaughtStudents()) {
+							// student without teacher
+							info.getUnit().setOrdersConfirmed(true);
+						} else if (isUnconfirm()) {
+							info.getUnit().setOrdersConfirmed(false);
+						}
 					}
 				}
 			}
@@ -1621,10 +1670,10 @@ public class Teacher {
 					// no order: just keep the old line
 					newOrders.add(line);
 				} else if (newOrder == null) {
-					if (!safety)
+					if (!safety) {
 						throw new IllegalArgumentException(
 								"you didn't intend to delete all meta orders, did you?");
-					else {
+					} else {
 						// delete this line
 					}
 				} else {
@@ -1648,17 +1697,19 @@ public class Teacher {
 	}
 
 	private static String getLearnTag(String namespace) {
-		if (namespace == null)
+		if (namespace == null) {
 			return "$L";
-		else
+		} else {
 			return "$" + namespace + "$L";
+		}
 	}
 
 	private static String getTeachTag(String namespace) {
-		if (namespace == null)
+		if (namespace == null) {
 			return "$T";
-		else
+		} else {
 			return "$" + namespace + "$T";
+		}
 	}
 
 	public boolean isConfirmFullTeachers() {
@@ -1734,6 +1785,91 @@ public class Teacher {
 	 */
 	public double getQuality() {
 		return quality;
+	}
+
+	public double getGlobalWeight(Integer skill, int level) {
+		Double weight = globalWeights.get(skill).get(level);
+		if (weight == null) {
+			return 1;
+		}
+		return weight;
+	}
+
+	static final double WEIGHT_FACTOR1 = .2;
+	static final double WEIGHT_FACTOR2 = .6;
+
+	protected void initGlobalWeight(SUnit[] units2) {
+		globalWeights = new HashMap<Integer, Map<Integer, Double>>();
+		// map skill -> list level -> persons
+		Map<Integer, ArrayList<Integer>> counts = new HashMap<Integer, ArrayList<Integer>>();
+
+		for (SUnit unit : units2) {
+			for (Integer skill : unit.getLearnTalents()) {
+				ArrayList<Integer> count = counts.get(skill);
+				if (count == null) {
+					counts.put(skill, count = new ArrayList<Integer>());
+				}
+				increase(counts.get(skill), unit.getSkillLevel(skill), unit.getUnit().getPersons());
+			}
+		}
+
+		for (Integer skill : counts.keySet()) {
+			ArrayList<Integer> persons = counts.get(skill);
+			Map<Integer, Double> skillWeights = new HashMap<Integer, Double>();
+			globalWeights.put(skill, skillWeights);
+			int teachers = 0;
+			for (int level = persons.size() - 1; level >= TEACH_DIFF - 1; --level) {
+				teachers += persons.get(level);
+			}
+			int students = 0;
+			for (int level = 0; level < persons.size(); ++level) {
+				students += persons.get(level);
+				if (students > 0) {
+					if (teachers * 2 >= persons.get(level)) {
+						// more than enough teachers
+						skillWeights.put(level, minGlobalWeight);
+					} else if (teachers * 5 >= persons.get(level)) {
+						// twice as much as needed
+						skillWeights.put(level, 1 - (1 - minGlobalWeight) * WEIGHT_FACTOR2);
+					} else if (teachers * 10 >= persons.get(level)) {
+						// just enough teachers
+						skillWeights.put(level, 1 - (1 - minGlobalWeight) * WEIGHT_FACTOR1);
+					} else {
+						// not enough
+						skillWeights.put(level, 1 + (1 - minGlobalWeight) * WEIGHT_FACTOR1);
+					}
+				}
+				if (level + TEACH_DIFF - 1 < persons.size()) {
+					students = Math.max(0, students - persons.get(level + TEACH_DIFF - 1) * 10);
+					teachers -= persons.get(level + TEACH_DIFF - 1);
+				}
+			}
+		}
+	}
+
+	protected void increase(ArrayList<Integer> arrayList, Integer key, int inc) {
+		for (int i = arrayList.size(); i <= key; ++i) {
+			arrayList.add(0);
+		}
+		arrayList.set(key, arrayList.get(key) + inc);
+	}
+
+	@SuppressWarnings("unused")
+	protected void increase(Map<Integer, Integer> map, Integer key, int inc) {
+		Integer old = map.get(key);
+		if (old == null) {
+			map.put(key, inc);
+		} else {
+			map.put(key, old + inc);
+		}
+	}
+
+	public double getMinGlobalWeight() {
+		return minGlobalWeight;
+	}
+
+	public void setMinGlobalWeight(double weight) {
+		minGlobalWeight = weight;
 	}
 
 }

@@ -110,7 +110,7 @@ import magellan.library.utils.logging.Logger;
  * teaching orders <i>must</i> also have a learning order.
  * 
  * @author stm
- * @version 0.10.3
+ * @version 0.11
  */
 public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
 		UnitContextMenuProvider, ActionListener {
@@ -185,11 +185,13 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		}
 
 		public static PlugInAction getAction(ActionEvent e) {
-			if (e == null)
+			if (e == null) {
 				return UNKNOWN;
+			}
 			for (PlugInAction action : values()) {
-				if (action.id.equalsIgnoreCase(e.getActionCommand()))
+				if (action.id.equalsIgnoreCase(e.getActionCommand())) {
 					return action;
+				}
 			}
 			return UNKNOWN;
 		}
@@ -592,13 +594,17 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	protected void delOrder(Unit unit, Collection<Unit> selectedObjects, Order newOrder) {
 		Teacher.delOrder(selectedObjects != null ? selectedObjects : Collections.singletonList(unit),
 				getNamespaces(), newOrder);
-		client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+		if (client != null) {
+			client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+		}
 	}
 
 	protected void addOrder(Unit unit, Collection<Unit> selectedObjects, Order newOrder) {
 		Teacher.addOrder(selectedObjects != null ? selectedObjects : Collections.singletonList(unit),
 				getNamespaces().iterator().next(), newOrder);
-		client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+		if (client != null) {
+			client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+		}
 	}
 
 	public void actionPerformed(final ActionEvent e) {
@@ -707,8 +713,9 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 					}
 					aborted = true;
 					return false;
-				} else
+				} else {
 					return false;
+				}
 
 			}
 		}
