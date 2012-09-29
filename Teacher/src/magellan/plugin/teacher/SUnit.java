@@ -57,8 +57,9 @@ public class SUnit implements Named {
 	}
 
 	public void addLearn(Integer talent, Integer target, Integer max) {
-		if (target == 0)
+		if (target == 0) {
 			throw new IllegalArgumentException("target must be > 0");
+		}
 		targets.put(talent, target);
 		maxs.put(talent, max);
 		talentLevels.put(talent, teacher.getLevel(getUnit(), talent));
@@ -70,8 +71,9 @@ public class SUnit implements Named {
 	}
 
 	public double calcWeight(Integer skill) {
-		if (skill == null)
+		if (skill == null) {
 			return 0;
+		}
 		Double prio = weights.get(skill);
 		if (prio == null) {
 			// calc max mult
@@ -125,8 +127,9 @@ public class SUnit implements Named {
 	}
 
 	public int getTarget(Integer skill) {
-		if (skill == null)
+		if (skill == null) {
 			return 0;
+		}
 		return (targets.get(skill) != null ? targets.get(skill) : -1);
 	}
 
@@ -135,8 +138,9 @@ public class SUnit implements Named {
 	}
 
 	public int getMax(Integer skill) {
-		if (skill == null)
+		if (skill == null) {
 			return 0;
+		}
 		return (maxs.get(skill) != null ? maxs.get(skill) : -1);
 	}
 
@@ -153,8 +157,9 @@ public class SUnit implements Named {
 	}
 
 	public int getMaximumDifference(Integer sill) {
-		if (sill == null)
+		if (sill == null) {
 			return 1;
+		}
 		return (teach.get(sill) != null ? teach.get(sill) : 1);
 	}
 
@@ -249,8 +254,9 @@ public class SUnit implements Named {
 	}
 
 	public int compareTo(Object o) {
-		if (o instanceof SUnit)
+		if (o instanceof SUnit) {
 			return getUnit().compareTo(((SUnit) o).getUnit());
+		}
 		return 1;
 	}
 
@@ -269,18 +275,17 @@ public class SUnit implements Named {
 	}
 
 	/**
-	 * More efficient variant of getLevel(SUnig, String).
+	 * Returns current level of this skill.
 	 * 
 	 * @param skill
-	 * @return
-	 * @deprecated now as efficient as getLevel?
+	 * @return The level, or 0 if it shouldn't exist
 	 */
-	@Deprecated
 	public int getSkillLevel(Integer skill) {
 		if (talentLevels != null) {
 			Integer result = talentLevels.get(skill);
-			if (result != null)
+			if (result != null) {
 				return result;
+			}
 		}
 		int level = teacher.getLevel(getUnit(), skill);
 		talentLevels.put(skill, level);
