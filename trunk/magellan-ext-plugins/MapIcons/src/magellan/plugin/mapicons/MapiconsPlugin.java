@@ -62,7 +62,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
 	// FF: 0.94: show Talents
 	// FF: 0.96: show error regions
-	public static final String version="0.96";
+	public static final String version="0.97";
 	
 	private Client client = null;
 	
@@ -97,6 +97,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private static final String MONSTER_FACTION = "ii";
 	
 	private boolean mapIcons_showing_all = true;
+	private boolean mapIcons_showing_Messages = true;
+	private boolean mapIcons_showing_Battles = true;
+	private boolean mapIcons_showing_Thiefs = true;
+	private boolean mapIcons_showing_Monsters = true;
+	private boolean mapIcons_showing_Starving = true; // Hunger
+	private boolean mapIcons_showing_Specials = true; // Special Events
 	private boolean mapIcons_showing_Guarding = false;
 	private boolean mapIcons_showing_Empty_Towers = false;
 	private boolean mapIcons_showing_enemyPresence = false;
@@ -105,6 +111,14 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private boolean mapIcons_showing_Errors = false;
 	
 	private boolean enemy_faction_list_exists = false;
+	
+	private JCheckBoxMenuItem showMessagesMenu;
+	private JCheckBoxMenuItem showBattlesMenu;
+	private JCheckBoxMenuItem showThiefsMenu;
+	private JCheckBoxMenuItem showMonstersMenu;
+	private JCheckBoxMenuItem showStarvingMenu;
+	private JCheckBoxMenuItem showSpecialsMenu;
+	
 	
 	private JCheckBoxMenuItem showGuardMenu;
 	private JCheckBoxMenuItem showEmptyTowersMenu;
@@ -318,6 +332,80 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			}).start();
 		}
 		
+		
+		// showMessages
+		if (e.getActionCommand().equalsIgnoreCase("showMessages")){
+			new Thread(new Runnable() {
+				public void run() {
+					mapIcons_showing_Messages = !mapIcons_showing_Messages;
+					showMessagesMenu.setSelected(mapIcons_showing_Messages);
+					log.info(getName() + ": switching showing messages to " + mapIcons_showing_Messages);
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+				}
+			}).start();
+		}
+		
+		// showBattles
+		if (e.getActionCommand().equalsIgnoreCase("showBattles")){
+			new Thread(new Runnable() {
+				public void run() {
+					mapIcons_showing_Battles = !mapIcons_showing_Battles;
+					showBattlesMenu.setSelected(mapIcons_showing_Battles);
+					log.info(getName() + ": switching showing battles to " + mapIcons_showing_Battles);
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+				}
+			}).start();
+		}
+		
+		// showThiefs
+		if (e.getActionCommand().equalsIgnoreCase("showThiefs")){
+			new Thread(new Runnable() {
+				public void run() {
+					mapIcons_showing_Thiefs = !mapIcons_showing_Thiefs;
+					showThiefsMenu.setSelected(mapIcons_showing_Thiefs);
+					log.info(getName() + ": switching showing thiefs to " + mapIcons_showing_Thiefs);
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+				}
+			}).start();
+		}
+		
+		// showMonsters
+		if (e.getActionCommand().equalsIgnoreCase("showMonsters")){
+			new Thread(new Runnable() {
+				public void run() {
+					mapIcons_showing_Monsters = !mapIcons_showing_Monsters;
+					showMonstersMenu.setSelected(mapIcons_showing_Monsters);
+					log.info(getName() + ": switching showing monsters to " + mapIcons_showing_Monsters);
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+				}
+			}).start();
+		}
+		
+		// showStarving
+		if (e.getActionCommand().equalsIgnoreCase("showStarving")){
+			new Thread(new Runnable() {
+				public void run() {
+					mapIcons_showing_Starving = !mapIcons_showing_Starving;
+					showStarvingMenu.setSelected(mapIcons_showing_Starving);
+					log.info(getName() + ": switching showing starving to " + mapIcons_showing_Starving);
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+				}
+			}).start();
+		}
+		
+		// showSpecials
+		if (e.getActionCommand().equalsIgnoreCase("showSpecials")){
+			new Thread(new Runnable() {
+				public void run() {
+					mapIcons_showing_Specials = !mapIcons_showing_Specials;
+					showSpecialsMenu.setSelected(mapIcons_showing_Specials);
+					log.info(getName() + ": switching showing specials to " + mapIcons_showing_Specials);
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+				}
+			}).start();
+		}
+		
+		
 		// TradeWarnings
 		if (e.getActionCommand().equalsIgnoreCase("tradeWarnings")){
 			new Thread(new Runnable() {
@@ -420,6 +508,55 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		menu.add(recreateAllIconsMenu);
 		
 		menu.addSeparator();
+		
+		showTalentsMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showTalents"));
+		showTalentsMenu.setActionCommand("Talents");
+		showTalentsMenu.setSelected(mapIcons_showing_Talents);
+		showTalentsMenu.addActionListener(this);
+		menu.add(showTalentsMenu);
+		
+		// Auswahl des Talentes, ab Version 0.95..
+		talentMenu = new JMenu(getString("plugin.mapicons.menu.talentSubmenuName"));
+		// geht noch nicht,w eil keine Daten geladen sind..siehe init data
+		// addTalents(talentMenu);
+		menu.add(talentMenu);
+		
+		showMessagesMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showMessages"));
+		showMessagesMenu.setActionCommand("showMessages");
+		showMessagesMenu.setSelected(mapIcons_showing_Messages);
+		showMessagesMenu.addActionListener(this);
+		menu.add(showMessagesMenu);
+		
+		showBattlesMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showBattles"));
+		showBattlesMenu.setActionCommand("showBattles");
+		showBattlesMenu.setSelected(mapIcons_showing_Battles);
+		showBattlesMenu.addActionListener(this);
+		menu.add(showBattlesMenu);
+		
+		showThiefsMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showThiefs"));
+		showThiefsMenu.setActionCommand("showThiefs");
+		showThiefsMenu.setSelected(mapIcons_showing_Thiefs);
+		showThiefsMenu.addActionListener(this);
+		menu.add(showThiefsMenu);
+		
+		showMonstersMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showMonsters"));
+		showMonstersMenu.setActionCommand("showMonsters");
+		showMonstersMenu.setSelected(mapIcons_showing_Monsters);
+		showMonstersMenu.addActionListener(this);
+		menu.add(showMonstersMenu);		
+		
+		showStarvingMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showStarving"));
+		showStarvingMenu.setActionCommand("showStarving");
+		showStarvingMenu.setSelected(mapIcons_showing_Starving);
+		showStarvingMenu.addActionListener(this);
+		menu.add(showStarvingMenu);
+		
+		showSpecialsMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showSpecials"));
+		showSpecialsMenu.setActionCommand("showSpecials");
+		showSpecialsMenu.setSelected(mapIcons_showing_Specials);
+		showSpecialsMenu.addActionListener(this);
+		menu.add(showSpecialsMenu);
+		
 		showGuardMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showGuard"));
 		showGuardMenu.setActionCommand("showGuard");
 		showGuardMenu.setSelected(mapIcons_showing_Guarding);
@@ -450,17 +587,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		showErrorsMenu.addActionListener(this);
 		menu.add(showErrorsMenu);
 		
-		showTalentsMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showTalents"));
-		showTalentsMenu.setActionCommand("Talents");
-		showTalentsMenu.setSelected(mapIcons_showing_Talents);
-		showTalentsMenu.addActionListener(this);
-		menu.add(showTalentsMenu);
 		
-		// Auswahl des Talentes, ab Version 0.95..
-		talentMenu = new JMenu(getString("plugin.mapicons.menu.talentSubmenuName"));
-		// geht noch nicht,w eil keine Daten geladen sind..siehe init data
-		// addTalents(talentMenu);
-		menu.add(talentMenu);
 		
 		menu.addSeparator();
 		
@@ -569,27 +696,41 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private void processGameData(){
 		if (gd == null) {return;}
 		
-		// init list of enemies from orders from trusted units
-		// trusted...from which we know the orders 
-		getEnemyFactionsFromOrders();		
+		if (!mapIcons_showing_all){
+			log.info(getName() + " MapIcons turned off - no icons (no regionicon-tags)");
+			return;
+		}
+		
+				
 		
 		// die einzelnen Bereiche aufrufen..
 		if (mapIcons_showing_enemyPresence) {
+			// init list of enemies from orders from trusted units
+			// trusted...from which we know the orders 
+			getEnemyFactionsFromOrders();
 			log.info(getName() +  " set " + this.searchEnemyPresence() + " regions with enemies present");
 		}
 		if (mapIcons_showing_Guarding){
 			log.info(getName() +  " set " + this.setGuarding() + " regions with guard information");
 		}
-		if (mapIcons_showing_Talents){
-			log.info(getName() +  " set " + this.searchTalents() + " regions with perception level information");
+		if (mapIcons_showing_Battles){
+			log.info(getName() +  " found " + this.searchBattles() + " battle-regions");
 		}
-		log.info(getName() +  " found " + this.searchBattles() + " battle-regions");
-		log.info(getName() +  " found " + this.searchMonsters() + " regions with monsters");
-		log.info(getName() +  " found " + this.searchHunger() + " regions with hunger");
-		log.info(getName() +  " found " + this.searchSpecialEvents() + " regions with special events");
-		log.info(getName() +  " found " + this.searchThiefs() + " regions with thief-events");
-		
-		log.info(getName() +  " found " + this.searchBotschaften() + " regions with Messages(Botschaften)");
+		if (mapIcons_showing_Monsters){
+			log.info(getName() +  " found " + this.searchMonsters() + " regions with monsters");
+		}
+		if (mapIcons_showing_Starving){
+			log.info(getName() +  " found " + this.searchHunger() + " regions with hunger");
+		}
+		if (mapIcons_showing_Specials){
+			log.info(getName() +  " found " + this.searchSpecialEvents() + " regions with special events");
+		}
+		if (mapIcons_showing_Thiefs){
+			log.info(getName() +  " found " + this.searchThiefs() + " regions with thief-events");
+		}
+		if (mapIcons_showing_Messages){
+			log.info(getName() +  " found " + this.searchBotschaften() + " regions with Messages(Botschaften)");
+		}
 		
 		if (mapIcons_showing_Empty_Towers){
 			log.info(getName() +  " found " + this.setEmptyTowers() + " regions with empty towers");
@@ -599,6 +740,10 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			// 
 			log.info(getName() +  " found " + this.search_NoTRade() + " regions with trade warnings");
 			
+		}
+		
+		if (mapIcons_showing_Talents){
+			log.info(getName() +  " set " + this.searchTalents() + " regions with perception level information");
 		}
 		
 		if (mapIcons_showing_Errors){
@@ -1644,7 +1789,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 
     // Fiete: Load all enemy factions from orders 
     // order format: // EnemyFaction:abcd
-    // not case sencitive, abcd is added
+    // not case sensitive, abcd is added
     private void getEnemyFactionsFromOrders(){
     	int cnt = 0;
     	if (gd.units()!=null && gd.units().size()>0){
@@ -1734,6 +1879,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private void addTalents(JMenu menu){
 		if (gd != null){
 			if (gd.rules!=null){
+				menu.removeAll();
 				Collection<SkillType> skillTypesColl = gd.rules.getSkillTypes();
 				ArrayList<SkillType> skillTypes = new ArrayList<SkillType>();
 				// log.info("MapIcons - found skillTypes: " + skillTypesColl.size());
@@ -1745,6 +1891,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 					JMenuItem actItem = new JCheckBoxMenuItem(name);
 					actItem.setActionCommand("setNewTalent_" + skillType.getName());
 					actItem.addActionListener(this);
+					// log.info("MapIcons - sorted skilltypes, found: " + name);
 					if (skillType.getName().equalsIgnoreCase(actTalentName)){
 						actItem.setSelected(true);
 					} else {
