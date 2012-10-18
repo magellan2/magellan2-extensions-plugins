@@ -1139,6 +1139,7 @@ public class Teacher {
 			int notImproved = 0;
 			// do one run of the evol. algo; terminate if max number of rounds is reached or if minimum
 			// number of rounds is reached and the solution quality does not increase any more
+			log.fine("run " + metaRound + "/" + numMetaRounds);
 			int round = 0;
 			for (; (round < minRounds || (round < maxRounds && notImproved <= Math.max(3, minRounds / 5)))
 					&& !stopFlag; ++round) {
@@ -1173,7 +1174,7 @@ public class Teacher {
 				best[best.length - 1] = population[0].clone();
 				select(best);
 				if (round == 1 || round % Math.ceil(minRounds / 6.) == 0) {
-					log.info(round + "/" + minRounds + " best: " + best[0].evaluate() + " 0: "
+					log.fine("round " + round + "/" + minRounds + " best: " + best[0].evaluate() + " 0: "
 							+ population[0].evaluate() + " " + population.length / 10 + ": "
 							+ population[population.length / 10].evaluate() + " " + (population.length / 10 * 9)
 							+ ": " + population[population.length / 10 * 9].evaluate() + " "
@@ -1188,7 +1189,7 @@ public class Teacher {
 				veryBest[veryBest.length - 1 - metaRound * select - i] = population[i];
 			}
 			veryBest[veryBest.length - 1 - metaRound * select - (select - 1)] = best[0];
-			log.info("***" + minRounds + "/" + round + "/" + maxRounds + " best: " + best[0].evaluate()
+			log.fine("***" + minRounds + "/" + round + "/" + maxRounds + " best: " + best[0].evaluate()
 					+ " 0: " + population[0].evaluate() + " " + population.length / 10 + ": "
 					+ population[population.length / 10].evaluate() + " " + (population.length / 10 * 9)
 					+ ": " + population[population.length / 10 * 9].evaluate() + " "
@@ -1196,21 +1197,23 @@ public class Teacher {
 		}
 
 		// fix all remaining
-		log.info(fix(veryBest) + " fixes ");
+		log.fine(fix(veryBest) + " fixes ");
 
 		// optimize population of best solutions
 		select(veryBest);
-		log.info(" 0: " + veryBest[0].evaluate() + " l/3: " + veryBest[veryBest.length / 3].evaluate()
-				+ " " + (veryBest.length - 1) + ": " + veryBest[veryBest.length - 1].evaluate());
+		log.fine("population:  0: " + veryBest[0].evaluate() + " l/3: "
+				+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
+				+ veryBest[veryBest.length - 1].evaluate());
 		stopFlag = false;
+		log.fine("refinement");
 		for (int round = 0; round < minRounds * 8 && !stopFlag; ++round) {
 			if (round % (2 * minRounds) == 0) {
-				log.info(round + "/" + minRounds * 8 + ": " + veryBest[0].evaluate() + " l/3: "
+				log.fine("round " + round + "/" + minRounds * 8 + ": " + veryBest[0].evaluate() + " l/3: "
 						+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
 						+ veryBest[veryBest.length - 1].evaluate());
 			}
 			if (round > 0 && round % (minRounds * 4) == 0) {
-				log.info(fix(veryBest) + " fixes ");
+				log.fine(fix(veryBest) + " fixes ");
 			}
 			ui.setProgress("" + veryBest[0].evaluate(), numMetaRounds * maxRounds + round);
 			mutate(veryBest, .05 + .1 * (1 - Math.min(1, .2 * round / minRounds)), 1);
@@ -1220,12 +1223,12 @@ public class Teacher {
 
 		// select and return winner
 		select(veryBest);
-		log.info("***** 0: " + veryBest[0].evaluate() + " l/3: "
+		log.fine("**best population:**  0: " + veryBest[0].evaluate() + " l/3: "
 				+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
 				+ veryBest[veryBest.length - 1].evaluate());
-		log.info(fix(veryBest) + " fixes ");
+		log.fine(fix(veryBest) + " fixes ");
 		select(veryBest);
-		log.info("***** 0: " + veryBest[0].evaluate() + " l/3: "
+		log.info("**best population:** 0: " + veryBest[0].evaluate() + " l/3: "
 				+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
 				+ veryBest[veryBest.length - 1].evaluate());
 

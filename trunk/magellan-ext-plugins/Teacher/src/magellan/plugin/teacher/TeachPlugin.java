@@ -110,7 +110,7 @@ import magellan.library.utils.logging.Logger;
  * teaching orders <i>must</i> also have a learning order.
  * 
  * @author stm
- * @version 0.11
+ * @version 0.14
  */
 public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
 		UnitContextMenuProvider, ActionListener {
@@ -159,7 +159,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	protected Boolean running = false;
 
-	public static final String version = "0.13";
+	public static final String version = "0.14";
 
 	public TeachPlugin() {
 		namespaces = new LinkedList<String>();
@@ -322,6 +322,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 				new Thread(new Runnable() {
 					public void run() {
 						doTeachUnits(container);
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 					}
 
 				}).run();
@@ -617,6 +618,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			new Thread(new Runnable() {
 				public void run() {
 					execute(PlugInAction.getAction(e).toString());
+					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 				}
 			}).start();
 		}
@@ -626,9 +628,10 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 		PlugInAction action = PlugInAction.valueOf("EXECUTE_ALL");
 		TeachClosingListener listener = new TeachClosingListener();
 		ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
-		ui.setTitle(getString("plugin.teacher.mainmenu.executeall.title"));
+		String exe = getString("plugin.teacher.mainmenu.executeall.title");
 		ui.show();
 		for (Region r : gd.getRegions()) {
+			ui.setTitle(exe + " " + getName() + " " + r.getName());
 			if (listener.aborted) {
 				break;
 			}
@@ -677,11 +680,17 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 	}
 
 	public void doTeachUnits(UnitContainer container) {
+		doTeachUnits(Collections.singletonList(container));
+	}
+
+	public void doTeachUnits(Collection<UnitContainer> containers) {
 		TeachClosingListener listener = new TeachClosingListener();
 		ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
 		ui.show();
-		doTeachUnits(container.units(), listener, ui);
-		client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+		for (UnitContainer container : containers) {
+			ui.setTitle(getName() + " " + container.toString());
+			doTeachUnits(container.units(), listener, ui);
+		}
 		ui.ready();
 	}
 
