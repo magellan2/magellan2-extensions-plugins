@@ -1,3 +1,7 @@
+2012-10-20 - stm (stm_@users.sourceforge.net)
+    * adaption to new order update interface
+    * fixed a few glitches
+
 2009-05-23 - stm (stm_@users.sourceforge.net)
 	* added show dialog, context menus, (un)confirm orders
 
