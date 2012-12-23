@@ -40,6 +40,7 @@ import magellan.library.GameData;
 import magellan.library.Item;
 import magellan.library.LuxuryPrice;
 import magellan.library.Message;
+import magellan.library.Order;
 import magellan.library.Region;
 import magellan.library.Region.Visibility;
 import magellan.library.Skill;
@@ -62,7 +63,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
 	// FF: 0.94: show Talents
 	// FF: 0.96: show error regions
-	public static final String version="0.97";
+	public static final String version="0.98";
 	
 	private Client client = null;
 	
@@ -247,7 +248,6 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
     			mapIcons_showing_enemyPresence = true;
     		} else {
     			// Info Msg wen keine Feinde angezeigt werden können
-    			
     			String m = "No enemies known! (No ini-File, no info in orders)";
     			mapIcons_showing_enemyPresence=false;
     			new MsgBox(client,m,"Impossible",false);
@@ -620,7 +620,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	public void init(Client _client, Properties _properties) {
 		client = _client;
 		
-		Resources.getInstance().initialize(Client.getMagellanDirectory(), "mapiconsplugin_");
+		Resources.getInstance().initialize(Client.getResourceDirectory(), "mapiconsplugin_");
 
 		// initProperties();
 
@@ -704,10 +704,11 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 				
 		
 		// die einzelnen Bereiche aufrufen..
+		
+		// init list of enemies from orders from trusted units
+		// trusted...from which we know the orders 
+		getEnemyFactionsFromOrders();
 		if (mapIcons_showing_enemyPresence) {
-			// init list of enemies from orders from trusted units
-			// trusted...from which we know the orders 
-			getEnemyFactionsFromOrders();
 			log.info(getName() +  " set " + this.searchEnemyPresence() + " regions with enemies present");
 		}
 		if (mapIcons_showing_Guarding){
@@ -760,7 +761,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 */
 	private int searchEnemyPresence(){
 		int erg = 0;
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			erg += searchEnemiesRegion(r);
 		}
 		return erg;
@@ -799,7 +800,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private int searchBattles(){
 		
 		List<Region> regionsBattles = new ArrayList<Region>(0); 
-		for (Faction f:gd.factions().values()){
+		for (Faction f:gd.getFactions()){
 			if (f.getBattles()!=null && f.getBattles().size()>0){
 				searchBattlesForFaction(f,regionsBattles);
 			}
@@ -842,7 +843,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 */
 	private int searchMonsters(){
 		int erg = 0;
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			erg += searchMonstersRegion(r);
 		}
 		return erg;
@@ -885,7 +886,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 */
 	private int setGuarding(){
 		int erg=0;
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			erg += setGuardingRegion(r);
 		}
 		return erg;
@@ -937,7 +938,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 */
 	private int setEmptyTowers(){
 		int erg=0;
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			erg += setEmptyTowersRegion(r);
 		}
 		return erg;
@@ -976,7 +977,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 */
 	private int search_NoTRade(){
 		int erg=0;
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			erg += search_NoTrade_Region(r);
 		}
 		return erg;
@@ -1099,7 +1100,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private int searchHunger(){
 		
 		List<Region> regionsHunger = new ArrayList<Region>(0); 
-		for (Faction f:gd.factions().values()){
+		for (Faction f:gd.getFactions()){
 			if (f.getMessages()!=null && f.getMessages().size()>0){
 				searchHungerForFaction(f,regionsHunger);
 			}
@@ -1177,7 +1178,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		
 		// in den Messages der Factions suchen
 		List<Region> regionsBotschaften = new ArrayList<Region>(0); 
-		for (Faction f:gd.factions().values()){
+		for (Faction f:gd.getFactions()){
 			if (f.getMessages()!=null && f.getMessages().size()>0){
 				searchBotschaftForFaction(f,regionsBotschaften);
 			}
@@ -1185,7 +1186,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		
 		// in den Messages der Regionen suchen
 		 
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			boolean hasBotschaftsMessage = false;
 			if (r.getMessages()!=null && r.getMessages().size()>0){
 				if (r.getMessages()!=null && r.getMessages().size()>0){
@@ -1346,13 +1347,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private int searchSpecialEvents(){
 		
 		List<Region> regionsSpecialEvents = new ArrayList<Region>(0); 
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			if (r.getMessages()!=null && r.getMessages().size()>0){
 				searchSpecialEventsForRegion(r,regionsSpecialEvents);
 			}
 		}
 		
-		for (Faction f:gd.factions().values()){
+		for (Faction f:gd.getFactions()){
 			if (f.getMessages()!=null && f.getMessages().size()>0){
 				searchVulcanoEventsForFaction(f,regionsSpecialEvents);
 			}
@@ -1534,7 +1535,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private int searchThiefs(){
 		
 		List<Region> regionsThiefs = new ArrayList<Region>(0); 
-		for (Faction f:gd.factions().values()){
+		for (Faction f:gd.getFactions()){
 			if (f.getMessages()!=null && f.getMessages().size()>0){
 				searchThiefsForFaction(f,regionsThiefs);
 			}
@@ -1610,7 +1611,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private int searchErrors(){
 		
 		List<Region> regionsErrors = new ArrayList<Region>(0); 
-		for (Faction f:gd.factions().values()){
+		for (Faction f:gd.getFactions()){
 			if (f.getMessages()!=null && f.getMessages().size()>0){
 				searchErrorsForFaction(f,regionsErrors);
 			}
@@ -1704,7 +1705,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 * entfernt "unsere" Regionicon-tags aus GameData
 	 */
 	private void removeMyRegionIcons(){
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			removeMyRegionIconsRegion(r);
 		}
 		
@@ -1742,10 +1743,10 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 * @return true or false
 	 */
 	public boolean hasHelpGuard(Faction _f) {
-		if(gd.factions() != null) {
-			for(Faction f:gd.factions().values()) {
-				if(f.isPrivileged() && (f.getAllies() != null)) { // privileged
-
+		if(gd.getFactions() != null) {
+			for(Faction f:gd.getFactions()) {
+				if(f.isPrivileged() && (f.getAllies() != null)) { 
+					// privileged
 					for (Alliance alliance:f.getAllies().values()){
 						Faction ally = alliance.getFaction();
 						if (ally.equals(_f)){
@@ -1792,10 +1793,11 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
     // not case sensitive, abcd is added
     private void getEnemyFactionsFromOrders(){
     	int cnt = 0;
-    	if (gd.units()!=null && gd.units().size()>0){
-    		for (Unit u:gd.units().values()){
-    			if (u.getOrders()!=null && u.getOrders().size()>0){
-    				for (String orderString:u.getOrders()){
+    	if (gd.getUnits()!=null && gd.getUnits().size()>0){
+    		for (Unit u:gd.getUnits()){
+    			if (u.getOrders2()!=null && u.getOrders2().size()>0){
+    				for (Order order:u.getOrders2()){
+    					String orderString = order.getText();
     					if (orderString.toUpperCase().startsWith(ENEMY_FACTION_LIST_IDENTIFIER.toUpperCase())){
     						// Treffer...
     						// faction number extrahieren
@@ -1829,7 +1831,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		int erg = 0;
 		// Performance: nur einmal skill suchen
 		SkillType skillType = gd.rules.getSkillType(actTalentName, false);
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			erg += searchTalentsRegion(r,skillType);
 		}
 		return erg;
