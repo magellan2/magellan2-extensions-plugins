@@ -10,6 +10,7 @@ import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,9 +21,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
 import magellan.client.Client;
@@ -63,7 +66,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
 	// FF: 0.94: show Talents
 	// FF: 0.96: show error regions
-	public static final String version="0.98";
+	public static final String version="1.0";
 	
 	private Client client = null;
 	
@@ -88,6 +91,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private static final String MAPICON_GUARD_ENEMY = "guard_enemy.gif";
 	
 	private static final String MAPICON_TALENT = "level_X.gif"; // X wird durch Zahlenwert ersetzt
+	private static final String MAPICON_SILVER = "silveramount_X.gif"; // X wird durch Zahlenwert 1..3
 	
 	private static final String MAPICON_EMPTY_TOWER = "empty_tower.gif";
 	
@@ -110,6 +114,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private boolean mapIcons_showing_noTrade = false;
 	private boolean mapIcons_showing_Talents = false;
 	private boolean mapIcons_showing_Errors = false;
+	private boolean mapIcons_showing_Silver = false;
 	
 	private boolean enemy_faction_list_exists = false;
 	
@@ -125,6 +130,8 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private JCheckBoxMenuItem showEmptyTowersMenu;
 	private JCheckBoxMenuItem showTradeWarningsMenu;
 	private JCheckBoxMenuItem showErrorsMenu;
+	private JCheckBoxMenuItem showSilverMenu;
+	private JMenu silverLevelMenu;
 	// showEnemyPresenceMenu
 	private JCheckBoxMenuItem showEnemyPresenceMenu;
 	private JCheckBoxMenuItem showTalentsMenu;
@@ -132,7 +139,21 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	private String actTalentName="Wahrnehmung";
 	
+	// Silver Level
+	private Long Level1=500000L;
+	private Long Level2=1000000L;
+	private Long Level3=5000000L;
+	private Long Level4=10000000L;
+	private Long Level5=15000000L;
 	
+	// Silver Level Property Name
+	private static final String silverLevel1PropertyName = "MIplugin.silverlevel.1";
+	private static final String silverLevel2PropertyName = "MIplugin.silverlevel.2";
+	private static final String silverLevel3PropertyName = "MIplugin.silverlevel.3";
+	private static final String silverLevel4PropertyName = "MIplugin.silverlevel.4";
+	private static final String silverLevel5PropertyName = "MIplugin.silverlevel.5";
+	
+	private String silverActionHelper = "";
 	
 	// shortcuts
 	private List<KeyStroke> shortcuts;
@@ -459,6 +480,23 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			}).start();
 		}
 		
+		// Errors
+		if (e.getActionCommand().equalsIgnoreCase("showSilver")){
+			new Thread(new Runnable() {
+				public void run() {
+					mapIcons_showing_Silver = !mapIcons_showing_Silver;
+					showSilverMenu.setSelected(mapIcons_showing_Silver);
+					log.info(getName() + ": switching showing Silver info to " + mapIcons_showing_Silver);
+					if (mapIcons_showing_all){
+						if (!mapIcons_showing_Silver){
+							removeMyRegionIcons();
+						}
+						processGameData();
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}
+			}).start();
+		}
 		
 		// showInfo
 		if (e.getActionCommand().equalsIgnoreCase("showInfo")){
@@ -480,6 +518,46 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		}
 		
 		
+		// silverLevel
+		if (e.getActionCommand().startsWith("newSilverLevel")){
+			silverActionHelper = e.getActionCommand();
+			new Thread(new Runnable() {
+				public void run() {
+					String questText = getString("plugin.mapicons.menu.silverQuestText") + silverActionHelper.substring(14);
+					String TitleText = getString("plugin.mapicons.menu.silverTitleText");
+					String response = JOptionPane.showInputDialog(null,
+							 questText,TitleText,
+							  JOptionPane.QUESTION_MESSAGE);
+					Long newLevel = Long.parseLong(response);
+					if (newLevel>0){
+						// Properties setzen
+						Properties P = client.getProperties();
+						Integer I = Integer.parseInt(silverActionHelper.substring(14));
+						switch (I.intValue()) {
+						case 1:
+							P.setProperty(silverLevel1PropertyName, newLevel.toString());
+							break;
+						case 2:
+							P.setProperty(silverLevel2PropertyName, newLevel.toString());
+							break;
+						case 3:
+							P.setProperty(silverLevel3PropertyName, newLevel.toString());
+							break;
+						case 4:
+							P.setProperty(silverLevel4PropertyName, newLevel.toString());
+							break;
+						case 5:
+							P.setProperty(silverLevel5PropertyName, newLevel.toString());
+							break;
+						}
+						
+						removeMyRegionIcons();
+						processGameData();
+						client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+					}
+				}
+			}).start();
+		}
 	}
 	
 	
@@ -587,8 +665,17 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		showErrorsMenu.addActionListener(this);
 		menu.add(showErrorsMenu);
 		
+		showSilverMenu = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.showSilver"));
+		showSilverMenu.setActionCommand("showSilver");
+		showSilverMenu.setSelected(mapIcons_showing_Silver);
+		showSilverMenu.addActionListener(this);
+		menu.add(showSilverMenu);
 		
-		
+		// Setzen der SilberLevel, ab Version 0.99..
+		silverLevelMenu = new JMenu(getString("plugin.mapicons.menu.silverSubmenuName"));
+		// Inhalte werden gesetzt, wenn gamedata aktualisiert wird
+		menu.add(silverLevelMenu);
+
 		menu.addSeparator();
 		
 		JMenuItem showInfo = new JMenuItem(getString("plugin.mapicons.menu.showInfo"));
@@ -667,6 +754,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		removeMyRegionIcons();
 		processGameData();
 		addTalents(talentMenu);
+		addSilverLevel(silverLevelMenu);
 		
 	}
 	/* (non-Javadoc)
@@ -749,6 +837,10 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		
 		if (mapIcons_showing_Errors){
 			log.info(getName() +  " found " + this.searchErrors() + " regions with error-messages");
+		}
+		
+		if (mapIcons_showing_Silver){
+			log.info(getName() +  " found " + this.searchSilver() + " regions with Silver-Information");
 		}
 		
 		
@@ -1669,6 +1761,76 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		}
 	}
 	
+	
+	private class SilverRegion{
+		public Region region;
+		public Long amount;
+	}
+	
+	
+	/**
+	 * Bestimmt das bekannte Silber in der Region und setzt ggf ein Icon
+	 * @return
+	 */
+	private int searchSilver(){
+		
+		
+		
+		ItemType silverItemType = this.gd.rules.getItemType("Silber", false);
+		
+		List<SilverRegion> regionsSilver = new ArrayList<SilverRegion>(0); 
+		for (Region r:gd.getRegions()){
+			searchSilverForRegion(r,regionsSilver,Level1,silverItemType);
+		}
+
+		// Tags setzen
+		for (SilverRegion SR:regionsSilver){
+			int silverlevel = 1;
+			if (SR.amount>=Level2){
+				silverlevel = 2;
+			}
+			if (SR.amount>=Level3){
+				silverlevel = 3;
+			}
+			if (SR.amount>=Level4){
+				silverlevel = 4;
+			}
+			if (SR.amount>=Level5){
+				silverlevel = 5;
+			}
+			Integer silverInteger = new Integer(silverlevel);
+			setRegionIcon(MAPICON_SILVER.replace("X", silverInteger.toString()),SR.region);
+		}
+		
+		return regionsSilver.size();
+	}
+	
+	/**
+	 * durchsucht alle Einheiten der Region und summiert das Silber auf
+	 * fügt zur Ergebnisliste hinzu, wenn Silberbestand über minimumSilver
+	 * @param f
+	 * @param regionsErrors
+	 * @return
+	 */
+	private void searchSilverForRegion(Region r, List<SilverRegion> regionsSilver, Long minimumSilver,ItemType silverItemType){
+		Long actAmount = 0L;
+		if (r.getUnits()==null){
+			return;
+		}
+		for(Unit u:r.getUnits().values()){
+			Item silver = u.getModifiedItem(silverItemType);
+			if (silver!=null){
+				actAmount += silver.getAmount();
+			}
+		}
+		if (actAmount>=minimumSilver){
+			SilverRegion SR = new SilverRegion();
+			SR.region = r;
+			SR.amount = actAmount;
+			regionsSilver.add(SR);
+		}
+	}
+	
 	/**
 	 * Setzt den tag bei der Region, achtet auf Double-Tags
 	 * @param iconname
@@ -1908,6 +2070,80 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			log.info("MapIcons: data not init");
 		}
 	}
+	
+	
+	/*
+	 * puts the known talents into the submenu
+	 */
+	private void addSilverLevel(JMenu menu){
+		// aus den Settings // Properties lesen
+		
+		menu.removeAll();
+		
+		Properties P = client.getProperties();
+		Level1 = Long.parseLong(P.getProperty(silverLevel1PropertyName, Level1.toString()));
+		Level2 = Long.parseLong(P.getProperty(silverLevel2PropertyName, Level2.toString()));
+		Level3 = Long.parseLong(P.getProperty(silverLevel3PropertyName, Level3.toString()));
+		Level4 = Long.parseLong(P.getProperty(silverLevel4PropertyName, Level4.toString()));
+		Level5 = Long.parseLong(P.getProperty(silverLevel5PropertyName, Level5.toString()));
+		String name = "";
+		name = "1: " + NumberFormat.getInstance().format(Level1);
+		JMenuItem actItem = new JCheckBoxMenuItem(name);
+		actItem.setActionCommand("newSilverLevel1");
+		String iconName = "etc/images/map/MIplugin_silveramount_1.gif";
+	    Icon icon = client.getMagellanContext().getImageFactory().loadImage(iconName);
+	    if (icon!=null){
+	    	actItem.setIcon(icon);
+	    }
+		actItem.addActionListener(this);
+		menu.add(actItem);
+		
+		name = "2: " + NumberFormat.getInstance().format(Level2);
+		actItem = new JCheckBoxMenuItem(name);
+		actItem.setActionCommand("newSilverLevel2");
+		iconName = "etc/images/map/MIplugin_silveramount_2.gif";
+	    icon = client.getMagellanContext().getImageFactory().loadImage(iconName);
+	    if (icon!=null){
+	    	actItem.setIcon(icon);
+	    }
+		actItem.addActionListener(this);
+		menu.add(actItem);
+		
+		name = "3: " + NumberFormat.getInstance().format(Level3);
+		actItem = new JCheckBoxMenuItem(name);
+		actItem.setActionCommand("newSilverLevel3");
+		iconName = "etc/images/map/MIplugin_silveramount_3.gif";
+	    icon = client.getMagellanContext().getImageFactory().loadImage(iconName);
+	    if (icon!=null){
+	    	actItem.setIcon(icon);
+	    }
+		actItem.addActionListener(this);
+		menu.add(actItem);
+		
+		name = "4: " + NumberFormat.getInstance().format(Level4);
+		actItem = new JCheckBoxMenuItem(name);
+		actItem.setActionCommand("newSilverLevel4");
+		iconName = "etc/images/map/MIplugin_silveramount_4.gif";
+	    icon = client.getMagellanContext().getImageFactory().loadImage(iconName);
+	    if (icon!=null){
+	    	actItem.setIcon(icon);
+	    }
+		actItem.addActionListener(this);
+		menu.add(actItem);
+		
+		name = "5: " + NumberFormat.getInstance().format(Level5);
+		actItem = new JCheckBoxMenuItem(name);
+		actItem.setActionCommand("newSilverLevel5");
+		iconName = "etc/images/map/MIplugin_silveramount_5.gif";
+	    icon = client.getMagellanContext().getImageFactory().loadImage(iconName);
+	    if (icon!=null){
+	    	actItem.setIcon(icon);
+	    }
+		actItem.addActionListener(this);
+		menu.add(actItem);
+
+	}
+	
 	
 	/*
 	 * neuer Talentname ist gesetzt - Umsetzung
