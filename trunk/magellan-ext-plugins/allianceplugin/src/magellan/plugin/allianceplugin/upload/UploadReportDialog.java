@@ -5,6 +5,7 @@ import static pagelayout.EasyCell.none;
 import static pagelayout.EasyCell.right;
 import static pagelayout.EasyCell.row;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -143,7 +144,7 @@ public class UploadReportDialog extends AbstractOdysseyConnectDialog implements 
     enableButtons();
 
     Column layout = column(
-                      row(right,none,cancelButton,uploadButton)
+                      row(right,none,new Component[]{cancelButton,uploadButton})
                     );
     
     layout.createLayout(buttonPanel);

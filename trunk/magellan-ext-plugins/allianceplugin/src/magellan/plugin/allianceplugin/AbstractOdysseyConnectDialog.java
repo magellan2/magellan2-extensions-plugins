@@ -12,6 +12,7 @@ import static pagelayout.EasyCell.row;
 import static pagelayout.EasyCell.vgap;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -34,6 +35,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 
+import pagelayout.Cell;
 import pagelayout.Column;
 
 import magellan.client.Client;
@@ -131,14 +133,14 @@ public abstract class AbstractOdysseyConnectDialog extends JDialog implements Ke
     connectButton.addActionListener(listener);
     connectButton.setActionCommand("button.connect");
     enableConnectButton();
-    
+
     Column layout = column(
                       grid(
                         label(Constants.RESOURCE_SERVER_URL),serverURLField,eol(),
                         label(Constants.RESOURCE_SERVER_USER_EMAIL),userEMailField,eol(),
                         label(Constants.RESOURCE_SERVER_USER_PASSWORD),userPasswordField),
-                      row(center,none,vgap(10)),
-                      row(right,none,autoConnectBox,connectButton));
+                      row(center,none,new Cell[]{vgap(10)}),
+                      row(right,none,new Component[]{autoConnectBox,connectButton}));
     layout.createLayout(northPanel);
     
     return northPanel;
@@ -169,16 +171,16 @@ public abstract class AbstractOdysseyConnectDialog extends JDialog implements Ke
     mapPartChooser.addItemListener(this);
     
     JPanel panel = initSpecialGUIPanel();
-
+    
     Column layout = column(
                       grid(
                         label(Constants.RESOURCE_SERVER_NAME),servernameField,eol(),
                         label(Constants.RESOURCE_ALLIANCE),allianceChooser,eol(),
                         label(Constants.RESOURCE_ALLIANCE_MAP),mapChooser,eol(),
                         label(Constants.RESOURCE_ALLIANCE_MAPPART),mapPartChooser),
-                      row(center,none,vgap(10)),
-                      row(center,none,panel),
-                      row(center,none,vgap(50))
+                      row(center,none,new Cell[]{vgap(10)}),
+                      row(center,none,new Component[]{panel}),
+                      row(center,none,new Cell[]{vgap(50)})
                     );
     layout.createLayout(centerPanel);
 
