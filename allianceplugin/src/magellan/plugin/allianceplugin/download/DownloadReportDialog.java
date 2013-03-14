@@ -2,6 +2,7 @@ package magellan.plugin.allianceplugin.download;
 
 import static pagelayout.EasyCell.*;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -76,11 +77,11 @@ public class DownloadReportDialog extends AbstractOdysseyConnectDialog implement
     downloadButton.addActionListener(this);
     downloadButton.setActionCommand("button.download");
     enableDownloadButton();
-
-    Column layout = column(
-                      row(right,none,cancelButton,downloadButton)
-                    );
     
+    Column layout = column(
+                      row(right,none,new Component[]{cancelButton,downloadButton})
+                    );
+        
     layout.createLayout(buttonPanel);
 
     return buttonPanel;

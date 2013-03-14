@@ -9,7 +9,6 @@
 	<classpathentry kind="lib" path="lib/jcommon-1.0.12.jar"/>
 	<classpathentry kind="lib" path="lib/jfreechart-1.0.9.jar" sourcepath="C:/Users/thoralf/Downloads/jfreechart-1.0.9.zip"/>
 	<classpathentry kind="lib" path="lib/swtgraphics2d.jar"/>
-	<classpathentry kind="lib" path="/Magellan2/lib/idw-gpl.jar" sourcepath="C:/Users/thoralf/Downloads/infonode docking framework/idw-gpl-1.5.0-src.zip"/>
 	<classpathentry kind="lib" path="lib/derby.jar"/>
 	<classpathentry kind="lib" path="lib/derbytools.jar"/>
 	<classpathentry kind="lib" path="lib/avalon-framework-api-4.3.jar"/>
