@@ -49,6 +49,7 @@ import magellan.library.Region.Visibility;
 import magellan.library.Skill;
 import magellan.library.StringID;
 import magellan.library.Unit;
+import magellan.library.UnitID;
 import magellan.library.event.GameDataEvent;
 import magellan.library.impl.MagellanMessageImpl;
 import magellan.library.rules.CastleType;
@@ -66,7 +67,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
 	// FF: 0.94: show Talents
 	// FF: 0.96: show error regions
-	public static final String version="1.0";
+	public static final String version="1.1";
 	
 	private Client client = null;
 	
@@ -79,6 +80,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private static final String MAPICON_BATTLE = "battle.gif";
 	private static final String MAPICON_MONSTER = "monster.gif";
 	private static final String MAPICON_BADMONSTER = "badmonster.gif";
+	private static final String MAPICON_SPYMONSTERAR = "spymonsterAR.gif";
 	private static final String MAPICON_HUNGER = "hunger.gif";
 	private static final String MAPICON_SPECIALEVENT = "specialevents.gif";
 	private static final String MAPICON_THIEF = "dieb.gif";
@@ -955,7 +957,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 				} else {
 					setRegionIcon(MAPICON_MONSTER,r);
 				}
-				return 1;
+				erg=1;
 			}
 			if (u.isHideFaction()){
 				Race race = u.getRace();
@@ -965,9 +967,33 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 					} else {
 						setRegionIcon(MAPICON_MONSTER,r);
 					}
-					return 1;
+					erg=1;
 				}
 			}
+			
+			// 20130513: im AR Erkennung von getarnten Monstern und Parteigetarnten
+			// nennen sich Hirntöter...sind aber eine andere Rasse
+			CoordinateID actC = r.getCoordinate();
+			if (actC.getZ()==1){
+				// Region im AR
+				if (u.isHideFaction()){
+					Race race = u.getRace();
+					if (!race.getName().equals("Hirntöter")){
+						// Bingo
+						setRegionIcon(MAPICON_SPYMONSTERAR,r);
+						erg=1;
+					}
+				}
+				if (u.getFaction()!=null && u.getFaction().getID().toString().equals(MONSTER_FACTION)){
+					Race race = u.getRace();
+					if (!race.getName().equals("Hirntöter")){
+						// Bingo
+						setRegionIcon(MAPICON_SPYMONSTERAR,r);
+						erg=1;
+					}
+				}
+			}
+			
 		}
 		return erg;
 	}
@@ -1448,6 +1474,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		for (Faction f:gd.getFactions()){
 			if (f.getMessages()!=null && f.getMessages().size()>0){
 				searchVulcanoEventsForFaction(f,regionsSpecialEvents);
+				searchSpecialEventsForFaction(f,regionsSpecialEvents);
 			}
 		}
 		
@@ -1584,12 +1611,26 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
+	          		// MESSAGETYPE 1948430386
+	          		// "\"$unit($unit) in $region($region): '$order($command)' - Selbst in der Bibliothek von Xontormia konnte dieser Spruch nicht gefunden werden.\"";text
+	          		if (msg.getMessageType().getID().intValue()==1948430386){
+	          			isSpecialEventMessage=true;
+	          		}
+	          		
+	          		
 	          		// 	MESSAGETYPE 1071183144
 	          		// "\"Aus dem Vulkankrater von $region($region) steigt plötzlich Rauch.\"";text
 	          		// "events";section
 	          		if (msg.getMessageType().getID().intValue()==1071183144){
 	          			isSpecialEventMessage=true;
 	          		}
+	          		
+	          		// MESSAGETYPE 1847594364
+	          		// "\"$unit($unit) in $region($region): '$order($command)' - Der Magier zerstört den Fluch($id) auf ${target}.\"";text
+	          		if (msg.getMessageType().getID().intValue()==1847594364){
+	          			isSpecialEventMessage=true;
+	          		}
+	          		
 	          		
 	          		// MESSAGETYPE 2122087327
 	          		// "\"$int($amount) Bauern flohen aus Furcht vor $unit($unit).\"";text
@@ -1604,6 +1645,15 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	          		if (msg.getMessageType().getID().intValue()==1359435364){
 	          			isSpecialEventMessage=true;
 	          		}
+	          		
+	          		// MESSAGETYPE 2047863741
+	          		// "\"$unit($unit) wird aus der astralen Ebene nach $region($region) geschleudert.\"";text
+	          		// "magic";section
+	          		if (msg.getMessageType().getID().intValue()==2047863741){
+	          			isSpecialEventMessage=true;
+	          		}
+	          		
+	          		
 	          		
 	          		if (isSpecialEventMessage){
 	          			// yep, dies ist eine Special Event Message und wir
@@ -1660,36 +1710,118 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		              if (coordinate == null) {
 		                coordinate = CoordinateID.parse(regionCoordinate, " ");
 		              }
-		              
+		              boolean isThiefMessage = false;
+		              Region r1 = null;
+		              Region r2 = null;
 		              if (coordinate!=null){
-		            	  boolean isThiefMessage = false;   
-		            	
-		          		
+
 		          		// MESSAGETYPE 1543395091
 		          		// "\"$unit($unit) wurden in $region($region) $int($amount) Silberstücke geklaut.\"";text
 		          		if (msg.getMessageType().getID().intValue()==1543395091){
 		          			isThiefMessage=true;
 		          		}
-		          		
-		          		// 1565770951
-		          		// MESSAGETYPE 1565770951
-		          		// "\"$unit($target) ertappte $unit($unit) beim versuchten Diebstahl.\"";text
-		          		if (msg.getMessageType().getID().intValue()==1565770951){
-		          			isThiefMessage=true;
-		          		}
-		          		
-		          		
-		          		if (isThiefMessage){
-		          			// yep, dies ist eine Diebstahl Message und wir
-		          			// haben regionskoords dafür
-		          			Region r = gd.getRegion(coordinate);
-		          			if (!(regionsThiefs.contains(r))){
-		          				// log.info("Debug: added hunger region: " + r.toString());
-		          				regionsThiefs.add(r);
-		          			}
-		          		}
+		              } else {
+		            	  // keine Region info in der msg
+		            	  
+		            	  // 1565770951
+		          		  // MESSAGETYPE 1565770951
+		          		  // "\"$unit($target) ertappte $unit($unit) beim versuchten Diebstahl.\"";text
+		          		  // FF: funktioniert hier so nicht, da kein regiontag gesetzt ist.
+		          		  if (msg.getMessageType().getID().intValue()==1565770951){
+		          		     isThiefMessage=true;
+		          		     String value = msg.getAttributes().get("unit");
+		          			 int unit_ID = Integer.parseInt(value);
+		          			 value = msg.getAttributes().get("target");
+		          			 int target_ID = Integer.parseInt(value);
+		          			 UnitID actID = UnitID.createUnitID(target_ID, 10);
+		          			 Unit actUnit = gd.getUnit(actID);
+		          			 if (actUnit!=null){
+		          				 r1 = actUnit.getRegion();
+		          			 }
+		          			 actID = UnitID.createUnitID(unit_ID, 10);
+		          			 actUnit = gd.getUnit(actID);
+		          			 if (actUnit!=null){
+		          				 r2 = actUnit.getRegion();
+		          			 }
+		          		     
+		          		  }
+		            	  
 		              }
+
+	          		  if (isThiefMessage && coordinate!=null){
+	          			// yep, dies ist eine Diebstahl Message und wir
+	          			// haben regionskoords dafür
+	          			Region r = gd.getRegion(coordinate);
+	          			if (!(regionsThiefs.contains(r))){
+	          				regionsThiefs.add(r);
+	          			}
+	          		  }
+	          		  
+	          		  if (isThiefMessage && r1!=null){
+	          			// yep, dies ist eine Diebstahl Message und wir
+	          			// haben regionskoords dafür
+	          			if (!(regionsThiefs.contains(r1))){
+	          				regionsThiefs.add(r1);
+	          			}
+	          		  }
+	          		  if (isThiefMessage && r2!=null){
+	          			// yep, dies ist eine Diebstahl Message und wir
+	          			// haben regionskoords dafür
+	          			if (!(regionsThiefs.contains(r2))){
+	          				regionsThiefs.add(r2);
+	          			}
+	          		  }
+	          		  
 		           }
+				}
+			}
+		}
+	}
+	
+	/**
+	 * durchsucht die Meldungen einer Faction und ergänzt die Liste der Special-Event-Regionen
+	 * @param f
+	 * @param regionsSpecialEvents
+	 * @return
+	 */
+	private void searchSpecialEventsForFaction(Faction f, List<Region> regionsSpecialEvents){
+		
+		if (f.getMessages()!=null && f.getMessages().size()>0){
+			for (Message m : f.getMessages()){
+				MagellanMessageImpl msg = (MagellanMessageImpl)m;
+				if (msg.getAttributes() != null) {
+	            	boolean isSpecialEventMessage = false;   
+	            	int unit_ID = 0;
+	            	int target_ID = 0;
+	          		Region r1 = null;
+	          		Region r2 = null;
+	            	// MESSAGETYPE 1922066494
+	            	// "\"$unit($unit) versuchte erfolglos, $unit($target) in eine andere Welt zu schleudern.\"";text
+	            	// "magic";section
+	          		if (msg.getMessageType().getID().intValue()==1922066494){
+	          			isSpecialEventMessage=true;
+	          			 String value = msg.getAttributes().get("unit");
+	          			 unit_ID = Integer.parseInt(value);
+	          			 value = msg.getAttributes().get("target");
+	          			 target_ID = Integer.parseInt(value);
+	          			 UnitID actID = UnitID.createUnitID(target_ID, 10);
+	          			 Unit actUnit = gd.getUnit(actID);
+	          			 if (actUnit!=null){
+	          				 r1 = actUnit.getRegion();
+	          			 }
+	          			 actID = UnitID.createUnitID(unit_ID, 10);
+	          			 actUnit = gd.getUnit(actID);
+	          			 if (actUnit!=null){
+	          				 r2 = actUnit.getRegion();
+	          			 }
+	          		}
+
+	          		if (isSpecialEventMessage && r1!=null){
+	          			regionsSpecialEvents.add(r1);
+	          		}
+	          		if (isSpecialEventMessage && r2!=null){
+	          			regionsSpecialEvents.add(r2);
+	          		}  
 				}
 			}
 		}
