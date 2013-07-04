@@ -638,6 +638,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 			ui.setTitle(r.toString());
 			switch (action) {
 			case EXECUTE_ALL:
+				log.info("teaching " + r);
 				doTeachUnits(r.units(), listener, ui);
 				break;
 			case TAG_ALL:
@@ -685,13 +686,22 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	public void doTeachUnits(Collection<UnitContainer> containers) {
 		TeachClosingListener listener = new TeachClosingListener();
-		ProgressBarUI ui = new ProgressBarUI(client, true, 50, listener);
-		ui.show();
-		for (UnitContainer container : containers) {
-			ui.setTitle(getName() + " " + container.toString());
-			doTeachUnits(container.units(), listener, ui);
+		ProgressBarUI ui = null;
+		try {
+			ui = new ProgressBarUI(client, true, 50, listener);
+			ui.show();
+			for (UnitContainer container : containers) {
+				if (container != null && container.units() != null && container.units().size() > 0) {
+					ui.setTitle(getName() + " " + container.toString());
+					log.info("teaching " + container);
+					doTeachUnits(container.units(), listener, ui);
+				}
+			}
+		} finally {
+			if (ui != null) {
+				ui.ready();
+			}
 		}
-		ui.ready();
 	}
 
 	public void doTeachUnits(final Collection<Unit> values, TeachClosingListener listener,
@@ -712,7 +722,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 				t.mainrun();
 				listener.setTeacher(null);
 			} catch (Exception e) {
-				log.error(e);
+				log.error("teacher error: ", e);
 			}
 		}
 	}
