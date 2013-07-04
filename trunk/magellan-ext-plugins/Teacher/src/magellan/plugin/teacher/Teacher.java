@@ -1791,6 +1791,10 @@ public class Teacher {
 	}
 
 	public double getGlobalWeight(Integer skill, int level) {
+		if (globalWeights.get(skill) == null) {
+			log.warnOnce("skill " + getSkillName(skill) + " (" + skill + ") unknown");
+			return .1;
+		}
 		Double weight = globalWeights.get(skill).get(level);
 		if (weight == null) {
 			return 1;
