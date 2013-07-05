@@ -33,5 +33,5 @@ Options--Keep Silver: Units keep their silver. Otherwise units may give silver t
 Options--Keep Silver in Faction: If this is checked, units may give silver only to units of their 
    own factions.
 Options--Marker text: This text will be included in the added orders. It is used to identify orders
-   removed by the "Rmove all unit orders" action.
+   removed by the "Remove all unit orders" action.
 
