@@ -168,7 +168,7 @@ public class ShipLoader {
    * @param gameData
    */
   protected void init(GameData gameData) {
-    silver = gameData.rules.getItemType(EresseaConstants.I_USILVER);
+    silver = gameData.getRules().getItemType(EresseaConstants.I_USILVER);
     ships = new HashMap<EntityID, ShipStruct>();
     units = new HashSet<Unit>();
 
@@ -406,7 +406,7 @@ public class ShipLoader {
    */
   public void distribute() {
     if (silver == null) {
-      silver = client.getData().rules.getItemType("Silber");
+      silver = client.getData().getRules().getItemType("Silber");
       if (silver == null) {
         JOptionPane.showMessageDialog(client, "error, no silver type");
         return;

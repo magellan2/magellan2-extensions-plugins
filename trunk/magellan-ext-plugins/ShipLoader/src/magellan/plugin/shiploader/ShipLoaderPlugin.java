@@ -19,8 +19,11 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
+import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -42,6 +45,7 @@ import magellan.client.Client;
 import magellan.client.event.EventDispatcher;
 import magellan.client.event.SelectionEvent;
 import magellan.client.extern.MagellanPlugIn;
+import magellan.client.swing.InternationalizedDialog;
 import magellan.client.swing.basics.SpringUtilities;
 import magellan.client.swing.context.UnitContainerContextFactory;
 import magellan.client.swing.context.UnitContainerContextMenuProvider;
@@ -54,6 +58,7 @@ import magellan.client.swing.tree.NodeWrapperFactory;
 import magellan.client.swing.tree.RegionNodeWrapper;
 import magellan.client.swing.tree.UnitContainerNodeWrapper;
 import magellan.client.swing.tree.UnitNodeWrapper;
+import magellan.client.utils.SwingUtils;
 import magellan.library.GameData;
 import magellan.library.Region;
 import magellan.library.Ship;
@@ -71,7 +76,7 @@ import magellan.library.utils.logging.Logger;
  * This plugin helps to load ships.
  * 
  * @author stm
- * @version 0.1.2
+ * @version 0.1.3
  */
 public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
     UnitContextMenuProvider, ActionListener, GameDataListener {
@@ -97,7 +102,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
   private ShipLoader loader;
   private MovementEvaluator evaluator;
   private ShowDialog shower;
-  private static final String version = "0.1.2";
+  private static final String version = "0.1.3";
 
   /**
    * An enum for all action types in this plugin.
@@ -107,7 +112,8 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
   public enum PlugInAction {
     EXECUTE("mainmenu.execute"), DISTRIBUTESILVER("mainmenu.distribute"), SHOW("mainmenu.show"),
     CLEAR("mainmenu.clear"), CLEARORDERS("mainmenu.clearorders"),
-    CONFIRMORDERS("mainmenu.confirm"), UNCONFIRMORDERS("mainmenu.unconfirm"), UNKNOWN("");
+    CONFIRMORDERS("mainmenu.confirm"), UNCONFIRMORDERS("mainmenu.unconfirm"),
+    HELP("mainmenu.help"), UNKNOWN("");
 
     private final String id;
 
@@ -223,6 +229,11 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
     unconfirmOrdersMenu.setActionCommand(PlugInAction.UNCONFIRMORDERS.getID());
     unconfirmOrdersMenu.addActionListener(this);
     menu.add(unconfirmOrdersMenu);
+
+    final JMenuItem helpMenu = new JMenuItem(getString("plugin.shiploader.mainmenu.help.title"));
+    helpMenu.setActionCommand(PlugInAction.HELP.getID());
+    helpMenu.addActionListener(this);
+    menu.add(helpMenu);
 
     return items;
   }
@@ -351,6 +362,10 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
     }
     case UNCONFIRMORDERS: {
       unconfirmOrders();
+      break;
+    }
+    case HELP: {
+      showHelp();
       break;
     }
     case SHOW: {
@@ -938,4 +953,62 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
     init(e.getGameData());
   }
 
+  private void showHelp() {
+    new HelpDialog(Client.INSTANCE).setVisible(true);
+  }
+
+  class HelpDialog extends InternationalizedDialog {
+
+    private JPanel mainPanel;
+    private JButton btn_OK;
+    private JLabel magellanImage;
+    private JEditorPane helpTextArea;
+
+    /**
+     * Creates a new InfoDlg object.
+     * 
+     * @param parent modally stucked frame.
+     */
+    public HelpDialog(JFrame parent) {
+      super(parent, true);
+      initComponents();
+
+      SwingUtils.center(this);
+    }
+
+    private void initComponents() {
+      mainPanel = new JPanel();
+      mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+
+      setModal(false);
+      setTitle(getString("plugin.shiploader.helpdialog.title"));
+
+      String text = getString("plugin.shiploader.helpdialog.text");
+
+      helpTextArea = new JEditorPane();
+      helpTextArea.setContentType("text/html");
+      helpTextArea.setEditable(false);
+      helpTextArea.setText(text);
+      helpTextArea.setCaretPosition(0);
+      helpTextArea.setPreferredSize(new Dimension(800, 400));
+      JScrollPane scrollPane = new JScrollPane(helpTextArea);
+      scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      scrollPane.setPreferredSize(new Dimension(800, 400));
+      mainPanel.add(scrollPane);
+
+      // OK Button
+      btn_OK = new JButton(getString("plugin.shiploader.ok.text"));
+      btn_OK.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent evt) {
+          quit();
+        }
+      });
+      btn_OK.setAlignmentX(Component.CENTER_ALIGNMENT);
+      mainPanel.add(btn_OK);
+
+      getContentPane().add(mainPanel);
+
+      pack();
+    }
+  }
 }
