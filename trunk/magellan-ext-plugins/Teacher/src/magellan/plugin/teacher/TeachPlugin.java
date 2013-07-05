@@ -110,7 +110,7 @@ import magellan.library.utils.logging.Logger;
  * teaching orders <i>must</i> also have a learning order.
  * 
  * @author stm
- * @version 0.14
+ * @version 0.15
  */
 public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
 		UnitContextMenuProvider, ActionListener {
@@ -159,7 +159,7 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
 
 	protected Boolean running = false;
 
-	public static final String version = "0.14";
+	public static final String version = "0.15";
 
 	public TeachPlugin() {
 		namespaces = new LinkedList<String>();
