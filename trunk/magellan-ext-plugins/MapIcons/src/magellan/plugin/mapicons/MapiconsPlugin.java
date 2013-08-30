@@ -67,7 +67,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
 	// FF: 0.94: show Talents
 	// FF: 0.96: show error regions
-	public static final String version="1.1";
+	public static final String version="1.21";
 	
 	private Client client = null;
 	
@@ -1682,6 +1682,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 				searchThiefsForFaction(f,regionsThiefs);
 			}
 		}
+		
 		// Tags setzen
 		for (Region r:regionsThiefs){
 			setRegionIcon(MAPICON_THIEF,r);
@@ -1720,6 +1721,18 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		          		if (msg.getMessageType().getID().intValue()==1543395091){
 		          			isThiefMessage=true;
 		          		}
+		          		// MESSAGETYPE 771334452
+		          		// "\"$unit($unit) verdient$if($eq($mode,4),\" am Handel\",\"\") in $region($region) $int($amount)$if($eq($wanted,$amount),\"\",\" statt $int($wanted)\") Silber$if($eq($mode,1),\" durch Unterhaltung\",$if($eq($mode,2),\" durch Steuern\",$if($eq($mode,3),\" durch Handel\",$if($eq($mode,5),\" durch Diebstahl\",$if($eq($mode,6),\" durch Zauberei\",\"\"))))).\"";text
+		          		// wobei mode=5 = durch Diebstahl
+		          		if (msg.getMessageType().getID().intValue()==771334452){
+		          			String value = msg.getAttributes().get("mode");
+		          			int MsgMode = Integer.parseInt(value);
+		          			if (MsgMode==5){
+		          				isThiefMessage=true;
+		          			}
+		          		}
+		          		
+		          		
 		              } else {
 		            	  // keine Region info in der msg
 		            	  
