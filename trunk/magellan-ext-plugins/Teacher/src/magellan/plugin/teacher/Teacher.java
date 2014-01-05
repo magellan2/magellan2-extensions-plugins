@@ -38,9 +38,11 @@ import java.util.StringTokenizer;
 
 import magellan.client.swing.ProgressBarUI;
 import magellan.library.Skill;
+import magellan.library.StringID;
 import magellan.library.TempUnit;
 import magellan.library.Unit;
 import magellan.library.gamebinding.EresseaConstants;
+import magellan.library.gamebinding.GameSpecificStuff;
 import magellan.library.utils.NullUserInterface;
 import magellan.library.utils.Resources;
 import magellan.library.utils.UserInterface;
@@ -100,6 +102,8 @@ public class Teacher {
 	private Map<Integer, Map<Integer, Double>> globalWeights;
 
 	private double minGlobalWeight = .7d;
+
+	private GameSpecificStuff gsst;
 
 	/**
 	 * Create a new Teacher object.
@@ -163,6 +167,7 @@ public class Teacher {
 			private Integer learning = null;
 			private int students = 0;
 			private int teacher = -1;
+			public String debug;
 
 			public Info(SUnit unit) {
 				this.unit = unit;
@@ -182,7 +187,8 @@ public class Teacher {
 
 			@Override
 			public String toString() {
-				return unit.toString() + " " + getSkillName(getLearning()) + " " + students + " " + teacher;
+				return unit.toString() + " " + (getLearning() != null ? getSkillName(getLearning()) : "-")
+						+ " " + students + " " + teacher;
 			}
 
 			public SUnit getSUnit() {
@@ -241,7 +247,7 @@ public class Teacher {
 				}
 				int firstTeacher = random.nextInt(teachers.size());
 				for (int i = 0; i < teachers.size(); ++i) {
-					if (validTeacher(this, teachers.get((firstTeacher + i) % teachers.size()))) {
+					if (validTeacher(this, getLearning(), teachers.get((firstTeacher + i) % teachers.size()))) {
 						return teachers.get((firstTeacher + i) % teachers.size());
 					}
 				}
@@ -326,7 +332,7 @@ public class Teacher {
 							String id = tokenizer.nextToken();
 							Info student = lookup.get(id);
 							if (student != null && student.getLearning() != null
-									&& validTeacher(student, info.getSUnit().getIndex())) {
+									&& validTeacher(student, student.getLearning(), info.getSUnit().getIndex())) {
 								student.addTeacher(info.getSUnit().getIndex());
 								info.students += student.getUnit().getModifiedPersons();
 							}
@@ -372,8 +378,7 @@ public class Teacher {
 				return result;
 			}
 			result = 0;
-			for (int i = 0; i < infos.length; ++i) {
-				Info info = infos[i];
+			for (Info info : infos) {
 				result += evaluate(info);
 			}
 			changed = false;
@@ -483,10 +488,56 @@ public class Teacher {
 		 */
 		public int fix() {
 			int fixes = 0;
-			for (int i = 0; i < infos.length; ++i) {
-				Info info = infos[i];
+			for (Info student : infos) {
+
+				// remove invalid teachers (should not be)
+				student.debug = null;
+				for (int t : student.getTeacherSet()) {
+					if (student.getLearning() == null
+							|| !validTeacher(student, student.getLearning(), t, true)) {
+						Info teacher = infos[t];
+						student.removeTeacher(t);
+						teacher.students -= student.getUnit().getModifiedPersons();
+						student.debug = teacher.getUnit().toString();
+						changed = true;
+						fixes++;
+					}
+				}
+
+				if (student.students <= 0) {
+					// try to greedily reassign learn talent
+					SUnit u = student.unit;
+					Integer oldTalent = student.getLearning();
+					Integer maxT = null;
+					double max = evaluate(student);
+					for (Integer tal : u.getLearnTalents()) {
+						student.setLearning(tal);
+						if (evaluate(student) > max) {
+							max = evaluate(student);
+							maxT = tal;
+						}
+					}
+					if (maxT != null && maxT != oldTalent) {
+						student.debug += oldTalent == null ? "null" : oldTalent.toString();
+						student.setLearning(maxT);
+						for (int t : student.getTeacherSet()) {
+							if (t >= 0 && !validTeacher(student, maxT, t)) {
+								infos[t].students -= student.getUnit().getModifiedPersons();
+								student.removeTeacher(t);
+							}
+						}
+						changed = true;
+						fixes++;
+					} else {
+						student.setLearning(oldTalent);
+					}
+				}
+			}
+
+			// fix empty teachers
+			for (Info info : infos) {
 				SUnit u = info.unit;
-				if (info.students == 0) { // info.getLearning() == null &&
+				if (info.students == 0 && info.teacher < 0 && info.getLearning() == null) {
 					Integer oldTalent = info.getLearning();
 					Integer maxT = null;
 					double max = evaluate(info);
@@ -498,14 +549,12 @@ public class Teacher {
 						}
 					}
 					if (maxT != null && maxT != oldTalent) {
-						// info.setLearning(oldTalent);
-						// double e1 = evaluate(info);
-						// info.setLearning(maxT);
-						// double e2 = evaluate(info);
-						// log.info("fixing " + u + " from " +
-						// (oldTalent==null?"nothing":getSkillName(oldTalent))+ ", "+ e1 + " to "+
-						// getSkillName(maxT)+", "+e2);
+						info.debug += oldTalent == null ? "null" : oldTalent.toString();
 						info.setLearning(maxT);
+						if (info.teacher >= 0) {
+							info.debug += "teacher " + infos[info.teacher].getUnit() + " teaches teacher";
+						}
+
 						changed = true;
 						fixes++;
 					} else {
@@ -541,14 +590,13 @@ public class Teacher {
 			// Integer[] teachers = (Integer[]) teacherSet.toArray(new Integer[0]);
 
 			// assign teachers
-			for (int i = 0; i < infos.length; ++i) {
-				Info student = infos[i];
+			for (Info student : infos) {
 				if (student.getLearning() != null) {
 					if (student.getTeacher() == -1) {
 						// find new teacher
 						// int teacher = student.getRandomTeacher();
 						int teacher = student.getFreeTeacher();
-						if (teacher != -1 && validTeacher(student, teacher)) {
+						if (teacher != -1 && validTeacher(student, student.getLearning(), teacher)) {
 							assignTeacher(student, teacher);
 						}
 						// int firstTeacher = random.nextInt(teachers.length);
@@ -630,7 +678,7 @@ public class Teacher {
 					parent = solution2.infos[i];
 				}
 				if (student.getLearning() != null && parent.getTeacher() != -1) {
-					if (validTeacher(student, parent.getTeacher())) {
+					if (validTeacher(student, student.getLearning(), parent.getTeacher())) {
 						assignTeacher(student, parent.getTeacher());
 					}
 				}
@@ -639,16 +687,16 @@ public class Teacher {
 			changed = true;
 		}
 
-		private boolean validTeacher(Info student, int t) {
-			return validTeacher(student, t, false);
+		private boolean validTeacher(Info student, int talent, int teacher) {
+			return validTeacher(student, talent, teacher, false);
 		}
 
-		private boolean validTeacher(Info student, int t, boolean partial) {
-			Info teacher = infos[t];
+		private boolean validTeacher(Info student, int talent, int te, boolean partial) {
+			Info teacher = infos[te];
 			boolean result = false;
 			if (teacher.getLearning() != null
-					|| teacher.getSUnit().getSkillLevel(student.getLearning()) < student.getSUnit()
-							.getSkillLevel(student.getLearning()) + TEACH_DIFF) {
+					|| teacher.getSUnit().getSkillLevel(talent) < student.getSUnit().getSkillLevel(talent)
+							+ TEACH_DIFF) {
 				result = false;
 			} else {
 				result = partial
@@ -779,7 +827,9 @@ public class Teacher {
 	public SUnit parseUnit(Unit u, boolean setTags) {
 		SUnit su = null;
 		boolean errorFlag = false;
-		for (String orderLine : u.getOrders()) {
+		@SuppressWarnings("deprecation")
+		List<String> orders = u.getOrders();
+		for (String orderLine : orders) {
 			try {
 				OrderList orderList = null;
 				orderList = parseOrder(u, orderLine, namespaces);
@@ -1055,9 +1105,11 @@ public class Teacher {
 
 	public static void convert(Collection<Unit> values, Collection<String> namespaces) {
 		for (Unit u : values) {
-			Collection<String> newOrders = new ArrayList<String>(u.getOrders().size());
+			@SuppressWarnings("deprecation")
+			List<String> orders = u.getOrders();
+			Collection<String> newOrders = new ArrayList<String>(orders.size());
 			boolean changed = false;
-			for (String oldOrder : u.getOrders()) {
+			for (String oldOrder : orders) {
 				OrderList orderList;
 				orderList = parseOrder(u, oldOrder, namespaces);
 				if (orderList.orders.isEmpty()) {
@@ -1104,6 +1156,8 @@ public class Teacher {
 		if (sUnits.length == 0) {
 			return 0;
 		}
+
+		gsst = sUnits[0].getUnit().getData().getGameSpecificStuff();
 
 		log.info("teaching " + sUnits.length + " units in namespace \"" + namespaces.toString() + "\"");
 
@@ -1196,6 +1250,10 @@ public class Teacher {
 					+ (population.length - 1) + ": " + population[population.length - 1].evaluate());
 		}
 
+		log.fine("population:  0: " + veryBest[0].evaluate() + " l/3: "
+				+ veryBest[veryBest.length / 3].evaluate() + " " + (veryBest.length - 1) + ": "
+				+ veryBest[veryBest.length - 1].evaluate());
+
 		// fix all remaining
 		log.fine(fix(veryBest) + " fixes ");
 
@@ -1245,6 +1303,7 @@ public class Teacher {
 	 */
 	public void clear() {
 		for (Unit u : units) {
+			@SuppressWarnings("deprecation")
 			Collection<String> orders = new ArrayList<String>(u.getOrders());
 			for (Iterator<String> it = orders.iterator(); it.hasNext();) {
 				String o = it.next();
@@ -1332,6 +1391,7 @@ public class Teacher {
 	 * @return
 	 */
 	public static Order getCurrentOrder(Unit u) {
+		@SuppressWarnings("deprecation")
 		List<String> orders = new ArrayList<String>(u.getOrders());
 		Order value = null;
 		for (String string : orders) {
@@ -1367,26 +1427,21 @@ public class Teacher {
 		return value;
 	}
 
-	private String getLearnOrder(Unit u) {
+	private String getOrderTranslation(Unit u, StringID order) {
 		Locale locale = u.getFaction().getLocale();
-		return Resources.getOrderTranslation(EresseaConstants.O_LEARN, locale);
-	}
-
-	private String getTeachOrder(Unit u) {
-		Locale locale = u.getFaction().getLocale();
-		return Resources.getOrderTranslation(EresseaConstants.O_TEACH, locale);
+		return gsst.getOrderChanger().getOrder(locale, order);
 	}
 
 	private static boolean isLearnOrder(String o, Unit u) {
 		Locale locale = u.getFaction().getLocale();
-		return (o.toLowerCase(locale).trim().startsWith(Resources.getOrderTranslation(
-				EresseaConstants.O_LEARN, locale).toLowerCase(locale)));
+		return (o.toLowerCase(locale).trim().startsWith(u.getData().getGameSpecificStuff()
+				.getOrderChanger().getOrder(locale, EresseaConstants.OC_LEARN).toLowerCase(locale)));
 	}
 
 	private static boolean isTeachOrder(String o, Unit u) {
 		Locale locale = u.getFaction().getLocale();
-		return (o.toLowerCase(locale).trim().startsWith(Resources.getOrderTranslation(
-				EresseaConstants.O_TEACH, locale).toLowerCase(locale)));
+		return (o.toLowerCase(locale).trim().startsWith(u.getData().getGameSpecificStuff()
+				.getOrderChanger().getOrder(locale, EresseaConstants.OC_TEACH).toLowerCase(locale)));
 	}
 
 	private Object getLocalizedSkillName(Integer learning, Unit u) {
@@ -1407,6 +1462,7 @@ public class Teacher {
 	 * @return
 	 */
 	public static String getCurrentOrder(Unit u, boolean flag) {
+		@SuppressWarnings("deprecation")
 		List<String> orders = new ArrayList<String>(u.getOrders());
 		String value = null;
 		for (String string : orders) {
@@ -1438,6 +1494,7 @@ public class Teacher {
 	private double setResult(Solution best) {
 		// find old teach and learn orders, and replace with comment for each
 		for (Solution.Info info : best.infos) {
+			@SuppressWarnings("deprecation")
 			List<String> orders = new ArrayList<String>(info.getUnit().getOrders());
 			List<String> toAdd = new ArrayList<String>();
 			for (Iterator<String> it = orders.iterator(); it.hasNext();) {
@@ -1458,24 +1515,24 @@ public class Teacher {
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
 			if (info.getLearning() != null) {
-				orders[i] = new StringBuffer(getLearnOrder(info.getUnit()));
+				orders[i] = new StringBuffer(getOrderTranslation(info.getUnit(), EresseaConstants.OC_LEARN));
 				orders[i].append(" ");
 				orders[i].append(getLocalizedSkillName(info.getLearning(), info.getUnit()));
 			}
 			if (info.getTeacher() != -1) {
 				if (orders[info.getTeacher()] == null) {
-					orders[info.getTeacher()] = new StringBuffer(
-							getTeachOrder(best.infos[info.getTeacher()].getUnit()));
+					orders[info.getTeacher()] = new StringBuffer(getOrderTranslation(
+							best.infos[info.getTeacher()].getUnit(), EresseaConstants.OC_TEACH));
 					if (info.getUnit() instanceof TempUnit) {
 						orders[info.getTeacher()].append(" ").append(
-								Resources.getOrderTranslation(EresseaConstants.O_TEMP));
+								getOrderTranslation(info.getUnit(), EresseaConstants.OC_TEMP));
 					}
 					orders[info.getTeacher()].append(" ");
 					orders[info.getTeacher()].append(info.getUnit().getID());
 				} else {
 					if (info.getUnit() instanceof TempUnit) {
 						orders[info.getTeacher()].append(" ").append(
-								Resources.getOrderTranslation(EresseaConstants.O_TEMP));
+								getOrderTranslation(info.getUnit(), EresseaConstants.OC_TEMP));
 					}
 					orders[info.getTeacher()].append(" ").append(info.getUnit().getID().toString());
 				}
@@ -1486,8 +1543,6 @@ public class Teacher {
 		for (int i = 0; i < best.infos.length; ++i) {
 			Solution.Info info = best.infos[i];
 			StringBuilder debug = new StringBuilder();
-			Integer learning = info.getLearning();
-			int teacher = info.teacher;
 			if (info.getLearning() == null) {
 				debug.append("; $$$ T ").append(info.students);
 			} else {
@@ -1555,6 +1610,12 @@ public class Teacher {
 			}
 		}
 
+		for (Solution.Info info : best.infos) {
+			if (info.debug != null) {
+				info.getUnit().addOrder("; $$$debug$$$" + info.debug);
+			}
+		}
+
 		return best.evaluate();
 	}
 
@@ -1576,6 +1637,7 @@ public class Teacher {
 		delOrder(units, Collections.singletonList(namespace), newOrder);
 		// add new meta order to all units
 		for (Unit u : units) {
+			@SuppressWarnings("deprecation")
 			Collection<String> oldOrders = u.getOrders();
 			List<OrderList> relevantOrders = new ArrayList<OrderList>();
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
@@ -1624,6 +1686,7 @@ public class Teacher {
 	 */
 	public static void setPrio(Collection<Unit> units, Collection<String> namespace, double newPrio) {
 		for (Unit u : units) {
+			@SuppressWarnings("deprecation")
 			Collection<String> oldOrders = u.getOrders();
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
 
@@ -1660,6 +1723,7 @@ public class Teacher {
 	protected static void delOrder(Collection<Unit> units, Collection<String> namespaces,
 			Order newOrder, boolean safety) {
 		for (Unit u : units) {
+			@SuppressWarnings("deprecation")
 			Collection<String> oldOrders = u.getOrders();
 			List<String> newOrders = new ArrayList<String>(oldOrders.size());
 
@@ -1861,7 +1925,6 @@ public class Teacher {
 		arrayList.set(key, arrayList.get(key) + inc);
 	}
 
-	@SuppressWarnings("unused")
 	protected void increase(Map<Integer, Integer> map, Integer key, int inc) {
 		Integer old = map.get(key);
 		if (old == null) {
@@ -1877,6 +1940,10 @@ public class Teacher {
 
 	public void setMinGlobalWeight(double weight) {
 		minGlobalWeight = weight;
+	}
+
+	protected void setSeed(long seed) {
+		random = new Random(seed);
 	}
 
 }
