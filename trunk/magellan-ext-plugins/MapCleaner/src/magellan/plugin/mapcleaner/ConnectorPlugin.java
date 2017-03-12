@@ -36,7 +36,7 @@ public class ConnectorPlugin implements MagellanPlugIn, ActionListener{
 	   * be presented to the user in the options panel.
 	   */
 	  public String getName(){
-		  return "MapClean 1.1";
+		  return "MapClean 1.3";
 	  }
 	  
 	  /**
@@ -56,6 +56,7 @@ public class ConnectorPlugin implements MagellanPlugIn, ActionListener{
 		
 		this.cleanActions.add(new DelNamedOceans());
 		this.cleanActions.add(new RemoveUnusedIslands());
+		this.cleanActions.add(new RemoveWrongRessources());
 		
 	  }
 	  

@@ -27,8 +27,8 @@ public class DelNamedOceans implements MapCleanAction{
 	public void clean(Client client){
 		GameData data = client.getData();
 		int counter=0;
-		if (data!=null && data.regions()!=null && data.rules!=null){
-			for (Iterator<Region> iter = data.regions().values().iterator();iter.hasNext();){
+		if (data!=null && data.getRegions()!=null && data.rules!=null){
+			for (Iterator<Region> iter = data.getRegions().iterator();iter.hasNext();){
 				Region actRegion = (Region)iter.next();
 				if (actRegion!=null && actRegion.getRegionType()!=null && Regions.getOceanRegionTypes(data.rules).get(actRegion.getRegionType().getID())!=null && actRegion.getName()!=null){
 					actRegion.setName(null);

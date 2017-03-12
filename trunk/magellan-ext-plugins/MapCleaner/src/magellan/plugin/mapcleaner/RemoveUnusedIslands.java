@@ -5,7 +5,6 @@ import java.util.Iterator;
 
 import magellan.client.Client;
 import magellan.library.GameData;
-import magellan.library.ID;
 import magellan.library.Island;
 import magellan.library.Region;
 import magellan.library.event.GameDataEvent;
@@ -28,13 +27,13 @@ public class RemoveUnusedIslands implements MapCleanAction{
 	public void clean(Client client){
 		GameData data = client.getData();
 		// List of islandKeys to delete
-		ArrayList<ID> islandKeys = new ArrayList<ID>();
+		ArrayList<Island> islands = new ArrayList<Island>();
 		int counter=0;
 		if (data!=null ){
 			// Feuerwand-Regionen -> keine Inseln
-			for (Iterator<Region> iter = data.regions().values().iterator();iter.hasNext();){
+			for (Iterator<Region> iter = data.getRegions().iterator();iter.hasNext();){
 				Region actRegion = (Region)iter.next();
-				if (actRegion!=null && actRegion.getRegionType()!=null && actRegion.getRegionType().equals(Regions.getFeuerwandRegionType(data.rules, data)) && actRegion.getIsland()!=null){
+				if (actRegion!=null && actRegion.getRegionType()!=null && actRegion.getRegionType().equals(Regions.getFeuerwandRegionType(data)) && actRegion.getIsland()!=null){
 					actRegion.setIsland(null);
 					counter++;
 				}
@@ -44,21 +43,23 @@ public class RemoveUnusedIslands implements MapCleanAction{
 				new MsgBox(client,"Removed islands from " + counter + " Firewall-regions.","OK",false);
 			}
 			
-			
-			for (Iterator<Island> iter = data.islands().values().iterator();iter.hasNext();){
+			counter=0;
+			for (Iterator<Island> iter = data.getIslands().iterator();iter.hasNext();){
 				Island actIsland = (Island)iter.next();
 				if (actIsland.regions()==null || actIsland.regions().size()==0){
-					islandKeys.add(actIsland.getID());
+					islands.add(actIsland);
 				}
+				counter++;
 			}
-			if (islandKeys.size()>0){
-				for (Iterator<ID> iter = islandKeys.iterator();iter.hasNext();){
-					ID actID = (ID)iter.next();
-					data.islands().remove(actID);
+			new MsgBox(client,"Checked " + counter + " Islands. " + islands.size() + " islands are empty","OK",false);
+			if (islands.size()>0){
+				for (Island I:islands){
+					// data.getIslands().remove(I);
+					data.removeIsland(I.getID());
 				}
 				client.getDispatcher().fire(new GameDataEvent(this, data, true));
 			}
-			new MsgBox(client,"Removed " + islandKeys.size() + " Islands.","OK",false);
+			new MsgBox(client,"Removed " + islands.size() + " Islands.","OK",false);
 
 		} else {
 			new MsgBox(client,"No data loaded.","OK",false);
