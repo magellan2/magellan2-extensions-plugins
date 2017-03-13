@@ -1,4 +1,4 @@
-<project name="mapicons-plugin" default="create-installer">
+<project name="fow_update-plugin" default="create-installer">
   <description>
     This is the ant script for creating the fow_update plugin
   	for Magellan2. You need to setup some paths if you
@@ -19,10 +19,13 @@
   <!-- Compile Settings -->
   <property name="debug"             value="on" />
   <property name="optimize"          value="off" />
-  <property name="build.compiler"    value="javac1.6"/>
-  <property name="compile.target"    value="1.6"/>
+  <property name="build.compiler"    value="javac1.7"/>
+  <property name="compile.target"    value="1.7"/>
   <property name="compile.encoding"  value="ISO-8859-1"/>
 
+  <presetdef name="javac">
+    <javac includeantruntime="false" />
+  </presetdef>
 
   <path id="plugin.class.path">
     <pathelement path="${java.class.path}/" />
@@ -72,7 +75,7 @@
     <buildnumber file=".build.number"/>
     <jar jarfile="${plugin.name}" basedir="${classes}">
       <manifest>
-        <attribute name="Built-By" value="Fiete" />
+        <attribute name="Built-By" value="${user.name}" />
         <attribute name="Specification-Title" value="Magellan FoW-Update Plugin [build ${build.number}]" />
         <attribute name="Specification-Vendor" value="Fiete Fietz"/>
       </manifest>
