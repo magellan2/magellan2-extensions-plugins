@@ -1,3 +1,18 @@
+2014-05-03 - Fiete <sf@fietefietz.de>
+	* found actual version: 1.21, adjusted installer script
+	* new Version 1.3
+
+2013 [..]
+	* some missing, from website:
+	* Ab Version 0.7: Auch Vulkanausbrüche werden angezeigt, Juju-Zombies werden als Monster erkannt.
+	* Ab Version 0.8: Eine Liste feindlicher Parteien wird per Icon angezeigt.
+	* Ab Version 0.9: Die Liste feindlicher Einheiten kann per Datei und per Einheiten befehl gefüllt werden.
+	* Ab Version 0.92: Botschaften werden in der Region angezeigt, aus der sie gesendet wurden.
+	* Ab Version 0.96: Anzeige der maximalen Talente, Kennzeichnung der Regionen mit Fehlern.
+	* Ab Version 0.97: Alle Icons optional zuschaltbar, CTRL+M funktioniert wieder.
+	* Ab Version 0.98: Anpassungen an Magellan-nightly, funktioniert nicht mehr mit Magellan 2.0.5!
+	* Ab Version 0.99: Anzeige der Silberbestände nach selbst festgelegten Kategorien
+
 2010-12-17 - Fiete <sf@fietefietz.de>
 	* release 0.7
 	* added Juju-Zombies to monster-List

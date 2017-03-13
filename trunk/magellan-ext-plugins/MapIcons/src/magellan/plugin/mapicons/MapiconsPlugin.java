@@ -67,9 +67,10 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
 	// FF: 0.94: show Talents
 	// FF: 0.96: show error regions
-	public static final String version="1.21";
+	public static final String version="1.3";
 	
 	private Client client = null;
+	private Properties properties = null;
 	
 	private GameData gd = null;
 	
@@ -103,20 +104,35 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	private static final String MONSTER_FACTION = "ii";
 	
-	private boolean mapIcons_showing_all = true;
-	private boolean mapIcons_showing_Messages = true;
-	private boolean mapIcons_showing_Battles = true;
-	private boolean mapIcons_showing_Thiefs = true;
-	private boolean mapIcons_showing_Monsters = true;
-	private boolean mapIcons_showing_Starving = true; // Hunger
-	private boolean mapIcons_showing_Specials = true; // Special Events
-	private boolean mapIcons_showing_Guarding = false;
-	private boolean mapIcons_showing_Empty_Towers = false;
-	private boolean mapIcons_showing_enemyPresence = false;
-	private boolean mapIcons_showing_noTrade = false;
-	private boolean mapIcons_showing_Talents = false;
-	private boolean mapIcons_showing_Errors = false;
-	private boolean mapIcons_showing_Silver = false;
+	private Boolean mapIcons_showing_all = true;
+	private Boolean mapIcons_showing_Messages = true;
+	private Boolean mapIcons_showing_Battles = true;
+	private Boolean mapIcons_showing_Thiefs = true;
+	private Boolean mapIcons_showing_Monsters = true;
+	private Boolean mapIcons_showing_Starving = true; // Hunger
+	private Boolean mapIcons_showing_Specials = true; // Special Events
+	private Boolean mapIcons_showing_Guarding = false;
+	private Boolean mapIcons_showing_Empty_Towers = false;
+	private Boolean mapIcons_showing_enemyPresence = false;
+	private Boolean mapIcons_showing_noTrade = false;
+	private Boolean mapIcons_showing_Talents = false;
+	private Boolean mapIcons_showing_Errors = false;
+	private Boolean mapIcons_showing_Silver = false;
+	
+	private static final String propertyKey_showing_all = "MIplugin.showing_all";
+	private static final String propertyKey_showing_Messages = "MIplugin.showing_Messages";
+	private static final String propertyKey_showing_Battles = "MIplugin.showing_Battles";
+	private static final String propertyKey_showing_Thiefs = "MIplugin.showing_Thiefs";
+	private static final String propertyKey_showing_Monsters = "MIplugin.showing_Monsters";
+	private static final String propertyKey_showing_Starving = "MIplugin.showing_Starving";
+	private static final String propertyKey_showing_Specials = "MIplugin.showing_Specials";
+	private static final String propertyKey_showing_Guarding = "MIplugin.showing_Guarding";
+	private static final String propertyKey_showing_Empty_Towers = "MIplugin.showing_Empty_Towers";
+	private static final String propertyKey_showing_enemyPresence = "MIplugin.showing_enemyPresence";
+	private static final String propertyKey_showing_noTrade = "MIplugin.showing_noTrade";
+	private static final String propertyKey_showing_Talents = "MIplugin.showing_Talents";
+	private static final String propertyKey_showing_Errors = "MIplugin.showing_Errors";
+	private static final String propertyKey_showing_Silver = "MIplugin.showing_Silver";
 	
 	private boolean enemy_faction_list_exists = false;
 	
@@ -323,6 +339,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Guarding = !mapIcons_showing_Guarding;
+					properties.setProperty(propertyKey_showing_Guarding, mapIcons_showing_Guarding.toString());
 					showGuardMenu.setSelected(mapIcons_showing_Guarding);
 					log.info(getName() + ": switching showing guard info to " + mapIcons_showing_Guarding);
 					if (mapIcons_showing_all){
@@ -342,6 +359,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Empty_Towers = !mapIcons_showing_Empty_Towers;
+					properties.setProperty(propertyKey_showing_Empty_Towers, mapIcons_showing_Empty_Towers.toString());
 					showEmptyTowersMenu.setSelected(mapIcons_showing_Empty_Towers);
 					log.info(getName() + ": switching showing empty towers info to " + mapIcons_showing_Empty_Towers);
 					if (mapIcons_showing_all){
@@ -361,6 +379,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Messages = !mapIcons_showing_Messages;
+					properties.setProperty(propertyKey_showing_Messages, mapIcons_showing_Messages.toString());
 					showMessagesMenu.setSelected(mapIcons_showing_Messages);
 					log.info(getName() + ": switching showing messages to " + mapIcons_showing_Messages);
 					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
@@ -373,6 +392,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Battles = !mapIcons_showing_Battles;
+					properties.setProperty(propertyKey_showing_Battles, mapIcons_showing_Battles.toString());
 					showBattlesMenu.setSelected(mapIcons_showing_Battles);
 					log.info(getName() + ": switching showing battles to " + mapIcons_showing_Battles);
 					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
@@ -385,6 +405,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Thiefs = !mapIcons_showing_Thiefs;
+					properties.setProperty(propertyKey_showing_Thiefs, mapIcons_showing_Thiefs.toString());
 					showThiefsMenu.setSelected(mapIcons_showing_Thiefs);
 					log.info(getName() + ": switching showing thiefs to " + mapIcons_showing_Thiefs);
 					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
@@ -397,6 +418,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Monsters = !mapIcons_showing_Monsters;
+					properties.setProperty(propertyKey_showing_Monsters, mapIcons_showing_Monsters.toString());
 					showMonstersMenu.setSelected(mapIcons_showing_Monsters);
 					log.info(getName() + ": switching showing monsters to " + mapIcons_showing_Monsters);
 					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
@@ -409,6 +431,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Starving = !mapIcons_showing_Starving;
+					properties.setProperty(propertyKey_showing_Starving, mapIcons_showing_Starving.toString());
 					showStarvingMenu.setSelected(mapIcons_showing_Starving);
 					log.info(getName() + ": switching showing starving to " + mapIcons_showing_Starving);
 					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
@@ -421,6 +444,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Specials = !mapIcons_showing_Specials;
+					properties.setProperty(propertyKey_showing_Specials, mapIcons_showing_Specials.toString());
 					showSpecialsMenu.setSelected(mapIcons_showing_Specials);
 					log.info(getName() + ": switching showing specials to " + mapIcons_showing_Specials);
 					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
@@ -434,6 +458,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_noTrade = !mapIcons_showing_noTrade;
+					properties.setProperty(propertyKey_showing_noTrade, mapIcons_showing_noTrade.toString());
 					showTradeWarningsMenu.setSelected(mapIcons_showing_noTrade);
 					log.info(getName() + ": switching showing tradewarnings info to " + mapIcons_showing_noTrade);
 					if (mapIcons_showing_all){
@@ -452,6 +477,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Errors = !mapIcons_showing_Errors;
+					properties.setProperty(propertyKey_showing_Errors, mapIcons_showing_Errors.toString());
 					showErrorsMenu.setSelected(mapIcons_showing_Errors);
 					log.info(getName() + ": switching showing Errors info to " + mapIcons_showing_Errors);
 					if (mapIcons_showing_all){
@@ -470,6 +496,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					toogleEnemyPresence();
+					properties.setProperty(propertyKey_showing_enemyPresence, mapIcons_showing_enemyPresence.toString());
 				}
 			}).start();
 		}
@@ -478,6 +505,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					toogleShowTalents();
+					properties.setProperty(propertyKey_showing_Talents, mapIcons_showing_Talents.toString());
 				}
 			}).start();
 		}
@@ -487,6 +515,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			new Thread(new Runnable() {
 				public void run() {
 					mapIcons_showing_Silver = !mapIcons_showing_Silver;
+					properties.setProperty(propertyKey_showing_Silver, mapIcons_showing_Silver.toString());
 					showSilverMenu.setSelected(mapIcons_showing_Silver);
 					log.info(getName() + ": switching showing Silver info to " + mapIcons_showing_Silver);
 					if (mapIcons_showing_all){
@@ -700,18 +729,16 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 * @see magellan.client.extern.MagellanPlugIn#getPreferencesProvider()
 	 */
 	public PreferencesFactory getPreferencesProvider() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	/* (non-Javadoc)
 	 * @see magellan.client.extern.MagellanPlugIn#init(magellan.client.Client, java.util.Properties)
 	 */
 	public void init(Client _client, Properties _properties) {
-		client = _client;
+		this.client = _client;
+		this.properties = _properties;
 		
 		Resources.getInstance().initialize(Client.getResourceDirectory(), "mapiconsplugin_");
-
-		// initProperties();
 
 		log = Logger.getInstance(MapiconsPlugin.class);
 		
@@ -723,11 +750,24 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		try {
 			loadEnemyFactions(_client);
 	    } catch (Exception e) {
-	    	// TODO: Machen wir das Feature öffentlich? Falls ja, Logeintrag schreiben
-	    	// 	    	System.err.println("Error while reading enemy faction file! Check if MIPlugin_Enemies.ini is present in Magellan directory. \n");
 	    	log.info(getName() + ": No enemy faction file. Check if MIPlugin_Enemies.ini is present in Magellan directory.");
 	    }
 		
+		// Aus properties laden...
+		this.mapIcons_showing_all = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_all, this.mapIcons_showing_all.toString()));
+		this.mapIcons_showing_Messages = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Messages, this.mapIcons_showing_Messages.toString()));
+		this.mapIcons_showing_Battles = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Battles, this.mapIcons_showing_Battles.toString()));
+		this.mapIcons_showing_Thiefs = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Thiefs, this.mapIcons_showing_Thiefs.toString()));
+		this.mapIcons_showing_Monsters = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Monsters, this.mapIcons_showing_Monsters.toString()));
+		this.mapIcons_showing_Starving = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Starving, this.mapIcons_showing_Starving.toString()));
+		this.mapIcons_showing_Specials = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Specials, this.mapIcons_showing_Specials.toString()));
+		this.mapIcons_showing_Guarding = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Guarding, this.mapIcons_showing_Guarding.toString()));
+		this.mapIcons_showing_Empty_Towers = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Empty_Towers, this.mapIcons_showing_Empty_Towers.toString()));
+		this.mapIcons_showing_enemyPresence = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_enemyPresence, this.mapIcons_showing_enemyPresence.toString()));
+		this.mapIcons_showing_noTrade = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_noTrade, this.mapIcons_showing_noTrade.toString()));
+		this.mapIcons_showing_Talents = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Talents, this.mapIcons_showing_Talents.toString()));
+		this.mapIcons_showing_Errors = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Errors, this.mapIcons_showing_Errors.toString()));
+		this.mapIcons_showing_Silver = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Silver, this.mapIcons_showing_Silver.toString()));
 		
 	}
 	
@@ -1146,7 +1186,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		
 		// Problem 2: kein Händler
 		boolean hasTrader=false;
-		SkillType handelsSkillType = gd.rules.getSkillType("Handeln");
+		SkillType handelsSkillType = gd.getRules().getSkillType("Handeln");
 		if (handelsSkillType!=null){
 			for (Unit u:r.units()){
 				if (u.getCombatStatus()!=-1){
@@ -1921,7 +1961,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		
 		
 		
-		ItemType silverItemType = this.gd.rules.getItemType("Silber", false);
+		ItemType silverItemType = this.gd.getRules().getItemType("Silber", false);
 		
 		List<SilverRegion> regionsSilver = new ArrayList<SilverRegion>(0); 
 		for (Region r:gd.getRegions()){
@@ -2137,7 +2177,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private int searchTalents(){
 		int erg = 0;
 		// Performance: nur einmal skill suchen
-		SkillType skillType = gd.rules.getSkillType(actTalentName, false);
+		SkillType skillType = gd.getRules().getSkillType(actTalentName, false);
 		for (Region r:gd.getRegions()){
 			erg += searchTalentsRegion(r,skillType);
 		}
@@ -2187,9 +2227,9 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 */
 	private void addTalents(JMenu menu){
 		if (gd != null){
-			if (gd.rules!=null){
+			if (gd.getRules()!=null){
 				menu.removeAll();
-				Collection<SkillType> skillTypesColl = gd.rules.getSkillTypes();
+				Collection<SkillType> skillTypesColl = gd.getRules().getSkillTypes();
 				ArrayList<SkillType> skillTypes = new ArrayList<SkillType>();
 				// log.info("MapIcons - found skillTypes: " + skillTypesColl.size());
 				skillTypes.addAll(skillTypesColl);
