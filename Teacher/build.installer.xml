@@ -30,11 +30,11 @@
     <fileset dir="${magellan2}/lib"><include name="**/*.jar" /></fileset>
   </path>
 	
-  <!-- *************************************************************** -->
-  <!-- *                                                             * -->
-  <!-- *  This target .       * -->
-  <!-- *                                                             * -->
-  <!-- *************************************************************** -->
+  <!-- ****************************************************************** -->
+  <!-- *                                                                * -->
+  <!-- *  This target compiles and packs the Teacher Plugin Installer.  * -->
+  <!-- *                                                                * -->
+  <!-- ****************************************************************** -->
   <target name="create-installer" description="Run this to create a installer jar for this plugin">
     <echo message="Compiling Plug-In..." />
   	<echo message="Using Magellan sources in ${magellan2}"/>
@@ -72,7 +72,7 @@
     <buildnumber file=".build.number"/>
     <jar jarfile="${plugin.name}" basedir="${classes}">
       <manifest>
-        <attribute name="Built-By" value="stm" />
+        <attribute name="Built-By" value="${user.name}" />
         <attribute name="Specification-Title" value="Magellan Teacher Plugin [build ${build.number}]" />
         <attribute name="Specification-Vendor" value="Steffen Mecke"/>
       </manifest>
