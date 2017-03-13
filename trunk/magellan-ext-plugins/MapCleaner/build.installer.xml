@@ -1,4 +1,4 @@
-<project name="mapcleaner-plugin">
+<project name="mapcleaner-plugin" default="create-installer">
   <description>
     This is the ant script for creating the mapcleaner plugin
   	for Magellan2. You need to setup some paths if you
@@ -13,7 +13,8 @@
   <property name="magellan2"    location="${basedir}/../Magellan2/"/>
   <property name="installer"    location="${magellan2}/installer"/>
 
-  <property name="plugin.name"  value="mapcleaner-installer.jar"/>
+  <property name="plugin.name"  value="mapcleaner-plugin.jar"/>
+  <property name="installer.name"  value="mapcleaner-installer.jar"/>
 
   <!-- Compile Settings -->
   <property name="debug"             value="on" />
@@ -29,11 +30,11 @@
     <fileset dir="${magellan2}/lib"><include name="**/*.jar" /></fileset>
   </path>
 	
-  <!-- *************************************************************** -->
-  <!-- *                                                             * -->
-  <!-- *  This target compiles and packs the magellan library.       * -->
-  <!-- *                                                             * -->
-  <!-- *************************************************************** -->
+  <!-- ********************************************************************* -->
+  <!-- *                                                                   * -->
+  <!-- *  This target compiles and packs the MapCleaner Plugin Installer.  * -->
+  <!-- *                                                                   * -->
+  <!-- ********************************************************************* -->
   <target name="create-installer" description="Run this to create a installer jar for this plugin">
     <echo message="Compiling Plug-In..." />
   	<echo message="Using Magellan sources in ${magellan2}"/>
@@ -91,7 +92,7 @@
       <arg value="-b"/>
       <arg value="."/>
       <arg value="-o"/>
-      <arg value="${release}/${plugin.name}"/>
+      <arg value="${release}/${installer.name}"/>
       <arg value="-k"/>
       <arg value="standard"/>
  
