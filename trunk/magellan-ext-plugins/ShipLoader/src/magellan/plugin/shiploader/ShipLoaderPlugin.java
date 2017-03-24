@@ -168,6 +168,42 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
   private void initProperties() {
     // setNamespace(properties.getProperty(NAMESPACE_PROPERTY, getNamespace()));
+    loader.setMarkerName(properties.getProperty(MARKER_PROPERTY, ""));
+    loader.setSafety(Integer.valueOf(properties.getProperty(SAFETY_PROPERTY, "1000")).intValue());
+    loader.setSafetyPerPerson(Integer.valueOf(properties
+        .getProperty(SAFETYPERPERSON_PROPERTY, "10")));
+    loader.setChangeShip(Boolean.valueOf(properties.getProperty(CHANGESHIP_PROPERTY, "false"))
+        .booleanValue());
+    loader.setKeepSilver(Boolean.valueOf(properties.getProperty(KEEPSILVER_PROPERTY, "false"))
+        .booleanValue());
+    loader.setKeepSilverInFaction(Boolean.valueOf(
+        properties.getProperty(KEEPSILVERINFACTION_PROPERTY, "false")).booleanValue());
+
+    /*
+     * setSafety(1000); setSafetyPerPerson(10); setChangeShip(false); SAFETYPERPERSON_PROPERTY
+     * CHANGESHIP_PROPERTY KEEPSILVER_PROPERTY KEEPSILVERINFACTION_PROPERTY
+     * loader.setSafetyPerPerson(Integer.parseInt(txtSafetyPerPerson.getText()));
+     * loader.setChangeShip(chkChangeShip.isSelected());
+     * loader.setKeepSilver(chkKeepSilver.isSelected());
+     * loader.setKeepSilverInFaction(chkKeepSilverInFaction.isSelected()); try {
+     * loader.setSafety(Integer.parseInt(txtSafety.getText()));
+     * properties.setProperty(SAFETY_PROPERTY, String.valueOf(loader.getSafety())); } catch (final
+     * NumberFormatException e) { } try {
+     * loader.setSafetyPerPerson(Integer.parseInt(txtSafetyPerPerson.getText()));
+     * properties.setProperty(SAFETYPERPERSON_PROPERTY, String
+     * .valueOf(loader.getSafetyPerPerson())); } catch (final NumberFormatException e) { }
+     * loader.setChangeShip(chkChangeShip.isSelected()); properties.setProperty(CHANGESHIP_PROPERTY,
+     * chkChangeShip.isSelected() ? "true" : "false");
+     * loader.setKeepSilver(chkKeepSilver.isSelected()); properties.setProperty(KEEPSILVER_PROPERTY,
+     * chkKeepSilver.isSelected() ? "true" : "false");
+     * loader.setKeepSilverInFaction(chkKeepSilverInFaction.isSelected());
+     * properties.setProperty(KEEPSILVERINFACTION_PROPERTY, chkKeepSilverInFaction.isSelected() ?
+     * "true" : "false"); loader.setMarkerName(txtMarker.getText());
+     * properties.setProperty(MARKER_PROPERTY, txtMarker.getText());
+     * setDrawingLines((Boolean.valueOf(settings.getProperty("SignTextCellRenderer.DrawLines",
+     * "false"))).booleanValue());
+     */
+
   }
 
   /**
@@ -874,7 +910,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
       mainPanel.add(restrictPanel, BorderLayout.CENTER);
       restrictPanel.add(panel, BorderLayout.NORTH);
       restrictPanel.setBorder(new javax.swing.border.TitledBorder(BorderFactory
-          .createEtchedBorder(), getString("plugin.teacher.preferences.label.namespace")));
+          .createEtchedBorder(), getString("plugin.shiploader.preferences.label.namespace")));
 
     }
 
