@@ -2142,7 +2142,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
     	int cnt = 0;
     	if (gd.getUnits()!=null && gd.getUnits().size()>0){
     		for (Unit u:gd.getUnits()){
-    			if (u.getOrders2()!=null && u.getOrders2().size()>0){
+    			if (u.getFaction()!=null && u.getFaction().isPrivileged() && u.getOrders2()!=null && u.getOrders2().size()>0){
     				for (Order order:u.getOrders2()){
     					String orderString = order.getText();
     					if (orderString.toUpperCase().startsWith(ENEMY_FACTION_LIST_IDENTIFIER.toUpperCase())){
