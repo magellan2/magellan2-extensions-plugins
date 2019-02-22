@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import javax.swing.KeyStroke;
 import magellan.client.Client;
 import magellan.client.desktop.DesktopEnvironment;
 import magellan.client.desktop.ShortcutListener;
+import magellan.client.event.SelectionEvent;
 import magellan.client.extern.MagellanPlugIn;
 import magellan.client.swing.map.MarkingsImageCellRenderer;
 import magellan.client.swing.preferences.PreferencesFactory;
@@ -67,7 +69,9 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
 	// FF: 0.94: show Talents
 	// FF: 0.96: show error regions
-	public static final String version="1.3";
+	// FF: 1.4: Items
+	// FF: 1.41: Items with Colors in menu
+	public static final String version="1.41";
 	
 	private Client client = null;
 	private Properties properties = null;
@@ -95,6 +99,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	
 	private static final String MAPICON_TALENT = "level_X.gif"; // X wird durch Zahlenwert ersetzt
 	private static final String MAPICON_SILVER = "silveramount_X.gif"; // X wird durch Zahlenwert 1..3
+	private static final String MAPICON_ITEMS = "items_X.gif"; // X wird durch Zahlenwert 1..10
 	
 	private static final String MAPICON_EMPTY_TOWER = "empty_tower.gif";
 	
@@ -118,6 +123,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private Boolean mapIcons_showing_Talents = false;
 	private Boolean mapIcons_showing_Errors = false;
 	private Boolean mapIcons_showing_Silver = false;
+	private Boolean mapIcons_showing_Items = false;
 	
 	private static final String propertyKey_showing_all = "MIplugin.showing_all";
 	private static final String propertyKey_showing_Messages = "MIplugin.showing_Messages";
@@ -133,6 +139,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private static final String propertyKey_showing_Talents = "MIplugin.showing_Talents";
 	private static final String propertyKey_showing_Errors = "MIplugin.showing_Errors";
 	private static final String propertyKey_showing_Silver = "MIplugin.showing_Silver";
+	private static final String propertyKey_showing_Items = "MIplugin.showing_Items";
 	
 	private boolean enemy_faction_list_exists = false;
 	
@@ -154,8 +161,10 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private JCheckBoxMenuItem showEnemyPresenceMenu;
 	private JCheckBoxMenuItem showTalentsMenu;
 	private JMenu talentMenu;
+	private JMenu itemsMenu;
 	
 	private String actTalentName="Wahrnehmung";
+	private String actItemName = "nothing";
 	
 	// Silver Level
 	private Long Level1=500000L;
@@ -172,6 +181,8 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private static final String silverLevel5PropertyName = "MIplugin.silverlevel.5";
 	
 	private String silverActionHelper = "";
+	
+	private long ItemsMaxAnzahl=0;
 	
 	// shortcuts
 	private List<KeyStroke> shortcuts;
@@ -305,6 +316,20 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
     	}
 		processGameData();
 		client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+	}
+	
+	private void toogleShowItems(){
+		if (actItemName.equalsIgnoreCase("nothing")) {
+			mapIcons_showing_Items = false;
+			log.info("MapIcons-toogleShowItems nothing");
+    	} else {
+    		log.info("MapIcons-toogleShowItems is true -> " + actItemName);
+    		mapIcons_showing_Items = true;
+    	}
+		removeMyRegionIcons();
+		processGameData();
+		// client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
+		// client.getDispatcher().fire(SelectionEvent.create(this));
 	}
 	
 	/* (non-Javadoc)
@@ -548,6 +573,16 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			}).start();
 		}
 		
+		// Item-auswahl
+		if (e.getActionCommand().startsWith("setNewItem_")){
+			actItemName = e.getActionCommand().substring(11);
+			new Thread(new Runnable() {
+				public void run() {
+					setNewItem();
+				}
+			}).start();
+		}
+		
 		
 		// silverLevel
 		if (e.getActionCommand().startsWith("newSilverLevel")){
@@ -706,6 +741,11 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		silverLevelMenu = new JMenu(getString("plugin.mapicons.menu.silverSubmenuName"));
 		// Inhalte werden gesetzt, wenn gamedata aktualisiert wird
 		menu.add(silverLevelMenu);
+		
+		// Items, ab version 1.4 FF 2019-02-12 ff
+		itemsMenu = new JMenu(getString("plugin.mapicons.menu.itemsSubmenuName"));
+		// Inhalte werden gesetzt, wenn gamedata aktualisiert wird
+		menu.add(itemsMenu);
 
 		menu.addSeparator();
 		
@@ -768,6 +808,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		this.mapIcons_showing_Talents = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Talents, this.mapIcons_showing_Talents.toString()));
 		this.mapIcons_showing_Errors = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Errors, this.mapIcons_showing_Errors.toString()));
 		this.mapIcons_showing_Silver = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Silver, this.mapIcons_showing_Silver.toString()));
+		this.mapIcons_showing_Items = Boolean.parseBoolean(_properties.getProperty(propertyKey_showing_Items, this.mapIcons_showing_Items.toString()));
 		
 	}
 	
@@ -797,6 +838,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		processGameData();
 		addTalents(talentMenu);
 		addSilverLevel(silverLevelMenu);
+		addItems(itemsMenu);
 		
 	}
 	/* (non-Javadoc)
@@ -874,7 +916,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		}
 		
 		if (mapIcons_showing_Talents){
-			log.info(getName() +  " set " + this.searchTalents() + " regions with perception level information");
+			log.info(getName() +  " set " + this.searchTalents() + " regions with level information");
 		}
 		
 		if (mapIcons_showing_Errors){
@@ -885,7 +927,9 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			log.info(getName() +  " found " + this.searchSilver() + " regions with Silver-Information");
 		}
 		
-		
+		if (mapIcons_showing_Items) {
+			log.info(getName() +  " found " + this.searchItems() + " regions with Items-Information");
+		}
 		
 	}
 	
@@ -1848,10 +1892,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	            	int target_ID = 0;
 	          		Region r1 = null;
 	          		Region r2 = null;
+	          		int MessageTypeID = msg.getMessageType().getID().intValue();
+	          		
 	            	// MESSAGETYPE 1922066494
 	            	// "\"$unit($unit) versuchte erfolglos, $unit($target) in eine andere Welt zu schleudern.\"";text
 	            	// "magic";section
-	          		if (msg.getMessageType().getID().intValue()==1922066494){
+	          		if (MessageTypeID==1922066494){
 	          			isSpecialEventMessage=true;
 	          			 String value = msg.getAttributes().get("unit");
 	          			 unit_ID = Integer.parseInt(value);
@@ -1868,13 +1914,93 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	          				 r2 = actUnit.getRegion();
 	          			 }
 	          		}
-
+	          		
 	          		if (isSpecialEventMessage && r1!=null){
 	          			regionsSpecialEvents.add(r1);
 	          		}
 	          		if (isSpecialEventMessage && r2!=null){
 	          			regionsSpecialEvents.add(r2);
 	          		}  
+	          		
+	          		ArrayList<Integer> validMessageTypeIDs = new ArrayList<Integer>();
+	          		
+	          		// MESSAGETYPE 861989530
+	          		// "\"$unit($unit) in $region($region) kann keine Kräuter finden.\"";text
+	          		validMessageTypeIDs.add(861989530);
+	          		
+	          		// MESSAGETYPE 2094553546
+	          		// "\"$unit($unit) in $region($region): '$order($command)' - Ohne einen Handelsposten gibt es keinen Markt.\"";text
+	          		validMessageTypeIDs.add(2094553546);
+	          		
+	          		// MESSAGETYPE 486687258
+	          		// "\"$unit($unit) in $region($region): '$order($command)' - Die Region wird von Nichtalliierten bewacht.\"";text
+	          		validMessageTypeIDs.add(486687258);
+	          		
+	          		// MESSAGETYPE 1058871066
+	          		// "\"$unit($unit) in $region($region): '$order($command)' - Die Einheit ist mit uns alliiert.\"";text
+	          		validMessageTypeIDs.add(1058871066);
+	          		
+	          		// MESSAGETYPE 735957290
+	          		// "\"$unit($unit) wurde in $region($region) von $unit.dative($guard) aufgehalten.\"";text
+	          		validMessageTypeIDs.add(735957290);
+	          		
+	          		// MESSAGETYPE 428515567
+	          		// "\"$unit($unit) in $region($region): '$order($command)' - Die Region wird von $unit($guard), einer nichtalliierten Einheit, bewacht.\"";text
+	          		validMessageTypeIDs.add(428515567);
+	          		
+	          		// MESSAGETYPE 1543909816
+	          		// "\"$unit($unit) in $region($region): '$order($command)' - Migranten können keine kostenpflichtigen Talente lernen.\"";text
+	          		validMessageTypeIDs.add(1543909816);
+	          		
+	          		// MESSAGETYPE 1060448783
+	          		// "\"$unit($unit) entdeckt, dass $region($region) $localize($terrain) ist.\"";text
+	          		validMessageTypeIDs.add(1060448783);
+	          		
+	          		// MESSAGETYPE 187891574
+	          		// "\"$unit($unit) in $region($region) rekrutiert $int($amount) von $int($want) Personen.\"";text
+	          		validMessageTypeIDs.add(187891574);
+	          		
+	          		// MESSAGETYPE 1451290990
+	          		// "\"Die $ship($ship) entdeckt, dass $region($region) Festland ist.\"";text
+	          		validMessageTypeIDs.add(1451290990);
+	          		
+	          		// MESSAGETYPE 475784769
+	          		// "\"Die Mannschaft der $ship($ship) kann in letzter Sekunde verhindern, dass das Schiff in $region($region) auf Land aufläuft.\"";text
+	          		validMessageTypeIDs.add(475784769);
+	          		
+	          		// MESSAGETYPE 212341694
+	          		// "\"$unit($unit) ertrinkt in $region($region).\"";text
+	          		validMessageTypeIDs.add(212341694);
+	          		
+	          		if (validMessageTypeIDs.contains(MessageTypeID)){
+	          		
+	          		// if (MessageTypeID==861989530 || MessageTypeID==2094553546 || MessageTypeID==486687258){
+	          			isSpecialEventMessage=true;
+	          			// log.info("found MessageTypeID:" + MessageTypeID );
+	          			String regionCoordinate = msg.getAttributes().get("region");
+	          			if (regionCoordinate != null) {
+	          				CoordinateID coordinate = CoordinateID.parse(regionCoordinate, ",");
+	
+	                        if (coordinate == null) {
+	                          coordinate = CoordinateID.parse(regionCoordinate, " ");
+	                        }
+
+	                        if (coordinate !=null) {
+	                        	r1 = gd.getRegion(coordinate);
+	                        } else {
+	                        	log.info("no coordinate found for MessageType " + MessageTypeID );
+	                        }
+	                        
+	                        if (r1!=null) {
+	                        	regionsSpecialEvents.add(r1);
+	                        } else {
+	                        	log.info("no region found for MessageType " + MessageTypeID );
+	                        }
+                        } else {
+                        	log.info("no region atrribute found for MessageType " + MessageTypeID );
+                        }
+	          		}
+
 				}
 			}
 		}
@@ -1988,6 +2114,77 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		}
 		
 		return regionsSilver.size();
+	}
+	
+	/**
+	 * Bestimmt die Menge des Items maximal pro Region Reportweitund  in der Region und setzt ggf ein Icon
+	 * @return
+	 */
+	private int searchItems(){
+		
+		if (actItemName=="nothing") {
+			this.mapIcons_showing_Items=false;
+			return 0;
+		}
+		
+		ItemType myType = this.gd.getRules().getItemType(actItemName);
+		if (myType==null) {
+			log.info("!!! problem - unknown item " + actItemName);
+			this.mapIcons_showing_Items=false;
+			return 0;
+		}
+		
+		
+		// maximalen Bestand in einer Region dieses Items Reportweit ermitteln
+		// und speichern
+		Long maxAnzahl=(long) 0;
+		Map <Region,Long> bestand = new HashMap<Region, Long>();
+		for (Region r:this.gd.getRegions()) {
+			Long RegionAnzahl=(long)0;
+			if (r.getUnits()!=null) {
+				for (Unit u:r.getUnits().values()) {
+					if (u.getCombatStatus()>=0) {
+						Item actItem = u.getItem(myType);
+						if (actItem!=null && actItem.getAmount()>0) {
+							RegionAnzahl += actItem.getAmount();
+						}
+					}
+				}
+			}
+			if (RegionAnzahl>maxAnzahl) {
+				maxAnzahl = RegionAnzahl;
+			}
+			if (RegionAnzahl>0) {
+				bestand.put(r, RegionAnzahl);
+				// Debug
+				// log.info("Debug MapIcons searchItems. Marked: " + r.toString() + " with amount=" + RegionAnzahl + " " + actItemName);
+			}
+		}
+		
+		log.info("MapIcons-serachItems: maximum is " + maxAnzahl + " " + actItemName);
+		this.ItemsMaxAnzahl = maxAnzahl;
+		if (maxAnzahl==0) {
+			return 0;
+		}
+		
+		double d = maxAnzahl / 10;
+		
+		for (Region r:bestand.keySet()) {
+			Long stufe = (long) Math.ceil(bestand.get(r) / d);
+			if (stufe>10) {
+				stufe=(long)10;
+			}
+			// log.info("debug Mapicons: stufen, set " + r.toString() + " (" + bestand.get(r) + " => " + stufe);
+			setRegionIcon(MAPICON_ITEMS.replace("X", stufe.toString()),r);
+		}
+		
+		
+		
+		
+		// setRegionIcon(MAPICON_SILVER.replace("X", silverInteger.toString()),SR.region);
+		
+		
+		return bestand.keySet().size();
 	}
 	
 	/**
@@ -2256,6 +2453,114 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		}
 	}
 	
+	/*
+	 * puts the known items into the submenu
+	 */
+	private void addItems(JMenu menu){
+		if (gd != null){
+			if (gd.getRules()!=null){
+				menu.removeAll();
+				
+				// nothing - eintrag
+				JMenuItem actItem = new JCheckBoxMenuItem(getString("plugin.mapicons.menu.noItems"));
+				actItem.setActionCommand("setNewItem_nothing");
+				actItem.addActionListener(this);
+				// log.info("MapIcons - sorted skilltypes, found: " + name);
+				if (actItemName=="nothing"){
+					actItem.setSelected(true);
+				} else {
+					actItem.setSelected(false);
+				}
+				menu.add(actItem);
+				
+				long StufenWert = Math.round(this.ItemsMaxAnzahl / 10);
+				
+				// Farbeinträge
+				if (actItemName!="nothing" && this.ItemsMaxAnzahl>0){
+					JMenu colorInfo = new JMenu(getString("plugin.mapicons.menu.ItemColors"));
+					for (int x=1;x<=10;x++) {
+						long StartWert = ((x-1)*StufenWert) + 1;
+						if (StartWert<1) {
+							StartWert=1;
+						}
+						long EndWert = x * StufenWert;
+						if (EndWert>this.ItemsMaxAnzahl) {
+							EndWert = this.ItemsMaxAnzahl;
+						}
+						if (this.ItemsMaxAnzahl<=10) {
+							StartWert = 0;
+							EndWert=0;
+							if (x==10) {
+								StartWert = 1;
+								EndWert=this.ItemsMaxAnzahl;
+							}
+						}
+						NumberFormat nF = NumberFormat.getInstance();
+						String StartWertS = nF.format(StartWert);
+						String EndWertS = nF.format(EndWert);
+						JMenuItem actColor = new JMenuItem(StartWertS + "-" + EndWertS);
+						if (StartWert==0 && EndWert==0) {
+							actColor = new JMenuItem("- - -");
+						} 
+						// MAPICON_ITEMS = "items_X.gif";
+						String fileName = MAPICON_ITEMS.replace('X' + "", x+"");
+						String iconName = "etc/images/map/MIplugin_" + fileName;
+					    Icon icon = client.getMagellanContext().getImageFactory().loadImage(iconName);
+					    if (icon!=null){
+					    	actColor.setIcon(icon);
+					    }
+						colorInfo.add(actColor);
+					}
+					menu.add(colorInfo);
+				}
+
+				
+				Collection<ItemType> itemTypesColl = gd.getRules().getItemTypes();
+				ArrayList<ItemType> itemTypes = new ArrayList<ItemType>();
+				itemTypes.addAll(itemTypesColl);
+				Collections.sort(itemTypes,new ItemTypeComparator(gd));
+				log.info("MapIcons - sorted itemtypes: " + itemTypes.size());
+				
+				// Submenus bauen mit den Anfangsbuchstaben....sind einfach zu viele Gegenstände
+				
+				ArrayList<String> firstLetters = new ArrayList<String>();
+				
+				for (ItemType itemType:itemTypes){
+					String name = gd.getTranslation(itemType.getName());
+					String firstLetter = name.substring(0, 1);
+					if (!firstLetters.contains(firstLetter)) {
+						firstLetters.add(firstLetter);
+					}
+				}
+				
+				for (String actFirstLetter:firstLetters) {
+					JMenu actMenu = new JMenu(actFirstLetter);
+					for (ItemType itemType:itemTypes){
+						String name = gd.getTranslation(itemType.getName());
+						String firstLetter = name.substring(0, 1);
+						if (firstLetter.equalsIgnoreCase(actFirstLetter)) {
+							actItem = new JCheckBoxMenuItem(name);
+							actItem.setActionCommand("setNewItem_" + itemType.getName());
+							actItem.addActionListener(this);
+							// log.info("MapIcons - sorted skilltypes, found: " + name);
+							if (itemType.getName().equalsIgnoreCase(actItemName)){
+								actItem.setSelected(true);
+							} else {
+								actItem.setSelected(false);
+							}
+							actMenu.add(actItem);
+						}
+					}
+					menu.add(actMenu);
+				}
+			} else {
+				log.info("MapIcons: rules not init");
+			}
+		} else {
+			log.info("MapIcons: data not init");
+		}
+	}
+	
 	
 	/*
 	 * puts the known talents into the submenu
@@ -2345,6 +2650,20 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		showTalentsMenu.setSelected(true);
 	}
 	
+	/*
+	 * neuer Itemname ist gesetzt - Umsetzung
+	 */
+	private void setNewItem(){
+		// Kurzerhand alle submenus entfernen und neu anlegen
+		log.info("Mapicons - changing item name to: " + actItemName);
+		if (actItemName.equalsIgnoreCase("nothing")) {
+			this.ItemsMaxAnzahl=0;
+		}
+		itemsMenu.removeAll();
+		toogleShowItems();
+		addItems(itemsMenu);
+	}
+	
 	
 	/**
      * 
@@ -2367,6 +2686,33 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
       }
       
       public int compare(SkillType o1,SkillType o2){
+        String s1 = data.getTranslation(o1.getName());
+        String s2 = data.getTranslation(o2.getName());
+        return s1.compareToIgnoreCase(s2);
+      }
+    }
+    
+    /**
+     * 
+     * a small comparator to compare translated itemNames
+     *
+     * @author Fiete
+     * @version 1.4, 12.02.2019
+     */  
+    private class ItemTypeComparator implements Comparator<ItemType> {
+      
+      // Reference to Translations
+      private GameData data=null;
+      
+      /**
+       * constructs new Comparator
+       * @param _data
+       */
+      public ItemTypeComparator(GameData _data){
+        this.data = _data;
+      }
+      
+      public int compare(ItemType o1,ItemType o2){
         String s1 = data.getTranslation(o1.getName());
         String s2 = data.getTranslation(o2.getName());
         return s1.compareToIgnoreCase(s2);
