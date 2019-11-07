@@ -1,6 +1,4 @@
-Alliance Plugin
-Version 1.0
-Author Thoralf Rickert
+# Alliance Plugin
 
 Welcome to the Alliance Plugin for Magellan2. This plugin makes it 
 possible, that multiple factions can use on single report to manage 
