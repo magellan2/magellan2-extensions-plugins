@@ -21,5 +21,5 @@ jobs:
         override: true
         file: release/*.jar
         skip_cleanup: true
- #       on:
- #         tags: true
+        on:
+          branches: master
