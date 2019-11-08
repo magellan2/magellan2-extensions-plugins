@@ -19,7 +19,6 @@ jobs:
         provider: releases
         api_key: $GITHUB_OAUTH_TOKEN
         override: true
+        file_glob: true
         file: release/*.jar
         skip_cleanup: true
-        on:
-          branches: master
