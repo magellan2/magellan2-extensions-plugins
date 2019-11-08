@@ -1,0 +1,25 @@
+language: java
+
+jobs:
+  include:
+#    - state: test
+#      name: Calling Ant to create distribution
+#      script: ant run_tests
+    - stage: deploy
+      name: GitHub Release
+      script:
+        - ant distribute
+      before_deploy:
+        # Set up git user name and tag this commit
+        - git config --local user.name "$GITHUB_USER"
+        - git config --local user.email "$GITHUB_MAIL"
+        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
+        - git tag $TRAVIS_TAG
+      deploy:
+        provider: releases
+        api_key: $GITHUB_OAUTH_TOKEN
+        override: true
+        file: release/*.jar
+        skip_cleanup: true
+ #       on:
+ #         tags: true
