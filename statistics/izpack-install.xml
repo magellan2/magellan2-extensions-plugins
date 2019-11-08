@@ -20,8 +20,8 @@
   </locale>
   
   <resources>
-    <res id="InfoPanel.info"   src="README.txt"/>
-    <res id="useNativeLAF"     src="README.txt"/>
+    <res id="InfoPanel.info"   src="README.md"/>
+    <res id="useNativeLAF"     src="README.md"/>
   </resources>
 
   <panels>
@@ -37,7 +37,7 @@
     <pack name="Statistics Plugin for Magellan2" required="yes">
       <description>A plugin for Magellan2 that allows it to compare the report with historic data of the same object.</description>
       <file src="doc"                            targetdir="$INSTALL_PATH/doc/statisticsplugin"/>
-      <file src="README.txt"                     targetdir="$INSTALL_PATH/doc/statisticsplugin"/>
+      <file src="README.md"                      targetdir="$INSTALL_PATH/doc/statisticsplugin"/>
       <file src="statistics-plugin.jar"          targetdir="$INSTALL_PATH/plugins/statisticsplugin"/>
       <file src="etc"                            targetdir="$INSTALL_PATH"/>
       <file src="lib"                            targetdir="$INSTALL_PATH/plugins/statisticsplugin"/>

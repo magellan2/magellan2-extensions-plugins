@@ -1,4 +1,4 @@
-<project name="mapicons-plugin" default="create-installer">
+<project name="lighthouseicons-plugin" default="create-installer">
   <description>
     This is the ant script for creating the lighthouseicons plugin
   	for Magellan2. You need to setup some paths if you

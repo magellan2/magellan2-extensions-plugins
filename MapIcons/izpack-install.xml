@@ -20,8 +20,8 @@
   </locale>
   
   <resources>
-    <res id="InfoPanel.info"   src="README.txt"/>
-    <res id="useNativeLAF"     src="README.txt"/>
+    <res id="InfoPanel.info"   src="README.md"/>
+    <res id="useNativeLAF"     src="README.md"/>
   </resources>
 
   <panels>
@@ -37,8 +37,8 @@
     <pack name="MapIcons Plugin for Magellan2" required="yes">
       <description>A plugin for Magellan2 for easily visualizing more messages from the report.</description>
       <file src="doc"                            targetdir="$INSTALL_PATH/doc/mapicons"/>
-      <file src="README.txt"                     targetdir="$INSTALL_PATH/doc/mapicons"/>
-      <file src="mapicons-plugin.jar"             targetdir="$INSTALL_PATH/plugins"/>
+      <file src="README.md"                      targetdir="$INSTALL_PATH/doc/mapicons"/>
+      <file src="mapicons-plugin.jar"            targetdir="$INSTALL_PATH/plugins"/>
       <file src="etc"                            targetdir="$INSTALL_PATH"/>
       <file src="lib"                            targetdir="$INSTALL_PATH"/>
     </pack>

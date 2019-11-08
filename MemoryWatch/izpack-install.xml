@@ -25,8 +25,8 @@
   </locale>
   
   <resources>
-    <res id="InfoPanel.info"   src="README.txt"/>
-    <res id="useNativeLAF"     src="README.txt"/>
+    <res id="InfoPanel.info"   src="README.md"/>
+    <res id="useNativeLAF"     src="README.md"/>
   </resources>
 
   <panels>
