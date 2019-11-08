@@ -10,7 +10,7 @@
   <property name="classes"      location="${basedir}/classes"/>
   <property name="library"      location="${basedir}/lib"/>
   <property name="release"      location="${basedir}/release"/>
-  <property name="magellan2"    location="${basedir}/../Magellan2/"/>
+  <property name="magellan2"    location="${basedir}/../magellan2/"/>
   <property name="installer"    location="${magellan2}/installer"/>
 
   <property name="plugin.name"  value="shiploader-plugin.jar"/>
