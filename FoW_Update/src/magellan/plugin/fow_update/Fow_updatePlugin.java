@@ -19,7 +19,7 @@ import magellan.library.Region;
 import magellan.library.Region.Visibility;
 import magellan.library.utils.logging.Logger;
 
-// stm was here!
+
 
 public class Fow_updatePlugin implements MagellanPlugIn, ActionListener {
 
