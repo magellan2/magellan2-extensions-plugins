@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
+<installation version="1.0">
+  <info>
+    <appname>Your Plugin Name</appname>
+    <appversion>0.1</appversion>
+    <appsubpath>Magellan</appsubpath>
+    <authors>
+      <author name="Your Name Here" email="yourmail@example.com"/>
+    </authors>
+    <url>https://magellan2.github.io/</url>
+    <uninstaller write="no"/>
+    <javaversion>11</javaversion>
+  </info>
+  
+  <guiprefs width="640" height="480" resizable="no"/>
+  
+  <locale>
+    <langpack iso3="eng"/>
+    <langpack iso3="deu"/>
+  </locale>
+  
+  <resources>
+    <res id="InfoPanel.info"   src="README.md"/>
+    <res id="useNativeLAF"     src="README.md"/>
+  </resources>
+
+  <panels>
+    <panel classname="HelloPanel"/>
+    <panel classname="InfoPanel"/>
+    <panel classname="MagellanPluginTargetPanel"/>
+    <!--<panel classname="PacksPanel"/>-->
+    <panel classname="InstallPanel"/>
+    <panel classname="SimpleFinishPanel"/>
+  </panels>
+
+  <packs>
+    <pack name="Your Name Here Plugin for Magellan2" required="yes">
+      <description>This description should be changed.</description>
+      <file src="README.md"                      targetdir="$INSTALL_PATH/doc/yourpluginname"/>
+      <file src="yourpluginname-plugin.jar"      targetdir="$INSTALL_PATH/plugins"/>
+      <file src="etc"                            targetdir="$INSTALL_PATH"/>
+      <file src="lib"                            targetdir="$INSTALL_PATH"/>
+    </pack>
+  </packs>
+</installation>
