@@ -7,9 +7,9 @@
     <authors>
       <author name="Fiete Fietz" email="sf@fietefietz.de"/>
     </authors>
-    <url>http://magellan-client.sourceforge.net/</url>
+    <url>https://magellan2.github.io/</url>
     <uninstaller write="no"/>
-    <javaversion>1.6</javaversion>
+    <javaversion>11</javaversion>
   </info>
   
   <guiprefs width="640" height="480" resizable="no"/>
@@ -27,7 +27,7 @@
   <panels>
     <panel classname="HelloPanel"/>
     <panel classname="InfoPanel"/>
-    <panel classname="MagellanPluginTargetPanel"/> 
+    <panel classname="MagellanPluginTargetPanel"/>
     <!--<panel classname="PacksPanel"/>-->
     <panel classname="InstallPanel"/>
     <panel classname="SimpleFinishPanel"/>

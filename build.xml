@@ -1,88 +1,97 @@
 <project name="magellan2-extensions-plugin" default="distribute">
-  <description>
+	<description>
     This is the ant script for creating all plugins
   	for Magellan2. You need to setup some paths if you
   	want to use this script to compile a Install-JAR file.
   </description>
 
-  <property name="dist" location="${basedir}/release"/>
+	<property name="dist" location="${basedir}/release" />
 
-  <!-- *************************************************************** -->
-  <!-- *                                                             * -->
-  <!-- *************************************************************** -->
-  <target name="distribute">
-    <!-- checkout magellan2 because of a dependency -->
-	<delete dir="magellan2" failonerror="false"/>
-    <exec executable="git" dir="${basedir}">
-      <arg line="clone https://github.com/magellan2/magellan2.git"/>
-    </exec>
-	
-	<!-- create a release folder -->
-	<mkdir dir="${dist}"/>
-  
-    <ant antfile="FoW_Update/build.installer.xml" target="create-installer" useNativeBasedir="true"/>
-	<copy todir="${dist}">
-      <fileset dir="FoW_Update">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
+	<!-- *************************************************************** -->
+	<!-- *                                                             * -->
+	<!-- *************************************************************** -->
+	<target name="distribute">
+		<!-- checkout magellan2 because of a dependency -->
+		<delete dir="magellan2" failonerror="false" />
+		<exec executable="git" dir="${basedir}">
+			<arg line="clone https://github.com/magellan2/magellan2.git" />
+		</exec>
 
-    <ant antfile="LightHouseIcons/build.installer.xml" target="create-installer" useNativeBasedir="true"/>
-	<copy todir="${dist}">
-      <fileset dir="LightHouseIcons">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
+		<!-- create a release folder -->
+		<mkdir dir="${dist}" />
 
-    <ant antfile="MapCleaner/build.installer.xml" target="create-installer" useNativeBasedir="true"/>
-	<copy todir="${dist}">
-      <fileset dir="MapCleaner">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
+		<ant antfile="LightHouseIcons/build.installer.xml"
+		     target="create-installer"
+		     useNativeBasedir="true" />
+		<copy todir="${dist}">
+			<fileset dir="LightHouseIcons">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
 
-    <ant antfile="MapIcons/build.installer.xml" target="create-installer" useNativeBasedir="true"/>
-	<copy todir="${dist}">
-      <fileset dir="MapIcons">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
+		<ant antfile="MapCleaner/build.installer.xml"
+		     target="create-installer"
+		     useNativeBasedir="true" />
+		<copy todir="${dist}">
+			<fileset dir="MapCleaner">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
 
-    <ant antfile="MemoryWatch/build.installer.xml" target="create-installer" useNativeBasedir="true"/>
-	<copy todir="${dist}">
-      <fileset dir="MemoryWatch">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
+		<ant antfile="MapIcons/build.installer.xml"
+		     target="create-installer"
+		     useNativeBasedir="true" />
+		<copy todir="${dist}">
+			<fileset dir="MapIcons">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
 
-    <ant antfile="ShipLoader/build.installer.xml" target="create-installer" useNativeBasedir="true"/>
-	<copy todir="${dist}">
-      <fileset dir="ShipLoader">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
+		<ant antfile="MemoryWatch/build.installer.xml"
+		     target="create-installer"
+		     useNativeBasedir="true" />
+		<copy todir="${dist}">
+			<fileset dir="MemoryWatch">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
 
-    <ant antfile="statistics/build.installer.xml" target="create-installer" useNativeBasedir="true"/>
-	<copy todir="${dist}">
-      <fileset dir="statistics">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
+		<ant antfile="ShipLoader/build.installer.xml"
+		     target="create-installer"
+		     useNativeBasedir="true" />
+		<copy todir="${dist}">
+			<fileset dir="ShipLoader">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
 
-    <ant antfile="Teacher/build.installer.xml" target="create-installer" useNativeBasedir="true"/>
-	<copy todir="${dist}">
-      <fileset dir="Teacher">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
+		<ant antfile="statistics/build.installer.xml"
+		     target="create-installer"
+		     useNativeBasedir="true" />
+		<copy todir="${dist}">
+			<fileset dir="statistics">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
 
-    <ant antfile="allianceplugin/build.installer.xml" target="create-installer" useNativeBasedir="true"/>
-	<copy todir="${dist}">
-      <fileset dir="allianceplugin">
-        <include name="*.jar"/>
-      </fileset>
-    </copy>
-	
-	<delete dir="magellan2" failonerror="false"/>
-  </target>
+		<ant antfile="Teacher/build.installer.xml"
+		     target="create-installer"
+		     useNativeBasedir="true" />
+		<copy todir="${dist}">
+			<fileset dir="Teacher">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
+
+		<ant antfile="allianceplugin/build.installer.xml"
+		     target="create-installer"
+		     useNativeBasedir="true" />
+		<copy todir="${dist}">
+			<fileset dir="allianceplugin">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
+
+		<delete dir="magellan2" failonerror="false" />
+	</target>
 </project>

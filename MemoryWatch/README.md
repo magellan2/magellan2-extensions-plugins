@@ -1,3 +1,3 @@
 # MemoryWatch Plugin
 
-This is an example plugin to show how a plugin could work in Magellan2.
+The MemoryWatch plugin is a small helper tool for the curious. It was designed for developer to monitor the memory usage of Magellan.

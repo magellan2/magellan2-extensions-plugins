@@ -7,9 +7,9 @@
     <authors>
       <author name="Thoralf Rickert" email="thoralf@m84.de"/>
     </authors>
-    <url>http://magellan-client.sourceforge.net/</url>
+    <url>https://magellan2.github.io/</url>
     <uninstaller write="no"/>
-    <javaversion>1.5</javaversion>
+    <javaversion>11</javaversion>
   </info>
   
   <guiprefs width="640" height="480" resizable="no"/>
