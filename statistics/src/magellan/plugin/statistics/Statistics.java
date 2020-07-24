@@ -99,11 +99,11 @@ public class Statistics {
     
     runtime = System.currentTimeMillis() - startTime; 
     
-    Collection<Faction> factions = world.factions().values(); 
-    Collection<Region> regions = world.regions().values(); 
-    Collection<Unit> units = world.units().values(); 
-    Collection<Building> buildings = world.buildings().values(); 
-    Collection<Ship> ships = world.ships().values(); 
+    Collection<Faction> factions = world.getFactions(); 
+    Collection<Region> regions = world.getRegions(); 
+    Collection<Unit> units = world.getUnits(); 
+    Collection<Building> buildings = world.getBuildings(); 
+    Collection<Ship> ships = world.getShips(); 
     
     
     completeProgress = 0;
@@ -397,6 +397,11 @@ public class Statistics {
       int magic4 = fis.read();
 
       if((magic3 != 'B') || (magic4 != 'Z')) {
+        try {
+        fis.close();
+        } catch (Exception e) {
+          //
+        }
         throw new IOException("File " + file + " is missing bzip2 header BZ.");
       }
       
@@ -406,8 +411,6 @@ public class Statistics {
       bzstream.close();
       bis.close();
       fis.close();
-
-      
     } catch (Exception exception) {
       log.fatal(exception);
     }

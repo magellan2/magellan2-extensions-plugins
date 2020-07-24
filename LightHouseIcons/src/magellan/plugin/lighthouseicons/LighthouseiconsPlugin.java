@@ -151,7 +151,7 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,Sho
 	public void init(Client _client, Properties _properties) {
 		client = _client;
 		initShortcuts();
-		Resources.getInstance().initialize(Client.getMagellanDirectory(), "lighthouseiconsplugin_");
+		Resources.getInstance().initialize(Client.getResourceDirectory(), "lighthouseiconsplugin_");
 
 		// initProperties();
 
@@ -219,7 +219,7 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,Sho
 	 */
 	private int setLightHouseVisibility(Collection<Region> alreadyVisibleRegions){
 		int counter = 0;
-		for (Region r:this.gd.regions().values()){
+		for (Region r:this.gd.getRegions()){
 			if (r.getVisibility().equals(Visibility.LIGHTHOUSE)){
 				int i = setRegionIcon(MAPICON_LIGHTHOUSE, r);
 				if (i==1){
@@ -237,8 +237,8 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,Sho
 	 */
 	private int setLightHouseRange(Collection<Region> alreadyVisibleRegions){
 		int counter = 0;
-		BuildingType type = gd.rules.getBuildingType(EresseaConstants.B_LIGHTHOUSE);
-		RegionType oceanType = gd.rules.getRegionType(EresseaConstants.RT_OCEAN);
+		BuildingType type = gd.getRules().getBuildingType(EresseaConstants.B_LIGHTHOUSE);
+		RegionType oceanType = gd.getRules().getRegionType(EresseaConstants.RT_OCEAN);
 		if (type==null){
 			log.error(getName() + ": this game has no lighthouse-buildings!");
 			return 0;
@@ -247,7 +247,7 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,Sho
 			log.error(getName() + ": this game has no ocean-regiontype!");
 			return 0;
 		}
-		for (Building b:gd.buildings().values()){
+		for (Building b:gd.getBuildings()){
 			if (type.equals(b.getType()) && (b.getSize() >= 10)){
 				
 				// find out, if it could be a friendly lighthouse...
@@ -320,14 +320,14 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,Sho
 	 * entfernt "unsere" Regionicon-tags aus GameData
 	 */
 	private void removeMyRegionIcons(){
-		for (Region r:gd.regions().values()){
+		for (Region r:gd.getRegions()){
 			removeMyRegionIconsRegion(r);
 		}
 		
 	}
 	
 	/**
-	 * entfernt "unsere" regionicon-tag-eintr‰ge aus dem tag
+	 * entfernt "unsere" regionicon-tag-eintr√§ge aus dem tag
 	 * @param r
 	 */
 	private void removeMyRegionIconsRegion(Region r){
@@ -358,8 +358,8 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,Sho
 	private void initShortcuts(){
 		shortcuts = new ArrayList<KeyStroke>();
 		// 0: toggle Map Icons
-	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK));
-	    
+	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
+
 	    DesktopEnvironment.registerShortcutListener(this);
 	}
 	

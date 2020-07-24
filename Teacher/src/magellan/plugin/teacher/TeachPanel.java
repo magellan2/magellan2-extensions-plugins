@@ -85,6 +85,7 @@ ActionListener, UnitOrdersListener {
 	private static String teachDiffChar;
 	private static String otherChar;
 	private static String errorChar;
+	@SuppressWarnings("unused")
 	private static String valueChar;
 
 	private static String currentLearnChar;
@@ -95,7 +96,7 @@ ActionListener, UnitOrdersListener {
 	private Teacher teacher;
 
 	private final Collection<String> namespaces;
-	private JComboBox rBox;
+	private JComboBox<Region> rBox;
 
 	/**
 	 * Creates a new TradeOrganizer object.
@@ -161,7 +162,7 @@ ActionListener, UnitOrdersListener {
 		final GridBagConstraints c = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
 				GridBagConstraints.NONE, new Insets(5, 5, 5, 5), 0, 0);
 
-		rBox = new JComboBox(data.regions().values().toArray());
+		rBox = new JComboBox<Region>(data.getRegions().toArray(new Region[] {}));
 		rBox.setEditable(false);
 		rBox.addActionListener(this);
 		topPanel.add(new JLabel(TeachPlugin.getString("teachpanel.regionbox.lable")), c);
@@ -190,7 +191,7 @@ ActionListener, UnitOrdersListener {
 
 	private void updateGUI() {
 		rBox.removeAllItems();
-		for (final Region region : data.regions().values())
+		for (final Region region : data.getRegions())
 			rBox.addItem(region);
 	}
 
@@ -252,7 +253,7 @@ ActionListener, UnitOrdersListener {
 	public class TeachTable extends JTable implements MouseListener {
 		private final TeachTableModel model;
 		private final TableSorter sorter;
-		private final TableCellRenderer sunitRenderer = new SUnitRenderer();
+//		private final TableCellRenderer sunitRenderer = new SUnitRenderer();
 
 		class SUnitRenderer implements TableCellRenderer {
 
@@ -266,9 +267,9 @@ ActionListener, UnitOrdersListener {
 
 		@Override
 		public TableCellRenderer getCellRenderer(int row, int column) {
-			if (false && column == 0)
-				return sunitRenderer;
-			else
+//			if (false && column == 0)
+//				return sunitRenderer;
+//			else
 				return super.getCellRenderer(row, column);
 		}
 
@@ -973,6 +974,7 @@ ActionListener, UnitOrdersListener {
 		/**
 		 * Returns the unit corresponding to a row.
 		 */
+		@SuppressWarnings("unused")
 		public Unit getUnit(int row) {
 			return (Unit) content[row][0];
 		}
@@ -982,6 +984,7 @@ ActionListener, UnitOrdersListener {
 		 * 
 		 * @return
 		 */
+		@SuppressWarnings("unused")
 		public static int getFixedColumns() {
 			return numFixedColumns;
 		}

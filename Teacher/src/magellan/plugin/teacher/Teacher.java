@@ -1429,19 +1429,19 @@ public class Teacher {
 
 	private String getOrderTranslation(Unit u, StringID order) {
 		Locale locale = u.getFaction().getLocale();
-		return gsst.getOrderChanger().getOrder(locale, order);
+		return gsst.getOrderChanger().getOrderO(locale, order).getText();
 	}
 
 	private static boolean isLearnOrder(String o, Unit u) {
 		Locale locale = u.getFaction().getLocale();
 		return (o.toLowerCase(locale).trim().startsWith(u.getData().getGameSpecificStuff()
-				.getOrderChanger().getOrder(locale, EresseaConstants.OC_LEARN).toLowerCase(locale)));
+				.getOrderChanger().getOrderO(locale, EresseaConstants.OC_LEARN).getText().toLowerCase(locale)));
 	}
 
 	private static boolean isTeachOrder(String o, Unit u) {
 		Locale locale = u.getFaction().getLocale();
 		return (o.toLowerCase(locale).trim().startsWith(u.getData().getGameSpecificStuff()
-				.getOrderChanger().getOrder(locale, EresseaConstants.OC_TEACH).toLowerCase(locale)));
+				.getOrderChanger().getOrderO(locale, EresseaConstants.OC_TEACH).getText().toLowerCase(locale)));
 	}
 
 	private Object getLocalizedSkillName(Integer learning, Unit u) {
@@ -1525,14 +1525,14 @@ public class Teacher {
 							best.infos[info.getTeacher()].getUnit(), EresseaConstants.OC_TEACH));
 					if (info.getUnit() instanceof TempUnit) {
 						orders[info.getTeacher()].append(" ").append(
-								getOrderTranslation(info.getUnit(), EresseaConstants.OC_TEMP));
+								getOrderTranslation(info.getUnit(), EresseaConstants.OC_MAKETEMP));
 					}
 					orders[info.getTeacher()].append(" ");
 					orders[info.getTeacher()].append(info.getUnit().getID());
 				} else {
 					if (info.getUnit() instanceof TempUnit) {
 						orders[info.getTeacher()].append(" ").append(
-								getOrderTranslation(info.getUnit(), EresseaConstants.OC_TEMP));
+								getOrderTranslation(info.getUnit(), EresseaConstants.OC_MAKETEMP));
 					}
 					orders[info.getTeacher()].append(" ").append(info.getUnit().getID().toString());
 				}
