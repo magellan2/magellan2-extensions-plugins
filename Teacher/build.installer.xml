@@ -85,7 +85,7 @@
 				<attribute name="Specification-Title"
 				           value="${plugin.displayname} Plugin [v${plugin.version} build ${build.number}]" />
 				<attribute name="Specification-Vendor"
-				           value="${plugin.author.name}" />
+				           value="${plugin.author}" />
 			</manifest>
 		</jar>
 
@@ -109,7 +109,7 @@
 				<filter token="VERSION" value="${plugin.version}" />
 				<filter token="BUILD" value="${build.number}" />
 				<filter token="PLUGIN.FILENAME" value="${plugin.name}" />
-				<filter token="AUTHOR" value="${plugin.author.name}" />
+				<filter token="AUTHOR" value="${plugin.author}" />
 				<filter token="EMAIL" value="${plugin.author.email}" />
 			</filterset>
 		</copy>

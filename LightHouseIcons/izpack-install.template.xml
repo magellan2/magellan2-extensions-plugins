@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="iso-8859-1" standalone="yes" ?>
 <installation version="1.0">
   <info>
-    <appname>Your Plugin Name</appname>
-    <appversion>0.1</appversion>
+    <appname>@DISPLAYNAME@ Plugin for Magellan</appname>
+    <appversion>@VERSION@ (build @BUILD@)</appversion>
     <appsubpath>Magellan</appsubpath>
     <authors>
-      <author name="Your Name Here" email="yourmail@example.com"/>
+      <author name="@AUTHOR@" email="@EMAIL@"/>
     </authors>
-    <url>https://magellan2.github.io/</url>
+    <url>@URL@</url>
     <uninstaller write="no"/>
     <javaversion>11</javaversion>
   </info>
@@ -34,12 +34,13 @@
   </panels>
 
   <packs>
-    <pack name="Your Name Here Plugin for Magellan2" required="yes">
-      <description>This description should be changed.</description>
-      <file src="README.md"                      targetdir="$INSTALL_PATH/doc/yourpluginname"/>
-      <file src="yourpluginname-plugin.jar"      targetdir="$INSTALL_PATH/plugins"/>
+    <pack name="@DISPLAYNAME@ Plugin for Magellan2" required="yes">
+      <description>@DESCRIPTION@</description>
+      <fileset dir="doc"                            targetdir="$INSTALL_PATH/doc/@BASENAME@"/>
+      <file src="README.md"                      targetdir="$INSTALL_PATH/doc/@BASENAME@"/>
+      <file src="@PLUGIN.FILENAME@"              targetdir="$INSTALL_PATH/plugins"/>
       <file src="etc"                            targetdir="$INSTALL_PATH"/>
-      <file src="lib"                            targetdir="$INSTALL_PATH"/>
+      <file src="lib"                            targetdir="$INSTALL_PATH/plugins/@BASENAME@"/>
     </pack>
   </packs>
 </installation>

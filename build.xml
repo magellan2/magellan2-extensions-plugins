@@ -10,14 +10,23 @@
 	<!-- *************************************************************** -->
 	<!-- *                                                             * -->
 	<!-- *************************************************************** -->
-	<target name="distribute">
-		<!-- checkout magellan2 because of a dependency -->
-		<delete dir="magellan2" failonerror="false" />
+	<target name="check_magellan_dir">
+		<condition property="magellan.create">
+			<not>
+				<available file="magellan2" type="dir" />
+			</not>
+		</condition>
+	</target>
+
+	<target name="checkout" if="magellan.create">
+		<echo message="Checking out Magellan from git" />
 		<exec executable="git" dir="${basedir}">
 			<arg line="clone https://github.com/magellan2/magellan2.git" />
 		</exec>
+	</target>
 
-		<!-- create a release folder -->
+	<target name="build_plugins">
+		<echo message="Building all plugins" />
 		<mkdir dir="${dist}" />
 
 		<ant antfile="LightHouseIcons/build.installer.xml"
@@ -91,7 +100,14 @@
 				<include name="*.jar" />
 			</fileset>
 		</copy>
+	</target>
 
+	<target name="delete_magellan_dir" if="magellan.create">
+		<echo message="Removing magellan2" />
 		<delete dir="magellan2" failonerror="false" />
+	</target>
+
+	<target name="distribute"
+	        depends="check_magellan_dir, checkout, build_plugins, delete_magellan_dir">
 	</target>
 </project>

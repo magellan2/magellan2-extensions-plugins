@@ -5,7 +5,12 @@
     <appversion>@VERSION@ (build @BUILD@)</appversion>
     <appsubpath>Magellan</appsubpath>
     <authors>
-      <author name="@AUTHOR@" email="@EMAIL@"/>
+      <author name="Thoralf Rickert" email="thoralf@m84.de"/>
+      <author name="Fiete" email="sf@fietefietz.de"/>
+      <author name="Steffen Mecke" email="stm2@users.sourceforge.net"/>
+      <author name="Steve Wagner" email="lanwin@users.sourceforge.net"/>
+      <author name="Ralf Duckstein" email="sf.net@duckstein.net"/>
+      <author name="Mar'ek Khadar" email="regdokhan@gmail.com"/>
     </authors>
     <url>@URL@</url>
     <uninstaller write="no"/>

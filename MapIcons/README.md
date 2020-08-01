@@ -10,8 +10,8 @@ With the special names for the files used by this PlugIn, the inserted tags can 
 
 ## deutsch
 
-Das MapIcons Plugin für Magellan wird aus den Nachrichten im Report bestimmte Ereignisse in den betroffenen Regionen visualisieren.
+Das MapIcons Plugin fÃ¼r Magellan wird aus den Nachrichten im Report bestimmte Ereignisse in den betroffenen Regionen visualisieren.
 
-Dies wird über eine kleine Information bei der entsprechenden Region bewerkstelligt, einem sogenannten Tag. Diese Tag nennt sich "regionicon" und hat als Wert den Namen einer kleiner Grafik, die dann in der Region angezeigt wird. Dies ist ein altes Feature von Magellan, welches auch in Magellan 2 noch funktioniert.
+Dies wird Ã¼ber eine kleine Information bei der entsprechenden Region bewerkstelligt, einem sogenannten Tag. Diese Tag nennt sich "regionicon" und hat als Wert den Namen einer kleiner Grafik, die dann in der Region angezeigt wird. Dies ist ein altes Feature von Magellan, welches auch in Magellan 2 noch funktioniert.
 
-Anhand der besonderen Namen für die durch dieses PlugIn verwendeten Dateien können die eingefügten Tags auch wieder entfernt werden, dies kann über das PlugIn-Menu in Magellan gesteuert werden. 
+Anhand der besonderen Namen fÃ¼r die durch dieses PlugIn verwendeten Dateien kÃ¶nnen die eingefÃ¼gten Tags auch wieder entfernt werden, dies kann Ã¼ber das PlugIn-Menu in Magellan gesteuert werden. 

@@ -76,7 +76,7 @@ import magellan.library.utils.logging.Logger;
  * This plugin helps to load ships.
  *
  * @author stm
- * @version 0.1.3
+ * @version 0.2
  */
 public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
     UnitContextMenuProvider, ActionListener, GameDataListener {
@@ -102,7 +102,7 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
   private ShipLoader loader;
   private MovementEvaluator evaluator;
   private ShowDialog shower;
-  private static final String version = "0.1.3";
+  private static final String version = "0.2";
 
   /**
    * An enum for all action types in this plugin.

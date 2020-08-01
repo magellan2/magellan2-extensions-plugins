@@ -5,8 +5,12 @@
   	want to use this script to compile a Install-JAR file.
   </description>
 	<property name="plugin.displayname" value="ShipLoader" />
-	<property name="plugin.filename" value="shiploader" />
+	<property name="plugin.basename" value="shiploader" />
 	<property name="plugin.author" value="Steffen Mecke" />
+	<property name="plugin.author.email" value="stm2@users.sourceforge.net" />
+	<property name="plugin.url" value="https://magellan2.github.io/" />
+	<property name="plugin.version" value="0.2" />
+     <property name="plugin.description" value="A plugin for Magellan2 for automatically loading people on ships" />
 
 	<!-- Some properties -->
 	<property name="sources" location="${basedir}/src" />
@@ -16,8 +20,7 @@
 	<property name="magellan2" location="${basedir}/../magellan2/" />
 	<property name="installer" location="${magellan2}/installer" />
 
-	<property name="plugin.name" value="${plugin.filename}-plugin.jar" />
-	<property name="installer.name" value="${plugin.filename}-installer.jar" />
+	<property name="plugin.name" value="${plugin.basename}-plugin.jar" />
 
 	<!-- Compile Settings -->
 	<property name="debug" value="on" />
@@ -73,11 +76,14 @@
 
 		<!-- JAR File erzeugen -->
 		<buildnumber file=".build.number" />
+		<property name="installer.name"
+		          value="${plugin.basename}-v${plugin.version}-${build.number}-installer.jar" />
+
 		<jar jarfile="${plugin.name}" basedir="${classes}">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Specification-Title"
-				           value="${plugin.displayname} Plugin [build ${build.number}]" />
+				           value="${plugin.displayname} Plugin [v${plugin.version} build ${build.number}]" />
 				<attribute name="Specification-Vendor"
 				           value="${plugin.author}" />
 			</manifest>
@@ -91,6 +97,22 @@
 			<fileset dir="${release}" includes="**" />
 		</delete>
 		<mkdir dir="${release}" />
+
+		<copy file="izpack-install.template.xml"
+		      tofile="izpack-install.xml"
+		      encoding="${compile.encoding}"
+		      overwrite="yes">
+			<filterset>
+				<filter token="DISPLAYNAME" value="${plugin.displayname}" />
+				<filter token="BASENAME" value="${plugin.basename}" />
+				<filter token="URL" value="${plugin.url}" />
+				<filter token="VERSION" value="${plugin.version}" />
+				<filter token="BUILD" value="${build.number}" />
+				<filter token="PLUGIN.FILENAME" value="${plugin.name}" />
+				<filter token="AUTHOR" value="${plugin.author}" />
+				<filter token="EMAIL" value="${plugin.author.email}" />
+			</filterset>
+		</copy>
 
 		<java jar="${installer}/izpack/standalone-compiler.jar"
 		      fork="true"
