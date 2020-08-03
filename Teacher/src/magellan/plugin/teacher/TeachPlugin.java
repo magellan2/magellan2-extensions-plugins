@@ -775,7 +775,11 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
     while (st.hasMoreElements()) {
       String s = st.nextToken().trim();
       if (!s.equals("")) {
-        namespaces.add(s);
+        if (Teacher.checkNamespace(s)) {
+          namespaces.add(s);
+        } else {
+          log.errorOnce("namespace '" + s + "' contains illegal characters.");
+        }
       }
     }
 
@@ -791,6 +795,11 @@ public class TeachPlugin implements MagellanPlugIn, UnitContainerContextMenuProv
    *          the namespace to set
    */
   public void addNamespace(String namespace) {
+    if (!Teacher.checkNamespace(namespace)) {
+      log.errorOnce("namespace '" + namespace + "' contains illegal characters.");
+      return;
+    }
+
     namespaces.add(namespace);
     if (namespaceMenu != null) {
       namespaceMenu.setText(getString("plugin.teacher.mainmenu.namespace.title",
