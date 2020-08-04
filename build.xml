@@ -3,7 +3,7 @@
     This is the ant script for creating all plugins
   	for Magellan2. You need to setup some paths if you
   	want to use this script to compile a Install-JAR file.
-  </description>
+	</description>
 
 	<property name="dist" location="${basedir}/release" />
 
