@@ -1,1 +1,1 @@
-Just an simply example for an Mageööan 2 plugin.
+Just an simply example for an Magellan 2 plugin.

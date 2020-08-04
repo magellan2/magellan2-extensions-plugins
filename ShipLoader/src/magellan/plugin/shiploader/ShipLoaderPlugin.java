@@ -74,9 +74,9 @@ import magellan.library.utils.logging.Logger;
 
 /**
  * This plugin helps to load ships.
- * 
+ *
  * @author stm
- * @version 0.1.3
+ * @version 0.2
  */
 public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMenuProvider,
     UnitContextMenuProvider, ActionListener, GameDataListener {
@@ -102,11 +102,11 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
   private ShipLoader loader;
   private MovementEvaluator evaluator;
   private ShowDialog shower;
-  private static final String version = "0.1.3";
+  private static final String version = "0.2";
 
   /**
    * An enum for all action types in this plugin.
-   * 
+   *
    * @author stm
    */
   public enum PlugInAction {
@@ -408,6 +408,8 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
       show();
       break;
     }
+    default:
+      break;
     }
 
   }
@@ -468,7 +470,6 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
     public ShowDialog(JFrame frame, ShipLoader loader) {
       super(frame);
       this.loader = loader;
-      loader.addListener(this);
 
       factory = new NodeWrapperFactory(properties, "ShipLoader", null);
 
@@ -556,10 +557,6 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
       shipTree.setShowsRootHandles(true);
       shipTree.setRootVisible(true);
 
-      addUnits(loader.getUnits());
-
-      addShips(loader.getShips());
-
       final JScrollPane unitScroll = new JScrollPane(unitTree);
       unitScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
       unitScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -575,13 +572,17 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
       add(mainPanel);
     }
 
-    /**
-     * @see java.lang.Object#finalize()
-     */
     @Override
-    protected void finalize() throws Throwable {
-      loader.removeListener(this);
-      super.finalize();
+    public void setVisible(boolean vis) {
+      if (vis) {
+        addUnits(loader.getUnits());
+        addShips(loader.getShips());
+
+        loader.addListener(this);
+      } else {
+        loader.removeListener(this);
+      }
+      super.setVisible(vis);
     }
 
     private void addUnits(Collection<?> selectedObjects) {
@@ -791,8 +792,8 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
   }
 
   /**
-	 * 
-	 */
+   *
+   */
   public PreferencesFactory getPreferencesProvider() {
     return new PreferencesFactory() {
 
@@ -997,12 +998,11 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
     private JPanel mainPanel;
     private JButton btn_OK;
-    private JLabel magellanImage;
     private JEditorPane helpTextArea;
 
     /**
      * Creates a new InfoDlg object.
-     * 
+     *
      * @param parent modally stucked frame.
      */
     public HelpDialog(JFrame parent) {

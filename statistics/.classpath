@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Magellan2"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="/Magellan2/lib/ant-1.7.0.jar"/>
 	<classpathentry kind="lib" path="lib/gnujaxp.jar"/>
 	<classpathentry kind="lib" path="lib/itext-2.0.6.jar"/>
@@ -27,5 +31,6 @@
 	<classpathentry kind="lib" path="lib/xercesImpl-2.6.2.jar"/>
 	<classpathentry kind="lib" path="lib/xml-apis-2.0.2.jar"/>
 	<classpathentry kind="con" path="DERBY_CONTAINER"/>
+	<classpathentry kind="lib" path="/Magellan2/lib/idw-gpl-1.6.1.jar" sourcepath="/Magellan2/libsrc/idw-gpl-1.6.1-src.zip"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

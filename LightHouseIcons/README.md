@@ -7,7 +7,7 @@ In addition, the maximum range of each known lighthouse is displayed.
 
 ## deutsch
 
-Das LightHouse Icons PlugIn für Magellan 2 visualisiert die von einem Leuchtturm gesehenen Regionen.
-Zusätzlich wird die maximale Reichweite jedes bekannten Leuchtturms angezeigt.
+Das LightHouse Icons PlugIn fÃ¼r Magellan 2 visualisiert die von einem Leuchtturm gesehenen Regionen.
+ZusÃ¤tzlich wird die maximale Reichweite jedes bekannten Leuchtturms angezeigt.
 
 

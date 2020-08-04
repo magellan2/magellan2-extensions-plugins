@@ -1,0 +1,3 @@
+Unless otherwise indicated, all files in this distribution are provided 
+to you under the terms and conditions of the GNU GPL License Version 2.0. 
+A copy of this license is provided in COPYING.

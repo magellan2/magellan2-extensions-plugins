@@ -32,7 +32,6 @@ import javax.swing.KeyStroke;
 import magellan.client.Client;
 import magellan.client.desktop.DesktopEnvironment;
 import magellan.client.desktop.ShortcutListener;
-import magellan.client.event.SelectionEvent;
 import magellan.client.extern.MagellanPlugIn;
 import magellan.client.swing.map.MarkingsImageCellRenderer;
 import magellan.client.swing.preferences.PreferencesFactory;
@@ -819,9 +818,9 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	private void initShortcuts(){
 		shortcuts = new ArrayList<KeyStroke>();
 		// 0: toggle Map Icons
-	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK));
+	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK));
 	    // 1: toggle display of enemy presence
-	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_MASK));
+	    shortcuts.add(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_DOWN_MASK));
 	    
 	    DesktopEnvironment.registerShortcutListener(this);
 	}
@@ -2109,8 +2108,8 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			if (SR.amount>=Level5){
 				silverlevel = 5;
 			}
-			Integer silverInteger = new Integer(silverlevel);
-			setRegionIcon(MAPICON_SILVER.replace("X", silverInteger.toString()),SR.region);
+			
+			setRegionIcon(MAPICON_SILVER.replace("X", Integer.valueOf(silverlevel).toString()),SR.region);
 		}
 		
 		return regionsSilver.size();
@@ -2141,15 +2140,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		Map <Region,Long> bestand = new HashMap<Region, Long>();
 		for (Region r:this.gd.getRegions()) {
 			Long RegionAnzahl=(long)0;
-			if (r.getUnits()!=null) {
-				for (Unit u:r.getUnits().values()) {
+				for (Unit u:r.units()) {
 					if (u.getCombatStatus()>=0) {
 						Item actItem = u.getItem(myType);
 						if (actItem!=null && actItem.getAmount()>0) {
 							RegionAnzahl += actItem.getAmount();
 						}
 					}
-				}
 			}
 			if (RegionAnzahl>maxAnzahl) {
 				maxAnzahl = RegionAnzahl;
@@ -2196,10 +2193,10 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	 */
 	private void searchSilverForRegion(Region r, List<SilverRegion> regionsSilver, Long minimumSilver,ItemType silverItemType){
 		Long actAmount = 0L;
-		if (r.getUnits()==null){
+		if (r.units().size()==0){
 			return;
 		}
-		for(Unit u:r.getUnits().values()){
+		for(Unit u:r.units()){
 			Item silver = u.getModifiedItem(silverItemType);
 			if (silver!=null){
 				actAmount += silver.getAmount();
@@ -2411,8 +2408,8 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 			if (maxTalentValue>40){
 				maxTalentValue=40;
 			}
-			Integer maxV = new Integer(maxTalentValue);
-			name = name.replace("X", maxV.toString());
+			
+			name = name.replace("X", Integer.valueOf(maxTalentValue).toString());
 			setRegionIcon(name, r);
 			erg=1;
 		}

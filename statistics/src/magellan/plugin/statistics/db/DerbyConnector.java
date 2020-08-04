@@ -35,6 +35,7 @@ import java.util.Properties;
 
 import magellan.library.utils.logging.Logger;
 
+import org.apache.derby.jdbc.EmbeddedDriver;
 import org.apache.torque.Torque;
 
 public class DerbyConnector {
@@ -100,6 +101,11 @@ public class DerbyConnector {
           .addFile(new File(MAGELLAN_HOME + "/plugins/statisticsplugin/lib/derbytools.jar"));
       ClassPathHack.addFile(new File(MAGELLAN_HOME + "/lib/derbytools.jar"));
       Class.forName(DATABASE_DRIVER).newInstance();
+    } catch (Exception exception) {
+      log.error(exception);
+    }
+    try {
+      new EmbeddedDriver();
     } catch (Exception exception) {
       log.error(exception);
     }

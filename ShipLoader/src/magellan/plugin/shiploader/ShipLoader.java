@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package magellan.plugin.shiploader;
 
@@ -32,16 +32,16 @@ import magellan.library.UnitContainer;
 import magellan.library.gamebinding.EresseaConstants;
 import magellan.library.gamebinding.EresseaOrderParser;
 import magellan.library.gamebinding.MovementEvaluator;
+import magellan.library.gamebinding.OrderChanger;
 import magellan.library.relation.ItemTransferRelation;
 import magellan.library.relation.ReserveRelation;
 import magellan.library.relation.UnitRelation;
 import magellan.library.rules.ItemType;
-import magellan.library.utils.Resources;
 import magellan.library.utils.logging.Logger;
 
 /**
  * Class for helping loading of units onto ships.
- * 
+ *
  * @author stm
  */
 public class ShipLoader {
@@ -164,7 +164,7 @@ public class ShipLoader {
 
   /**
    * Reset all parameters (except client).
-   * 
+   *
    * @param gameData
    */
   protected void init(GameData gameData) {
@@ -177,7 +177,7 @@ public class ShipLoader {
 
   /**
    * Add a container to the list of ships (if it is a ship).
-   * 
+   *
    * @param container
    */
   public void add(UnitContainer container) {
@@ -207,7 +207,7 @@ public class ShipLoader {
 
   /**
    * Remove a ship.
-   * 
+   *
    * @param container
    */
   public void remove(UnitContainer container) {
@@ -219,7 +219,7 @@ public class ShipLoader {
 
   /**
    * Add a unit.
-   * 
+   *
    * @param unit
    */
   public void add(Unit unit) {
@@ -231,7 +231,7 @@ public class ShipLoader {
 
   /**
    * Remove a unit.
-   * 
+   *
    * @param unit
    */
   public void remove(Unit unit) {
@@ -257,7 +257,7 @@ public class ShipLoader {
 
   /**
    * Adds all ships and units in selectedObjects.
-   * 
+   *
    * @param selectedObjects
    */
   public void add(Collection<?> selectedObjects) {
@@ -276,7 +276,7 @@ public class ShipLoader {
 
   /**
    * Removes all ships and units in selectedObjects.
-   * 
+   *
    * @param selectedObjects
    */
   public void remove(Collection<?> selectedObjects) {
@@ -365,7 +365,7 @@ public class ShipLoader {
 
   /**
    * Returns the amount of silver of a unit.
-   * 
+   *
    * @param unit
    * @return
    */
@@ -376,7 +376,7 @@ public class ShipLoader {
   /**
    * Get the free amount of silver, that is, the unit's modified silver minus the reserved silver
    * minus the silver the unit gets from other units.
-   * 
+   *
    * @param unit
    * @return
    */
@@ -445,7 +445,7 @@ public class ShipLoader {
         if (!done) {
           for (getIt = getters.iterator(), giveIt = givers.iterator(), giver = giveIt.next(), getter =
               getIt.next(), freeSilver = getFreeSilver(giver) - getSafety(giver), wantedSilver =
-              getSafety(getter) - getSilver(getter); !done;) {
+                  getSafety(getter) - getSilver(getter); !done;) {
             int amount = Math.min(wantedSilver, freeSilver);
             give(giver, getter, amount, silver);
             if (amount >= wantedSilver) {
@@ -487,7 +487,7 @@ public class ShipLoader {
 
   /**
    * Distributes the silver of the selected units to the ships until they are full.
-   * 
+   *
    * @param selectedObjects
    */
   public void distribute(Collection<?> selectedObjects) {
@@ -576,7 +576,7 @@ public class ShipLoader {
 
   /**
    * Returns the capacity of the ship minus its modified load minus the safety margin.
-   * 
+   *
    * @param s1
    * @return
    */
@@ -595,7 +595,7 @@ public class ShipLoader {
 
   /**
    * Mark a unit with an error marker. Does <em>not</em> fire UnitOrderEvents.
-   * 
+   *
    * @param u
    */
   protected void error(Unit u) {
@@ -609,7 +609,7 @@ public class ShipLoader {
 
   /**
    * Add order to put unit onto ship.
-   * 
+   *
    * @param unit
    * @param shipStruct
    */
@@ -625,22 +625,20 @@ public class ShipLoader {
   }
 
   protected void updateLocale(Unit unit) {
+    OrderChanger orderChanger;
     if (!unit.getFaction().getLocale().equals(locale)) {
       locale = unit.getFaction().getLocale();
-      enterToken =
-          Resources.getOrderTranslation(EresseaConstants.O_ENTER, unit.getFaction().getLocale());
-      leaveToken =
-          Resources.getOrderTranslation(EresseaConstants.O_LEAVE, unit.getFaction().getLocale());
-      shipToken =
-          Resources.getOrderTranslation(EresseaConstants.O_SHIP, unit.getFaction().getLocale());
-      giveToken =
-          Resources.getOrderTranslation(EresseaConstants.O_GIVE, unit.getFaction().getLocale());
+      orderChanger = unit.getData().getGameSpecificStuff().getOrderChanger();
+      enterToken = orderChanger.getOrderO(locale, EresseaConstants.OC_ENTER).getText();
+      leaveToken = orderChanger.getOrderO(locale, EresseaConstants.OC_LEAVE).getText();
+      shipToken = orderChanger.getOrderO(locale, EresseaConstants.OC_SHIP).getText();
+      giveToken = orderChanger.getOrderO(locale, EresseaConstants.OC_GIVE).getText();
     }
   }
 
   /**
    * Add order to put unit onto ship.
-   * 
+   *
    * @param unit
    * @param ship
    */
@@ -650,7 +648,7 @@ public class ShipLoader {
 
   /**
    * Add orders to give amount of item from giver to getter. Does <em>not</em> fire UnitOrderEvents!
-   * 
+   *
    * @param giver
    * @param getter
    * @param amount
@@ -674,7 +672,7 @@ public class ShipLoader {
   /**
    * Remove orders from unit that match orderStub. If contains==true, remove all orders that contain
    * it. Otherwise, remove all orders that start with it (not counting leading spaces).
-   * 
+   *
    * @param unit
    * @param orderStub
    * @param contains
@@ -699,7 +697,7 @@ public class ShipLoader {
 
   /**
    * Return the safety margin for the specified unit.
-   * 
+   *
    * @param unit
    * @return
    */
@@ -711,7 +709,7 @@ public class ShipLoader {
 
   /**
    * Return the safety margin for the specified ship.
-   * 
+   *
    * @param s1
    * @return
    */
@@ -726,7 +724,7 @@ public class ShipLoader {
 
   /**
    * Returns safety margin (in silver) for a ship.
-   * 
+   *
    * @return
    */
   public int getSafety() {
@@ -735,7 +733,7 @@ public class ShipLoader {
 
   /**
    * Sets safety margin (in silver) for a ship.
-   * 
+   *
    * @param safety
    */
   public void setSafety(int safety) {
@@ -744,7 +742,7 @@ public class ShipLoader {
 
   /**
    * Returns the safety margin per person.
-   * 
+   *
    * @return
    */
   public int getSafetyPerPerson() {
@@ -753,7 +751,7 @@ public class ShipLoader {
 
   /**
    * Set the safety margin per person.
-   * 
+   *
    * @param safety
    */
   public void setSafetyPerPerson(int safety) {
@@ -762,7 +760,7 @@ public class ShipLoader {
 
   /**
    * Return a comment which marks orders coming from us.
-   * 
+   *
    * @return
    */
   public String getComment() {
@@ -771,7 +769,7 @@ public class ShipLoader {
 
   /**
    * Return the marker which marks orders coming from us.
-   * 
+   *
    * @return
    */
   public String getMarker() {
@@ -780,7 +778,7 @@ public class ShipLoader {
 
   /**
    * Sets the marker.
-   * 
+   *
    * @param name
    */
   public void setMarkerName(String name) {
@@ -790,7 +788,7 @@ public class ShipLoader {
   /**
    * Specify if units should keep their silver. If false, units may distribute silver to other
    * units.
-   * 
+   *
    * @param keep
    * @deprecated not yet in use
    */
@@ -802,7 +800,7 @@ public class ShipLoader {
   /**
    * Returns true if units should keep their silver. If false, units may distribute silver to other
    * units.
-   * 
+   *
    * @return
    */
   public boolean isKeepSilver() {
@@ -812,7 +810,7 @@ public class ShipLoader {
   /**
    * Specify if units must pass their silver only to units of the same faction. If false and
    * isKeepSilver() is true, units may pass silver to any unit.
-   * 
+   *
    * @param keep
    */
   public void setKeepSilverInFaction(boolean keep) {
@@ -822,7 +820,7 @@ public class ShipLoader {
   /**
    * Returns if units must pass their silver only to units of the same faction. If false and
    * isKeepSilver() is true, units may pass silver to any unit.
-   * 
+   *
    * @return
    */
   public boolean isKeepSilverInFaction() {
@@ -831,7 +829,7 @@ public class ShipLoader {
 
   /**
    * Returns if units may change ships if they are already on a ship.
-   * 
+   *
    * @return
    */
   public boolean isChangeShip() {
@@ -840,7 +838,7 @@ public class ShipLoader {
 
   /**
    * Specifies if units may change ships if they are already on a ship.
-   * 
+   *
    * @param change
    */
   public void setChangeShip(boolean change) {

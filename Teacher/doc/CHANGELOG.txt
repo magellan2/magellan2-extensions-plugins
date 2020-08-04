@@ -1,3 +1,6 @@
+2020-08-03 (Build 101)- stm (stm_@users.sourceforge.net)
+    * more strict matching: orders must start with "// $ns$" or "; $ns$" and namespaces must match [A-Za-zäöüß0-9+.-]*
+
 2012-10-20 (Build 75)- stm (stm_@users.sourceforge.net)
     * prefer secondary skills if there are enough teachers, but they're busy
     * improved console output

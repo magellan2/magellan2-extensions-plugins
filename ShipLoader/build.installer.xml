@@ -1,123 +1,149 @@
 <project name="shiploader-plugin" default="create-installer">
-  <description>
+	<description>
     This is the ant script for creating the shiploader plugin
   	for Magellan2. You need to setup some paths if you
   	want to use this script to compile a Install-JAR file.
   </description>
+	<property name="plugin.displayname" value="ShipLoader" />
+	<property name="plugin.basename" value="shiploader" />
+	<property name="plugin.author" value="Steffen Mecke" />
+	<property name="plugin.author.email" value="stm2@users.sourceforge.net" />
+	<property name="plugin.url" value="https://magellan2.github.io/" />
+	<property name="plugin.version" value="0.2" />
+     <property name="plugin.description" value="A plugin for Magellan2 for automatically loading people on ships" />
 
-  <!-- Some properties -->
-  <property name="sources"      location="${basedir}/src"/>
-  <property name="classes"      location="${basedir}/classes"/>
-  <property name="library"      location="${basedir}/lib"/>
-  <property name="release"      location="${basedir}/release"/>
-  <property name="magellan2"    location="${basedir}/../magellan2/"/>
-  <property name="installer"    location="${magellan2}/installer"/>
+	<!-- Some properties -->
+	<property name="sources" location="${basedir}/src" />
+	<property name="classes" location="${basedir}/classes" />
+	<property name="library" location="${basedir}/lib" />
+	<property name="release" location="${basedir}/release" />
+	<property name="magellan2" location="${basedir}/../magellan2/" />
+	<property name="installer" location="${magellan2}/installer" />
 
-  <property name="plugin.name"  value="shiploader-plugin.jar"/>
-  <property name="installer.name"  value="shiploader-installer.jar"/>
+	<property name="plugin.name" value="${plugin.basename}-plugin.jar" />
 
-  <!-- Compile Settings -->
-  <property name="debug"             value="on" />
-  <property name="optimize"          value="off" />
-  <property name="build.compiler"    value="javac1.7"/>
-  <property name="compile.target"    value="1.7"/>
-  <property name="compile.encoding"  value="ISO-8859-1"/>
+	<!-- Compile Settings -->
+	<property name="debug" value="on" />
+	<property name="optimize" value="off" />
+	<property name="compile.release" value="11" />
+	<property name="compile.encoding" value="ISO-8859-1" />
 
-  <presetdef name="javac">
-    <javac includeantruntime="false" />
-  </presetdef>
+	<presetdef name="javac">
+		<javac includeantruntime="false" />
+	</presetdef>
 
-  <path id="plugin.class.path">
-    <pathelement path="${java.class.path}/" />
-    <fileset dir="${library}"><include name="**/*.jar" /></fileset>
-    <fileset dir="${magellan2}/lib"><include name="**/*.jar" /></fileset>
-  </path>
-	
-  <!-- *************************************************************** -->
-  <!-- *                                                             * -->
-  <!-- *  This target .       * -->
-  <!-- *                                                             * -->
-  <!-- *************************************************************** -->
-  <target name="create-installer" description="Run this to create a installer jar for this plugin">
-    <echo message="Compiling Plug-In..." />
-  	<echo message="Using Magellan sources in ${magellan2}"/>
+	<path id="plugin.class.path">
+		<pathelement path="${java.class.path}/" />
+		<fileset dir="${library}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${magellan2}/lib">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
 
-    <antcall target="clear-classes"/>
-    <mkdir dir="${classes}" />
-  	
-  	<!--
-           fork="true"
-           memoryInitialSize="128m"
-           memoryMaximumSize="256m"
-  	-->
-  	
-    <javac srcdir="${sources}:${magellan2}/src-library:${magellan2}/src-client"
-           destdir="${classes}"
-           includes="**"
-           source="${compile.target}"
-           target="${compile.target}"
-           encoding="${compile.encoding}"
-           optimize="${optimize}"
-           debug="${debug}">
-      <!--<compilerarg value="-Xlint:unchecked"/>-->
-      <!--<compilerarg value="-Xlint:deprecation"/>-->
-      <classpath refid="plugin.class.path"/>
-    </javac>
-  	
-    <delete includeEmptyDirs="true" failonerror="false">
-      <fileset dir="${classes}/magellan/client" includes="**" />
-      <fileset dir="${classes}/magellan/library" includes="**" />
-    </delete>
-  	
-    <echo message="Building ShipLoader Plugin JAR file" />
-  	
-    <!-- JAR File erzeugen -->
-    <buildnumber file=".build.number"/>
-    <jar jarfile="${plugin.name}" basedir="${classes}">
-      <manifest>
-        <attribute name="Built-By" value="${user.name}" />
-        <attribute name="Specification-Title" value="Magellan ShipLoader Plugin [build ${build.number}]" />
-        <attribute name="Specification-Vendor" value="Steffen Mecke"/>
-      </manifest>
-    </jar>
-  	
-    <antcall target="clear-classes"/>
-  	
-    <!-- delete old release files -->
-    <mkdir dir="${release}" />
-    <delete includeEmptyDirs="true" failonerror="false">
-      <fileset dir="${release}" includes="**" />
-    </delete>
-    <mkdir dir="${release}" />
+	<!-- *************************************************************** -->
+	<!-- *                                                             * -->
+	<!-- *  This target creates the installer jar.                      * -->
+	<!-- *                                                             * -->
+	<!-- *************************************************************** -->
+	<target name="create-installer"
+	        description="Run this to create a installer jar for the ${plugin.displayname} plugin">
+		<echo message="Compiling Plug-In..." />
+		<echo message="Using Magellan sources in ${magellan2}" />
 
-  	<java jar="${installer}/izpack/standalone-compiler.jar" fork="true" failonerror="true">
-      <arg value="${basedir}/izpack-install.xml"/>
-      <arg value="-b"/>
-      <arg value="."/>
-      <arg value="-o"/>
-      <arg value="${release}/${installer.name}"/>
-      <arg value="-k"/>
-      <arg value="standard"/>
- 
-      <classpath>
-        <pathelement path="${java.class.path}/" />
-        <fileset dir="${installer}/izpack/">
-          <include name="**/*.jar" />
-        </fileset>
-      </classpath>
-  	</java>
-  </target>
-	
+		<antcall target="clear-classes" />
+		<mkdir dir="${classes}" />
 
-  <!-- *************************************************************** -->
-  <!-- *                                                             * -->
-  <!-- *************************************************************** -->
-  <target name="clear-classes">
-  	<!-- cleaning classes directory by creating&deleting and creating it -->
-    <echo message="Cleaning output folder"/>
-    <mkdir dir="${classes}" />
-    <delete includeEmptyDirs="true" failonerror="false">
-      <fileset dir="${classes}" includes="**" />
-    </delete>
-  </target>
+		<javac srcdir="${sources}:${magellan2}/src-library:${magellan2}/src-client"
+		       destdir="${classes}"
+		       includes="**"
+		       release="${compile.release}"
+		       encoding="${compile.encoding}"
+		       optimize="${optimize}"
+		       debug="${debug}">
+			<!--<compilerarg value="-Xlint:unchecked"/>-->
+			<!--<compilerarg value="-Xlint:deprecation"/>-->
+			<classpath refid="plugin.class.path" />
+		</javac>
+
+		<delete includeEmptyDirs="true" failonerror="false">
+			<fileset dir="${classes}/magellan/client" includes="**" />
+			<fileset dir="${classes}/magellan/library" includes="**" />
+		</delete>
+
+		<echo message="Building ${plugin.displayname} Plugin JAR file" />
+
+		<!-- JAR File erzeugen -->
+		<buildnumber file=".build.number" />
+		<property name="installer.name"
+		          value="${plugin.basename}-v${plugin.version}-${build.number}-installer.jar" />
+
+		<jar jarfile="${plugin.name}" basedir="${classes}">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Specification-Title"
+				           value="${plugin.displayname} Plugin [v${plugin.version} build ${build.number}]" />
+				<attribute name="Specification-Vendor"
+				           value="${plugin.author}" />
+			</manifest>
+		</jar>
+
+		<antcall target="clear-classes" />
+
+		<!-- delete old release files -->
+		<mkdir dir="${release}" />
+		<delete includeEmptyDirs="true" failonerror="false">
+			<fileset dir="${release}" includes="**" />
+		</delete>
+		<mkdir dir="${release}" />
+
+		<copy file="izpack-install.template.xml"
+		      tofile="izpack-install.xml"
+		      encoding="${compile.encoding}"
+		      overwrite="yes">
+			<filterset>
+				<filter token="DISPLAYNAME" value="${plugin.displayname}" />
+				<filter token="BASENAME" value="${plugin.basename}" />
+				<filter token="URL" value="${plugin.url}" />
+				<filter token="VERSION" value="${plugin.version}" />
+				<filter token="BUILD" value="${build.number}" />
+				<filter token="PLUGIN.FILENAME" value="${plugin.name}" />
+				<filter token="AUTHOR" value="${plugin.author}" />
+				<filter token="EMAIL" value="${plugin.author.email}" />
+			</filterset>
+		</copy>
+
+		<java jar="${installer}/izpack/standalone-compiler.jar"
+		      fork="true"
+		      failonerror="true">
+			<arg value="${basedir}/izpack-install.xml" />
+			<arg value="-b" />
+			<arg value="." />
+			<arg value="-o" />
+			<arg value="${release}/${installer.name}" />
+			<arg value="-k" />
+			<arg value="standard" />
+
+			<classpath>
+				<pathelement path="${java.class.path}/" />
+				<fileset dir="${installer}/izpack/">
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+		</java>
+	</target>
+
+
+	<!-- *************************************************************** -->
+	<!-- *                                                             * -->
+	<!-- *************************************************************** -->
+	<target name="clear-classes">
+		<!-- cleaning classes directory by creating&deleting and creating it -->
+		<echo message="Cleaning output folder" />
+		<mkdir dir="${classes}" />
+		<delete includeEmptyDirs="true" failonerror="false">
+			<fileset dir="${classes}" includes="**" />
+		</delete>
+	</target>
 </project>
