@@ -116,7 +116,7 @@ jobs:
         tag: ${{ env.TAG }}
         name: Pre-Release  v${{ env.VERSION }}
         body: |
-          These are the latest builds of the plugins for Magellan. Your need Magellan to uses them. To install, call the installer with java -jar xyz-installer.jar and install into your Magellan directory.
+          These are the latest builds of the plugins for Magellan. You need Magellan to use them. To install, call the installer with `java -jar xyz-installer.jar` and install into your Magellan directory.
         gzip: folders
         files: ${{ env.UPLOADS }}
 
