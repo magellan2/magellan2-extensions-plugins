@@ -1339,12 +1339,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		              if (coordinate!=null){
 		            	  boolean isHungerMessage = false;   
 		            	// Unterernährung 1158830147
-		          		if (msg.getMessageType().getID().intValue()==1158830147){
+		          		if (getId(msg)==1158830147){
 		          			isHungerMessage=true;
 		          		}
 		          		
 		          		// Schwächung 829394366
-		          		if (msg.getMessageType().getID().intValue()==829394366){
+		          		if (getId(msg)==829394366){
 		          			isHungerMessage=true;
 		          		}
 		          		
@@ -1396,11 +1396,11 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 						if (msg.getAttributes() != null) {
 			            	 boolean isBotschaftsMessage = false;   
 			            	// Message an Region
-			          		if (msg.getMessageType().getID().intValue()==2110306401){
+			          		if (getId(msg)==2110306401){
 			          			isBotschaftsMessage=true;
 			          		}
 			          		// Uups, Quack, Quack: 621181552
-			          		if (msg.getMessageType().getID().intValue()==621181552){
+			          		if (getId(msg)==621181552){
 			          			isBotschaftsMessage=true;
 			          		}
 			          		if (isBotschaftsMessage){
@@ -1452,12 +1452,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		              if (coordinate!=null){
 		            	  boolean isBotschaftMessage = false;   
 		            	// Botschaft an Einheit 424720393
-		          		if (msg.getMessageType().getID().intValue()==424720393){
+		          		if (getId(msg)==424720393){
 		          			isBotschaftMessage=true;
 		          		}
 		          		
 		          		// Botschaft an Partei 1216545701
-		          		if (msg.getMessageType().getID().intValue()==1216545701){
+		          		if (getId(msg)==1216545701){
 		          			isBotschaftMessage=true;
 		          		}
 		          		
@@ -1503,7 +1503,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	            	// MESSAGETYPE 745563751
 	            	// "\"Der Vulkan in $region($regionv) bricht aus. Die Lavamassen verwüsten $region($regionn).\"";text
 	            	
-	          		if (msg.getMessageType()!=null && msg.getMessageType().getID()!=null && msg.getMessageType().getID().intValue()==745563751){
+	          		if (getId(msg)==745563751){
 	          			isVulcanoMessage=true;
 	          		}
 
@@ -1580,123 +1580,124 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		if (r.getMessages()!=null && r.getMessages().size()>0){
 			for (Message m : r.getMessages()){
 				MagellanMessageImpl msg = (MagellanMessageImpl)m;
+				int mtype = getId(msg);
 				if (msg.getAttributes() != null) {
 		            
 	            	 boolean isSpecialEventMessage = false;   
 	            	// MESSAGETYPE 919533243
 	            	//  "\"$unit($unit) erscheint plötzlich.\"";text
-	          		if (msg.getMessageType().getID().intValue()==919533243){
+	          		if (mtype==919533243){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 2037322195
 	          		// "\"$unit($unit) wird durchscheinend und verschwindet.\"";text
-	          		if (msg.getMessageType().getID().intValue()==2037322195){
+	          		if (mtype==2037322195){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 6037032
 	          		// "\"Hier wütete die Pest, und $int($dead) Bauern starben.\"";text
-	          		if (msg.getMessageType().getID().intValue()==6037032){
+	          		if (mtype==6037032){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 729133963
 	          		// "\"$unit($unit) in $region($region): $int($number) $race($race,$number) $if($eq($number,1),\"verschwand\", \"verschwanden\") über Nacht.\"";text
-	          		if (msg.getMessageType().getID().intValue()==729133963){
+	          		if (mtype==729133963){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 894791686
 	          		// "\"Der Eisberg $region($region) schmilzt.\"";text
-	          		if (msg.getMessageType().getID().intValue()==894791686){
+	          		if (mtype==894791686){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		
 	          		// MESSAGETYPE 1897415733
 	          		// "\"Das Wurmloch in $region($region) schließt sich.\"";text
-	          		if (msg.getMessageType().getID().intValue()==1897415733){
+	          		if (mtype==1897415733){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 744775869
 	          		// "\"Eine gewaltige Flutwelle verschlingt $region($region) und alle Bewohner.\"";text
-	          		if (msg.getMessageType().getID().intValue()==744775869){
+	          		if (mtype==744775869){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 1651515350
 	          		// "\"$unit($unit) reist durch ein Wurmloch nach $region($region).\"";text
-	          		if (msg.getMessageType().getID().intValue()==1651515350){
+	          		if (mtype==1651515350){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 1687287742
 	          		// "\"In $region($region) erscheint ein Wurmloch.\"";text
-	          		if (msg.getMessageType().getID().intValue()==1687287742){
+	          		if (mtype==1687287742){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 1176996908
 	          		// "\"Ein Wirbel aus blendendem Licht erscheint.\"";text
-	          		if (msg.getMessageType().getID().intValue()==1176996908){
+	          		if (mtype==1176996908){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 194649789
 	          		// "\"$unit($unit) belagert $building($building).\"";text
-	          		if (msg.getMessageType().getID().intValue()==194649789){
+	          		if (mtype==194649789){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 248430228
 	          		// "\"$unit($target) wird von $unit($unit) in eine andere Welt geschleudert.\"";text
-	          		if (msg.getMessageType().getID().intValue()==248430228){
+	          		if (mtype==248430228){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 1057880810
 	          		// "\"$unit($target) fühlt sich $if($isnull($spy),\"\",\"durch $unit($spy) \")beobachtet.\"";text
-	          		if (msg.getMessageType().getID().intValue()==1057880810){
+	          		if (mtype==1057880810){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 809710123
 	          		// "\"$unit($unit) fühlt sich beobachtet.\"";text
 	          		// "events";section
-	          		if (msg.getMessageType().getID().intValue()==809710123){
+	          		if (mtype==809710123){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		
 	          		// MESSAGETYPE 198782656
 	          		// "\"Ein Bauernmob erhebt sich und macht Jagd auf Schwarzmagier.\"";text
-	          		if (msg.getMessageType().getID().intValue()==198782656){
+	          		if (mtype==198782656){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 488105396
 	          		// "\"$unit($mage) ruft ein fürchterliches Unwetter über seine Feinde. Der magischen Regen lässt alles Eisen rosten.\"";text
-	          		if (msg.getMessageType().getID().intValue()==488105396){
+	          		if (mtype==488105396){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 1378226579
 	          		// "\"$unit($unit) reißt einen Teil von $building($building) ein.\"";text
-	          		if (msg.getMessageType().getID().intValue()==1378226579){
+	          		if (mtype==1378226579){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 212341694
 	          		// "\"$unit($unit) ertrinkt in $region($region).\"";text
-	          		if (msg.getMessageType().getID().intValue()==212341694){
+	          		if (mtype==212341694){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 1948430386
 	          		// "\"$unit($unit) in $region($region): '$order($command)' - Selbst in der Bibliothek von Xontormia konnte dieser Spruch nicht gefunden werden.\"";text
-	          		if (msg.getMessageType().getID().intValue()==1948430386){
+	          		if (mtype==1948430386){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
@@ -1704,13 +1705,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	          		// 	MESSAGETYPE 1071183144
 	          		// "\"Aus dem Vulkankrater von $region($region) steigt plötzlich Rauch.\"";text
 	          		// "events";section
-	          		if (msg.getMessageType().getID().intValue()==1071183144){
+	          		if (mtype==1071183144){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 1847594364
 	          		// "\"$unit($unit) in $region($region): '$order($command)' - Der Magier zerstört den Fluch($id) auf ${target}.\"";text
-	          		if (msg.getMessageType().getID().intValue()==1847594364){
+	          		if (mtype==1847594364){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
@@ -1718,21 +1719,21 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	          		// MESSAGETYPE 2122087327
 	          		// "\"$int($amount) Bauern flohen aus Furcht vor $unit($unit).\"";text
 	          		// "events";section
-	          		if (msg.getMessageType().getID().intValue()==2122087327){
+	          		if (mtype==2122087327){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 1359435364
 	          		// "\"$unit($unit) in $region($region): '$order($command)' - $unit($target) wird von uns aufgenommen.\"";text
 	          		// "magic";section
-	          		if (msg.getMessageType().getID().intValue()==1359435364){
+	          		if (mtype==1359435364){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
 	          		// MESSAGETYPE 2047863741
 	          		// "\"$unit($unit) wird aus der astralen Ebene nach $region($region) geschleudert.\"";text
 	          		// "magic";section
-	          		if (msg.getMessageType().getID().intValue()==2047863741){
+	          		if (mtype==2047863741){
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
@@ -1801,13 +1802,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 
 		          		// MESSAGETYPE 1543395091
 		          		// "\"$unit($unit) wurden in $region($region) $int($amount) Silberstücke geklaut.\"";text
-		          		if (msg.getMessageType().getID().intValue()==1543395091){
+		          		if (getId(msg)==1543395091){
 		          			isThiefMessage=true;
 		          		}
 		          		// MESSAGETYPE 771334452
 		          		// "\"$unit($unit) verdient$if($eq($mode,4),\" am Handel\",\"\") in $region($region) $int($amount)$if($eq($wanted,$amount),\"\",\" statt $int($wanted)\") Silber$if($eq($mode,1),\" durch Unterhaltung\",$if($eq($mode,2),\" durch Steuern\",$if($eq($mode,3),\" durch Handel\",$if($eq($mode,5),\" durch Diebstahl\",$if($eq($mode,6),\" durch Zauberei\",\"\"))))).\"";text
 		          		// wobei mode=5 = durch Diebstahl
-		          		if (msg.getMessageType().getID().intValue()==771334452){
+		          		if (getId(msg)==771334452){
 		          			String value = msg.getAttributes().get("mode");
 		          			int MsgMode = Integer.parseInt(value);
 		          			if (MsgMode==5){
@@ -1823,7 +1824,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		          		  // MESSAGETYPE 1565770951
 		          		  // "\"$unit($target) ertappte $unit($unit) beim versuchten Diebstahl.\"";text
 		          		  // FF: funktioniert hier so nicht, da kein regiontag gesetzt ist.
-		          		  if (msg.getMessageType().getID().intValue()==1565770951){
+		          		  if (getId(msg)==1565770951){
 		          		     isThiefMessage=true;
 		          		     String value = msg.getAttributes().get("unit");
 		          			 int unit_ID = Integer.parseInt(value);
@@ -1891,12 +1892,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	            	int target_ID = 0;
 	          		Region r1 = null;
 	          		Region r2 = null;
-	          		int MessageTypeID = msg.getMessageType().getID().intValue();
+	          		int mType = getId(msg);
 	          		
 	            	// MESSAGETYPE 1922066494
 	            	// "\"$unit($unit) versuchte erfolglos, $unit($target) in eine andere Welt zu schleudern.\"";text
 	            	// "magic";section
-	          		if (MessageTypeID==1922066494){
+	          		if (mType==1922066494){
 	          			isSpecialEventMessage=true;
 	          			 String value = msg.getAttributes().get("unit");
 	          			 unit_ID = Integer.parseInt(value);
@@ -1971,7 +1972,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	          		// "\"$unit($unit) ertrinkt in $region($region).\"";text
 	          		validMessageTypeIDs.add(212341694);
 	          		
-	          		if (validMessageTypeIDs.contains(MessageTypeID)){
+	          		if (validMessageTypeIDs.contains(mType)){
 	          		
 	          		// if (MessageTypeID==861989530 || MessageTypeID==2094553546 || MessageTypeID==486687258){
 	          			isSpecialEventMessage=true;
@@ -1987,16 +1988,16 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	                        if (coordinate !=null) {
 	                        	r1 = gd.getRegion(coordinate);
 	                        } else {
-	                        	log.info("no coordinate found for MessageType " + MessageTypeID );
+	                        	log.info("no coordinate found for MessageType " + mType );
 	                        }
 	                        
 	                        if (r1!=null) {
 	                        	regionsSpecialEvents.add(r1);
 	                        } else {
-	                        	log.info("no region found for MessageType " + MessageTypeID );
+	                        	log.info("no region found for MessageType " + mType );
 	                        }
                         } else {
-                        	log.info("no region atrribute found for MessageType " + MessageTypeID );
+                        	log.info("no region atrribute found for MessageType " + mType );
                         }
 	          		}
 
@@ -2006,6 +2007,15 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	}
 	
 	
+	private int getId(MagellanMessageImpl msg) {
+		try {
+		  return msg.getMessageType().getID().intValue();
+		} catch (Exception e) {
+			return -1;
+		}
+	}
+
+
 	/**
 	 * Durchsucht alle Factions in GameData nach Diebstahlmeldungen
 	 * @return
@@ -2054,7 +2064,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 		            	// ob dieeser MsgType in sektion "errors" gehört
 		          		magellan.library.rules.MessageType mT = msg.getMessageType();
 		          		if (mT != null){
-		          			if (mT.getSection().equalsIgnoreCase("errors")){
+		          			if ("errors".equalsIgnoreCase(mT.getSection())){
 		          				isErrorMessage = true;
 		          			}
 		          		}
