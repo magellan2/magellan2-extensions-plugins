@@ -816,7 +816,7 @@ public class Teacher {
    */
   public SUnit parseUnit(Unit u, boolean setTags) {
     SUnit su = null;
-    boolean errorFlag = false;
+    String error = null;
     @SuppressWarnings("deprecation")
     List<String> orders = u.getOrders();
     for (String orderLine : orders) {
@@ -856,20 +856,22 @@ public class Teacher {
             }
           }
         }
+        if (orderList.error != null) {
+          error = orderList.error;
+        }
       } catch (Exception e) {
-        // log.warn(e + " parse error, unit " + u + " line " + orderString);
-        errorFlag = true;
+        error = " parse error, unit " + u + " line " + orderLine;
         su = null;
       }
     }
 
-    if (errorFlag || (su != null && su.getLearnTalents().isEmpty())) {
+    if (error != null || (su != null && su.getLearnTalents().isEmpty())) {
       u.setOrdersConfirmed(false);
       if (setTags) {
         u.putTag(LEARN_TAG, "error");
       }
-      if (errorFlag) {
-        u.addOrder("; $$$ teach error: syntax error", false, 0);
+      if (error != null) {
+        u.addOrder("; $$$ teach error: syntax error " + error, false, 0);
       } else {
         u.addOrder("; $$$ teach error: unit needs L order", false, 0);
       }
@@ -885,14 +887,16 @@ public class Teacher {
   /**
    * Tries to parse orderLine.
    * 
+   * @param unit
    * @param orderLine
-   * @param teachTag
-   * @param learnTag
+   * @param namespaces
    * @return
    */
   protected static OrderList parseOrder(Unit unit, String orderLine, Collection<String> namespaces) {
+    String error = null;
+    OrderList result;
     for (String nsp : namespaces) {
-      OrderList result = null;
+      result = null;
       String teachTag = getTeachTag(nsp);
       String learnTag = getLearnTag(nsp);
       if (orderLine.matches("(// |;)\\h*(" + toRegex(teachTag) + "|" + toRegex(learnTag) + ")\\h.*")) {
@@ -955,14 +959,21 @@ public class Teacher {
             }
           }
         } catch (Exception e) {
-          // throw new OrderFormatException("parse error in line " + orderLine, e);
+          error = "parse error in line " + orderLine;
+          if (result != null) {
+            result.addError(error);
+          }
           log.warn(e);
         }
       }
       if (result != null && result.orders.size() > 0)
         return result;
     }
-    return new OrderList(Order.LEARN, namespaces.iterator().next());
+    result = new OrderList(Order.LEARN, namespaces.iterator().next());
+    if (error != null) {
+      result.addError(error);
+    }
+    return result;
   }
 
   private static String toRegex(String teachTag) {
@@ -975,6 +986,7 @@ public class Teacher {
     String namespace;
 
     private double prio = 1;
+    private String error;
 
     public OrderList(String type, String namespace) {
       if (type == null || namespace == null)
@@ -983,6 +995,12 @@ public class Teacher {
         throw new IllegalArgumentException("namespace '" + namespace + "' contains illegal characters");
       this.type = type;
       this.namespace = namespace;
+    }
+
+    public void addError(String message) {
+      if (error == null) {
+        error = message;
+      }
     }
 
     public void addOrder(Order o) {
@@ -1041,6 +1059,9 @@ public class Teacher {
       for (Order o : orders) {
         sb.append(" ");
         sb.append(o.shortOrder());
+      }
+      if (error != null) {
+        sb.append(" ; ").append(error);
       }
       return sb.toString();
     }
@@ -1624,13 +1645,13 @@ public class Teacher {
     delOrder(units, Collections.singletonList(namespace), newOrder);
     // add new meta order to all units
     for (Unit u : units) {
-      @SuppressWarnings("deprecation")
-      Collection<String> oldOrders = u.getOrders();
+      Collection<magellan.library.Order> oldOrders = u.getOrders2();
       List<OrderList> relevantOrders = new ArrayList<OrderList>();
       List<String> newOrders = new ArrayList<String>(oldOrders.size());
 
       // look for matching meta order
-      for (String line : oldOrders) {
+      for (magellan.library.Order order : oldOrders) {
+        String line = order.getText();
         boolean isRelevant = false;
         OrderList orderList;
         orderList = parseOrder(u, line, Collections.singletonList(namespace));

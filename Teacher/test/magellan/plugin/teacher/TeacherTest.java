@@ -328,5 +328,10 @@ public class TeacherTest extends MagellanTestWithResources {
     namespaces = Arrays.asList(new String[] { "A" });
     orders = Teacher.parseOrder(u1, "// $cript 1 $A$T ALLES 3", namespaces);
     assertEquals(0, orders.orders.size());
+
+    orders = Teacher.parseOrder(u1, "//  $A$T ALLES", namespaces);
+    assertTrue(orders.getName().contains("parse error"));
+  }
+
   }
 }
