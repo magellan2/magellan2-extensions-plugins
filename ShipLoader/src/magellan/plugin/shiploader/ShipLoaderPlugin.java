@@ -110,7 +110,8 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
    * @author stm
    */
   public enum PlugInAction {
-    EXECUTE("mainmenu.execute"), DISTRIBUTESILVER("mainmenu.distribute"), SHOW("mainmenu.show"),
+    EXECUTE("mainmenu.execute"), EXECUTE_ONE("mainmenu.execute_one"), DISTRIBUTESILVER("mainmenu.distribute"), SHOW(
+        "mainmenu.show"),
     CLEAR("mainmenu.clear"), CLEARORDERS("mainmenu.clearorders"),
     CONFIRMORDERS("mainmenu.confirm"), UNCONFIRMORDERS("mainmenu.unconfirm"),
     HELP("mainmenu.help"), UNKNOWN("");
@@ -231,6 +232,12 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
     executeMenu.setActionCommand(PlugInAction.EXECUTE.getID());
     executeMenu.addActionListener(this);
     menu.add(executeMenu);
+
+    final JMenuItem execute_oneMenu =
+        new JMenuItem(getString("plugin.shiploader.mainmenu.execute_one.title"));
+    execute_oneMenu.setActionCommand(PlugInAction.EXECUTE_ONE.getID());
+    execute_oneMenu.addActionListener(this);
+    menu.add(execute_oneMenu);
 
     final JMenuItem distributeMenu =
         new JMenuItem(getString("plugin.shiploader.mainmenu.distribute.title"));
@@ -378,6 +385,10 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
     switch (PlugInAction.getAction(e)) {
     case EXECUTE: {
       execute();
+      break;
+    }
+    case EXECUTE_ONE: {
+      execute_one();
       break;
     }
     case DISTRIBUTESILVER: {
@@ -771,6 +782,14 @@ public class ShipLoaderPlugin implements MagellanPlugIn, UnitContainerContextMen
 
   protected void execute() {
     loader.execute();
+    if (loader.getErrors() > 0) {
+      JOptionPane.showMessageDialog(client, getString("plugin.shiploader.message.loaderrors",
+          new Integer[] { loader.getErrors() }));
+    }
+  }
+
+  protected void execute_one() {
+    loader.execute_one();
     if (loader.getErrors() > 0) {
       JOptionPane.showMessageDialog(client, getString("plugin.shiploader.message.loaderrors",
           new Integer[] { loader.getErrors() }));

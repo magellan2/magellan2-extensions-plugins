@@ -570,6 +570,51 @@ public class ShipLoader {
     fireEvents();
   }
 
+  /**
+   * Packs 1 unit on each ship.
+   * Fiete 20200918
+   */
+  public void execute_one() {
+    SortedSet<ShipStruct> sortedShips = checkInput(isChangeShip(), !isChangeShip());
+    errors = 0;
+
+    // sort units by size
+    List<Unit> sortedUnits = new ArrayList<Unit>(units);
+    Collections.sort(sortedUnits, new Comparator<Unit>() {
+
+      public int compare(Unit o1, Unit o2) {
+        int diff = evaluator.getModifiedWeight(o1) - evaluator.getModifiedWeight(o1);
+        return diff != 0 ? diff : o1.getID().toString().compareTo(o2.getID().toString());
+      }
+    });
+
+    while (sortedUnits.size() > 0) {
+      // for every unit
+      Unit u = sortedUnits.remove(sortedUnits.size() - 1);
+      // find ship that best matches
+      ShipStruct bestMatch = null;
+      for (ShipStruct s : sortedShips) {
+        if (s.ship.getRegion() == u.getRegion() && getSpace(s) >= getSpace(u)) {
+          bestMatch = s;
+          break;
+        }
+      }
+      if (bestMatch != null) {
+        // put unit on this ship
+        sortedShips.remove(bestMatch);
+        load(u, bestMatch);
+
+      } else {
+        error(u);
+      }
+      client.getDispatcher().fire(new UnitOrdersEvent(this, u), true);
+    }
+    if (errors > 0) {
+      ShipLoaderPlugin.log.warn(errors + " errors");
+    }
+    fireEvents();
+  }
+
   protected int getSpace(Unit u) {
     return evaluator.getModifiedWeight(u) + getSafetyPerPerson() * u.getModifiedPersons();
   }
