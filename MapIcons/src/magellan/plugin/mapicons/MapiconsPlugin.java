@@ -70,7 +70,8 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	// FF: 0.96: show error regions
 	// FF: 1.4: Items
 	// FF: 1.41: Items with Colors in menu
-	public static final String version="1.41";
+	// FF: 1.42: BugFix Error ConcurrentModificationError when getting enemy factions from orders
+	public static final String version="1.42";
 	
 	private Client client = null;
 	private Properties properties = null;
@@ -2345,9 +2346,13 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
     private void getEnemyFactionsFromOrders(){
     	int cnt = 0;
     	if (gd.getUnits()!=null && gd.getUnits().size()>0){
-    		for (Unit u:gd.getUnits()){
+    		Collection<Unit> myU = new ArrayList<Unit>();
+    		myU.addAll(gd.getUnits());
+    		for (Unit u:myU){
     			if (u.getFaction()!=null && u.getFaction().isPrivileged() && u.getOrders2()!=null && u.getOrders2().size()>0){
-    				for (Order order:u.getOrders2()){
+    				Collection<Order> myC = new ArrayList<Order>();
+    				myC.addAll(u.getOrders2());
+    				for (Order order:myC){
     					String orderString = order.getText();
     					if (orderString.toUpperCase().startsWith(ENEMY_FACTION_LIST_IDENTIFIER.toUpperCase())){
     						// Treffer...
