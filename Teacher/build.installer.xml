@@ -121,7 +121,7 @@
 			<arg value="-b" />
 			<arg value="." />
 			<arg value="-o" />
-			<arg value="${release}/${installer.name}" />
+			<arg value="${basedir}/${installer.name}" />
 			<arg value="-k" />
 			<arg value="standard" />
 

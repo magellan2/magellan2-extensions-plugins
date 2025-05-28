@@ -69,13 +69,6 @@ jobs:
       run: |
         ant -noinput -buildfile build.xml distribute
 
-    - name: "Upload binary artifacts"
-      uses: actions/upload-artifact@v4
-      with:
-        name: magellan2-plugins.zip
-        path: |
-          release/*
-
     - name: "Read RELEASENOTES and CHANGELOG"
       id: changelog
       run: |
@@ -85,6 +78,14 @@ jobs:
         echo '' >> RELEASE.md
         head -20 CHANGELOG.txt | iconv -f ISO-8859-1 >> RELEASE.md
         echo '...' >> RELEASE.md
+
+    - name: "Upload binary artifacts"
+      uses: actions/upload-artifact@v4
+      with:
+        name: magellan2-plugins
+        path: |
+          RELEASE.md
+          release/*
 
     - name: "Publish git tag vX.Y.Z"
       env:
@@ -129,8 +130,8 @@ jobs:
               "meta_repository": "${{ github.repository_owner }}/magellan2.github.io",
               "tag": "${{ steps.get-version.outputs.TAG }}",
               "version": "${{ steps.get-version.outputs.VERSION }}",
-              "build": "${{ steps.get-version.outputs.BUILD }}",
-              "type": "stable" }}'
+              "build": "",
+              "type": "plugins" }}'
         if [ -s meta.log ]; then
           cat meta.log
           rm meta.log
