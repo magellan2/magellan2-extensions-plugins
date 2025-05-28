@@ -9,8 +9,6 @@ jobs:
   build:
     name: "Test, Build and Create Release"
     runs-on: ubuntu-latest
-    env:
-      INSTALL4J_KEY: ${{ secrets.INSTALL4J_LICENSE_KEY_1 }}
     continue-on-error: false
 
     steps:
@@ -72,11 +70,11 @@ jobs:
     - name: "Read RELEASENOTES and CHANGELOG"
       id: changelog
       run: |
-        cat RELEASENOTES.txt | iconv -f ISO-8859-1 > RELEASE.md
+        cat RELEASENOTES.md | iconv -f ISO-8859-1 > RELEASE.md
         echo '' >> RELEASE.md
         echo '## Excerpt from CHANGELOG' >> RELEASE.md
         echo '' >> RELEASE.md
-        head -20 CHANGELOG.txt | iconv -f ISO-8859-1 >> RELEASE.md
+        head -20 CHANGELOG.md | iconv -f ISO-8859-1 >> RELEASE.md
         echo '...' >> RELEASE.md
 
     - name: "Upload binary artifacts"
