@@ -72,11 +72,11 @@ jobs:
     - name: "Read RELEASENOTES and CHANGELOG"
       id: changelog
       run: |
-        cat RELEASENOTES.txt | iconv -f ISO-8859-1 > RELEASE.md
+        cat RELEASENOTES.md | iconv -f ISO-8859-1 > RELEASE.md
         echo '' >> RELEASE.md
         echo '## Excerpt from CHANGELOG' >> RELEASE.md
         echo '' >> RELEASE.md
-        head -20 CHANGELOG.txt | iconv -f ISO-8859-1 >> RELEASE.md
+        head -20 CHANGELOG.md | iconv -f ISO-8859-1 >> RELEASE.md
         echo '...' >> RELEASE.md
 
     - name: "Upload binary artifacts"
