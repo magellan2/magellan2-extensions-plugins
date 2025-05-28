@@ -77,7 +77,7 @@
 		<!-- JAR File erzeugen -->
 		<buildnumber file=".build.number" />
 		<property name="installer.name"
-		          value="${plugin.basename}-v${plugin.version}-${build.number}-installer.jar" />
+		          value="${plugin.basename}-plugin-v${plugin.version}-${build.number}-installer.jar" />
 
 		<jar jarfile="${plugin.name}" basedir="${classes}">
 			<manifest>
