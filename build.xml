@@ -5,7 +5,24 @@
   	want to use this script to compile a Install-JAR file.
 	</description>
 
+  <property name="VERSION.MAJOR" value="1" />
+  <property name="VERSION.MINOR" value="1" />
+  <property name="VERSION.SUB" value="0" />
+  <property name="VERSION.POINTED" value="${VERSION.MAJOR}.${VERSION.MINOR}.${VERSION.SUB}" />
+
 	<property name="dist" location="${basedir}/release" />
+
+  <!-- *************************************************************** -->
+  <!-- *                                                             * -->
+  <!-- *************************************************************** -->
+  <target name="print_version">
+    <copy file="${basedir}/.github/VERSION.template" tofile="${basedir}/VERSION" overwrite="yes">
+      <filterset>
+        <filter token="VERSION" value="${VERSION.POINTED}" />
+      </filterset>
+    </copy>
+    <echo message="${VERSION.POINTED}" />
+  </target>
 
 	<!-- *************************************************************** -->
 	<!-- *                                                             * -->

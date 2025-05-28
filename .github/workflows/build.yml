@@ -1,0 +1,88 @@
+name: "Run tests and build with Ant on any branch"
+
+on:
+  push:
+    branches-ignore:
+      - "master"
+
+jobs:
+  build:
+    name: "Test and Build"
+    runs-on: ubuntu-latest
+    env:
+      INSTALL4J_KEY: ${{ secrets.INSTALL4J_LICENSE_KEY_1 }}
+    continue-on-error: false
+
+    steps:
+    - name: "Checkout repository"
+      uses: actions/checkout@v4
+      with:
+        fetch-tags: true
+        fetch-depth: 0
+    
+    - name: "Generate version string"
+      id: get-version
+      run: |
+        VERSION=$(ant -q -S print_version)
+        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+        echo "TAG=v${VERSION}" >> $GITHUB_OUTPUT
+
+    - name: "Set up JDK 11"
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: 11
+
+    - name: "Sanity check"
+      id: sanity_check
+      run: |
+        # env
+        VERSION=${{ steps.get-version.outputs.VERSION }}
+        TAG=${{ steps.get-version.outputs.TAG }}
+        LASTTAG=$(git tag -l "v*" --sort='-committerdate' | head -1)
+
+        # version is v1.2.3
+        if [[ "${VERSION}" =~ ^[0-9][0-9]*[.][0-9][0-9]*[.][0-9][0-9]*$ ]]; then
+          echo "Version $VERSION is okay"
+        else
+          echo "Version format $VERSION is not okay!"
+          exit 1
+        fi
+        
+        # tag is v1.2.3
+        if [[ "${TAG}" =~ ^v[0-9][0-9]*[.][0-9][0-9]*[.][0-9][0-9]*$ ]]; then
+          echo "Tag $TAG okay"
+        else
+          echo "Tag $TAG is not okay for version $VERSION!"
+          exit 1
+        fi
+        
+        # new vesion defined
+        if [[ "$LASTTAG" == "$TAG" ]]; then
+          echo "Version not incremented, please update build.xml"
+          exit 1
+        else
+          echo "Version updated."
+        fi
+
+    - name: "Build with ant"
+      run: |
+        ant -noinput -buildfile build.xml distribute
+
+    - name: "Read RELEASENOTES and CHANGELOG"
+      id: changelog
+      run: |
+        cat RELEASENOTES.txt | iconv -f ISO-8859-1 > RELEASE.md
+        echo '' >> RELEASE.md
+        echo '## Excerpt from CHANGELOG' >> RELEASE.md
+        echo '' >> RELEASE.md
+        head -20 CHANGELOG.txt | iconv -f ISO-8859-1 >> RELEASE.md
+        echo '...' >> RELEASE.md
+
+    - name: "Upload binary artifacts"
+      uses: actions/upload-artifact@v4
+      with:
+        name: magellan2-plugins
+        path: |
+          RELEASE.md
+          release/*
