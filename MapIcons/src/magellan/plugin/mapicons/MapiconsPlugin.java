@@ -62,16 +62,14 @@ import magellan.library.utils.logging.Logger;
 
 
 public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutListener {
-		
-	
-	
 	// TH: Increased version to 0.8 when adding the "show regions with enemies" feature
 	// FF: 0.94: show Talents
 	// FF: 0.96: show error regions
 	// FF: 1.4: Items
 	// FF: 1.41: Items with Colors in menu
 	// FF: 1.42: BugFix Error ConcurrentModificationError when getting enemy factions from orders
-	public static final String version="1.42";
+	// FF: 1.43: added message for starving peasons
+	public static final String version="1.43";
 	
 	private Client client = null;
 	private Properties properties = null;
@@ -1738,6 +1736,12 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
+	          		// MESSAGETYPE 1195097758
+	          		// "\"$if($eq($dead,1),\"Ein Bauer verhungert\",\"$int($dead) Bauern verhungern\").\"";text
+	          		// "events";section
+	          		if (mtype==1195097758){
+	          			isSpecialEventMessage=true;
+	          		}
 	          		
 	          		
 	          		if (isSpecialEventMessage){
