@@ -77,7 +77,7 @@
 		<!-- JAR File erzeugen -->
 		<buildnumber file=".build.number" />
 		<property name="installer.name"
-		          value="${plugin.basename}_v${plugin.version}-${build.number}-installer.jar" />
+		          value="${plugin.basename}-plugin-v${plugin.version}-${build.number}-installer.jar" />
 
 		<jar jarfile="${plugin.name}" basedir="${classes}">
 			<manifest>
@@ -121,7 +121,7 @@
 			<arg value="-b" />
 			<arg value="." />
 			<arg value="-o" />
-			<arg value="${release}/${installer.name}" />
+			<arg value="${basedir}/${installer.name}" />
 			<arg value="-k" />
 			<arg value="standard" />
 
