@@ -69,7 +69,7 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	// FF: 1.41: Items with Colors in menu
 	// FF: 1.42: BugFix Error ConcurrentModificationError when getting enemy factions from orders
 	// FF: 1.43: added message for starving peasons
-	public static final String version="1.43";
+	public static final String version="1.44";
 	
 	private Client client = null;
 	private Properties properties = null;
@@ -1743,6 +1743,15 @@ public class MapiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutLi
 	          			isSpecialEventMessage=true;
 	          		}
 	          		
+	          		/*
+	          		 * 1533257949;type
+						"events";section
+						"Dunkle Eiferer des Durgan (zghh) in Yggdrasil (58,-291) wird durch unzureichende Opfer geschwächt.";rendered
+						von Pyanfar
+	          		 */
+	          		if (mtype==1533257949){
+	          			isSpecialEventMessage=true;
+	          		}
 	          		
 	          		if (isSpecialEventMessage){
 	          			// yep, dies ist eine Special Event Message und wir
