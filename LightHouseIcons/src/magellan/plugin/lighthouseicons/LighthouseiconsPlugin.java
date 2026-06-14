@@ -41,7 +41,7 @@ import magellan.library.utils.logging.Logger;
 
 public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,ShortcutListener {
 
-	public static final String version="0.2";
+	public static final String version="0.3";
 	
 	private Client client = null;
 	
@@ -74,12 +74,13 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,Sho
 				public void run() {
 					if (mapIcons_showing_all){
 						// jetzt zu sehen -> ausschalten
+						
 						removeMyRegionIcons();
 						mapIcons_showing_all=false;
 					} else {
 						// einschalten
-						processGameData();
-						mapIcons_showing_all=false;
+						// processGameData();
+						mapIcons_showing_all=true;
 					}
 					client.getDispatcher().fire(new GameDataEvent(client, client.getData()));
 				}
@@ -204,13 +205,15 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,Sho
 		
 		// einmal cleanen
 		removeMyRegionIcons();
-		
-		Collection<Region> alreadyVisibleRegions = new ArrayList<Region>();
-		// alle regionen mit Visibility tag LIGHTHOUSE...
-		log.info(getName() +  " added " + this.setLightHouseVisibility(alreadyVisibleRegions) + " lighthouse icons");
-		
-		// Reichweite aller Leuchttürme
-		log.info(getName() +  " marked " + this.setLightHouseRange(alreadyVisibleRegions) + " regions as in lighthouse-range");
+		if (this.mapIcons_showing_all) {
+			log.info(getName() + ": adding Icons");
+			Collection<Region> alreadyVisibleRegions = new ArrayList<Region>();
+			// alle regionen mit Visibility tag LIGHTHOUSE...
+			log.info(getName() +  " added " + this.setLightHouseVisibility(alreadyVisibleRegions) + " lighthouse icons");
+			
+			// Reichweite aller Leuchttürme
+			log.info(getName() +  " marked " + this.setLightHouseRange(alreadyVisibleRegions) + " regions as in lighthouse-range");
+		}
 	}
 	
 	/**
@@ -320,6 +323,7 @@ public class LighthouseiconsPlugin implements MagellanPlugIn, ActionListener,Sho
 	 * entfernt "unsere" Regionicon-tags aus GameData
 	 */
 	private void removeMyRegionIcons(){
+		log.info(getName() + ": removing Icons");
 		for (Region r:gd.getRegions()){
 			removeMyRegionIconsRegion(r);
 		}
